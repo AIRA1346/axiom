@@ -1,0 +1,29 @@
+# Unity Project Rules: Official Skill Assessment Game
+
+## 1. Naming Conventions (Standard C# & Unity)
+- Classes, Structs, Enums, and Methods: PascalCase (e.g., `GameManager`, `CalculateScore`, `InputHandler`).
+- Local Variables and Parameters: camelCase (e.g., `targetSpeed`, `hitCount`).
+- Private/Protected Fields: camelCase with an underscore prefix (e.g., `_currentScore`, `_isTestRunning`).
+- Use descriptive and clear names. Avoid abbreviations unless universally understood.
+
+## 2. Cross-Platform Integration & Layout
+- Target Platforms: PC (Steam) and Mobile (Android, iOS).
+- Screen Orientation: Landscape strictly (Target Aspect Ratio: 16:9).
+- Input System: Input logic must seamlessly handle and unify Mouse Clicks (PC) and Touch Inputs (Mobile) without duplicating logic.
+- UI Canvas MUST use "Scale With Screen Size" to ensure consistent proportions across different landscape resolutions.
+
+## 3. Design Philosophy & Visual Tone
+- Aesthetic: Achromatic (Grayscale, Black, White, Charcoal).
+- Vibe: Heavy, official, formal, clean, and highly intuitive. 
+- Concept: The environment should feel like a strict, standardized testing facility. 
+- Avoid unnecessary animations, flashy particle effects, or vibrant colors unless specifically required for critical visual feedback (e.g., a subtle red for an error/miss).
+
+## 4. Architecture & Coding Style
+- Single Responsibility Principle (SRP): Each script must have only one job. Separate UI updating logic from core game mechanics and scoring logic.
+- Decoupling: Use UnityEvents, C# Actions, or Delegates for communication between managers (e.g., `InputManager` broadcasts an event, `ScoreManager` listens to it). Do not use `GameObject.Find()`.
+- State Management: Use Enums or a simple State Machine to manage game phases (e.g., `MainMenu`, `TestInProgress`, `ResultScreen`).
+
+## 5. AI Assistant Workflow (Vibe Coding Best Practices)
+- Keep scripts short, modular, and focused. If a script exceeds 200 lines, consider refactoring.
+- Always include clear summary comments above complex mathematical formulas, scoring algorithms, or tracking logic so the AI understands the core intent.
+- When generating code, ensure public variables are exposed to the Unity Inspector using `[SerializeField]` rather than making them public, to maintain encapsulation.
