@@ -52,11 +52,15 @@ public sealed class ItemImporter : EditorWindow
     private const string DefaultCategorySheetUrl = "";
     private const string ItemDefinitionsPath = "Assets/Scripts/ItemDefinitions.cs";
     private const int ProgressUpdateInterval = 100;
+    private const int ProgressLogInterval = 1000;
     private const int MinimumImportedItemCountForDeletion = 10;
+    private const int TestModeItemLimit = 10;
+    private static readonly Dictionary<string, Sprite> ItemIconCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
 
     private string _sheetUrl;
     private string _categorySheetUrl;
     private bool _isImporting;
+    private bool _testMode = true;
     private string _lastStatusMessage = "대기 중";
 
     [MenuItem("Tools/Item Importer Settings")]
@@ -100,6 +104,9 @@ public sealed class ItemImporter : EditorWindow
             EditorPrefs.SetString(CategorySheetUrlKey, _categorySheetUrl);
         }
 
+        EditorGUILayout.Space();
+
+        _testMode = EditorGUILayout.ToggleLeft("Test Mode (상위 10개만 생성)", _testMode);
         EditorGUILayout.Space();
 
         if (GUILayout.Button("Import Items", GUILayout.Height(32f)))
@@ -166,124 +173,187 @@ public sealed class ItemImporter : EditorWindow
 
     private async Task RunImportAsync()
     {
-        if (string.IsNullOrWhiteSpace(_sheetUrl))
-        {
-            _lastStatusMessage = "Google Sheet CSV URL이 비어 있습니다.";
-            Debug.LogError("ItemImporter: Google Sheet CSV URL을 먼저 입력해 주세요.");
-            return;
-        }
-
-        EnsureFolderExists(ResourceFolderPath);
-        EditorUtility.DisplayProgressBar("Item Importer", "Downloading CSV data...", 0.1f);
-
-        using UnityWebRequest request = UnityWebRequest.Get(_sheetUrl);
-        UnityWebRequestAsyncOperation operation = request.SendWebRequest();
-
-        while (!operation.isDone)
-        {
-            await Task.Yield();
-        }
-
-        if (request.result != UnityWebRequest.Result.Success)
-        {
-            _lastStatusMessage = $"CSV 다운로드 실패: {request.error}";
-            Debug.LogError($"ItemImporter: CSV 다운로드 실패 - {request.error}");
-            return;
-        }
-
-        string csvText = request.downloadHandler.text;
-        List<List<string>> rows = ParseCsv(csvText);
-
-        if (rows.Count < 2)
-        {
-            _lastStatusMessage = "가져올 데이터가 없습니다.";
-            Debug.LogWarning("ItemImporter: CSV에 가져올 데이터가 없습니다.");
-            return;
-        }
-
-        Dictionary<string, int> headerMap = BuildHeaderMap(rows[0]);
-
-        if (!headerMap.ContainsKey("ItemId"))
-        {
-            _lastStatusMessage = "CSV Header에 ItemId 열이 없습니다.";
-            Debug.LogError("ItemImporter: CSV Header에 ItemId 열이 없습니다.");
-            return;
-        }
-
-        if (!ValidateItemRows(rows, headerMap))
-        {
-            _lastStatusMessage = "유효성 검사 실패. 시트를 수정한 뒤 다시 시도해 주세요.";
-            Debug.LogError("ItemImporter: 유효성 검사에 실패하여 임포트를 중단합니다. 시트를 수정한 뒤 다시 시도해 주세요.");
-            return;
-        }
-
-        int importedCount = 0;
-        HashSet<string> importedItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        Dictionary<string, string> existingAssetPathsByItemId = BuildExistingItemAssetPathMap();
-        AddressableAssetSettings addressableSettings = AddressableAssetSettingsDefaultObject.Settings;
-        Dictionary<string, AddressableAssetGroup> addressableGroupCache = BuildAddressableGroupCache(addressableSettings);
-
-        AssetDatabase.StartAssetEditing();
-
         try
         {
-            for (int rowIndex = 1; rowIndex < rows.Count; rowIndex++)
+            if (string.IsNullOrWhiteSpace(_sheetUrl))
             {
-                List<string> row = rows[rowIndex];
-                string itemId = GetCell(row, headerMap, "ItemId");
-
-                if (string.IsNullOrWhiteSpace(itemId))
-                {
-                    continue;
-                }
-
-                importedItemIds.Add(itemId);
-
-                if (rowIndex == 1 || rowIndex % ProgressUpdateInterval == 0 || rowIndex == rows.Count - 1)
-                {
-                    float progress = Mathf.Lerp(0.15f, 0.95f, rowIndex / (float)Mathf.Max(1, rows.Count - 1));
-                    EditorUtility.DisplayProgressBar("Item Importer", $"Importing {itemId}...", progress);
-                }
-
-                ItemImportPathInfo pathInfo = BuildItemAssetPathInfo(row, headerMap, itemId);
-                EnsureFolderExists(pathInfo.FolderPath);
-
-                ItemData itemData = LoadOrCreateItemAsset(itemId, pathInfo.AssetPath, existingAssetPathsByItemId);
-
-                if (itemData == null)
-                {
-                    Debug.LogError($"ItemImporter: ItemData 생성 또는 로드에 실패했습니다 - {itemId}");
-                    continue;
-                }
-
-                ApplyRowToItemData(itemData, row, headerMap);
-                RegisterAddressableEntry(addressableSettings, addressableGroupCache, itemData, pathInfo.AssetPath);
-                EditorUtility.SetDirty(itemData);
-                existingAssetPathsByItemId[itemId] = pathInfo.AssetPath;
-                importedCount++;
+                _lastStatusMessage = "Google Sheet CSV URL이 비어 있습니다.";
+                Debug.LogError("ItemImporter: Google Sheet CSV URL을 먼저 입력해 주세요.");
+                return;
             }
 
-            CleanupDeletedItems(importedItemIds);
+            string absoluteResourceFolderPath = GetAbsoluteProjectPath(ResourceFolderPath);
+            Directory.CreateDirectory(absoluteResourceFolderPath);
+            EnsureFolderExists(ResourceFolderPath);
+            Debug.Log($"ItemImporter: 아이템 저장 경로 확인 - {absoluteResourceFolderPath}");
+
+            string convertedSheetUrl = ConvertGoogleSheetUrlToCsv(_sheetUrl);
+            Debug.Log($"ItemImporter: Items CSV URL - {convertedSheetUrl}");
+
+            _lastStatusMessage = "CSV 다운로드 중...";
+            Repaint();
+
+            using UnityWebRequest request = UnityWebRequest.Get(convertedSheetUrl);
+            request.timeout = 60;
+
+            if (!await WaitForWebRequestAsync(request, "Item Importer", "Downloading CSV data..."))
+            {
+                return;
+            }
+
+            if (request.result != UnityWebRequest.Result.Success)
+            {
+                _lastStatusMessage = $"CSV 다운로드 실패: {request.error}";
+                Debug.LogError($"ItemImporter: CSV 다운로드 실패 - {request.error}");
+                return;
+            }
+
+            string csvText = StripUtf8Bom(request.downloadHandler.text);
+            List<List<string>> rows = ParseCsv(csvText);
+            int parsedItemRowCount = Mathf.Max(0, rows.Count - 1);
+            Debug.Log($"ItemImporter: 시트에서 파싱한 아이템 데이터 수 - {parsedItemRowCount}");
+
+            if (rows.Count < 2)
+            {
+                _lastStatusMessage = "가져올 데이터가 없습니다.";
+                Debug.LogWarning("ItemImporter: CSV에 가져올 데이터가 없습니다.");
+                return;
+            }
+
+            Dictionary<string, int> rawHeaderMap = BuildHeaderMap(rows[0]);
+            Dictionary<string, int> headerMap = ResolveItemsHeaderMap(rawHeaderMap);
+
+            if (headerMap == null)
+            {
+                string foundHeaders = string.Join(", ", rawHeaderMap.Keys);
+                _lastStatusMessage = "Items 시트 헤더가 올바르지 않습니다.";
+                Debug.LogError(
+                    "ItemImporter: Items 시트는 ItemId, ItemName, MainCategory, MiddleCategory, SubCategory 열을 포함해야 합니다.\n"
+                    + $"실제 발견된 헤더: [{foundHeaders}]");
+                return;
+            }
+
+            if (!ValidateItemRows(rows, headerMap))
+            {
+                _lastStatusMessage = "유효성 검사 실패. 시트를 수정한 뒤 다시 시도해 주세요.";
+                Debug.LogError("ItemImporter: 유효성 검사에 실패하여 임포트를 중단합니다. 시트를 수정한 뒤 다시 시도해 주세요.");
+                return;
+            }
+
+            int importedCount = 0;
+            int processedCount = 0;
+            int endRowExclusive = _testMode
+                ? Mathf.Min(rows.Count, 1 + TestModeItemLimit)
+                : rows.Count;
+            ItemIconCache.Clear();
+
+            if (_testMode)
+            {
+                Debug.Log($"ItemImporter: Test Mode 활성화 - 상위 {Mathf.Max(0, endRowExclusive - 1)}개 아이템만 생성합니다.");
+            }
+
+            HashSet<string> importedItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            Dictionary<string, string> existingAssetPathsByItemId = BuildExistingItemAssetPathMap();
+            AddressableAssetSettings addressableSettings = AddressableAssetSettingsDefaultObject.Settings;
+            Dictionary<string, AddressableAssetGroup> addressableGroupCache = BuildAddressableGroupCache(addressableSettings);
+
+            AssetDatabase.StartAssetEditing();
+
+            try
+            {
+                for (int rowIndex = 1; rowIndex < endRowExclusive; rowIndex++)
+                {
+                    List<string> row = rows[rowIndex];
+                    string itemId = GetCell(row, headerMap, "ItemId");
+
+                    if (string.IsNullOrWhiteSpace(itemId))
+                    {
+                        continue;
+                    }
+
+                    processedCount++;
+                    importedItemIds.Add(itemId);
+
+                    if (rowIndex == 1 || rowIndex % ProgressUpdateInterval == 0 || rowIndex == endRowExclusive - 1)
+                    {
+                        float progress = Mathf.Lerp(0.15f, 0.95f, rowIndex / (float)Mathf.Max(1, endRowExclusive - 1));
+                        EditorUtility.DisplayProgressBar("Item Importer", $"Importing {itemId}...", progress);
+                    }
+
+                    if (processedCount % ProgressLogInterval == 0)
+                    {
+                        Debug.Log($"ItemImporter: 진행 중... {processedCount}개 처리 완료");
+                    }
+
+                    ItemImportPathInfo pathInfo = BuildItemAssetPathInfo(row, headerMap, itemId);
+                    EnsureFolderExists(pathInfo.FolderPath);
+
+                    ItemData itemData = LoadOrCreateItemAsset(itemId, pathInfo.AssetPath, existingAssetPathsByItemId);
+
+                    if (itemData == null)
+                    {
+                        Debug.LogError($"ItemImporter: ItemData 생성 또는 로드에 실패했습니다 - {itemId}");
+                        continue;
+                    }
+
+                    ApplyRowToItemData(itemData, row, headerMap);
+                    RegisterAddressableEntry(addressableSettings, addressableGroupCache, itemData, pathInfo.AssetPath);
+                    EditorUtility.SetDirty(itemData);
+                    existingAssetPathsByItemId[itemId] = pathInfo.AssetPath;
+                    importedCount++;
+                }
+
+                if (_testMode)
+                {
+                    Debug.Log("ItemImporter: Test Mode에서는 삭제 동기화를 건너뜁니다.");
+                }
+                else
+                {
+                    CleanupDeletedItems(importedItemIds);
+                }
+            }
+            finally
+            {
+                AssetDatabase.StopAssetEditing();
+            }
+
+            if (addressableSettings != null)
+            {
+                EditorUtility.SetDirty(addressableSettings);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            _lastStatusMessage = $"{importedCount}개 아이템 생성/업데이트 완료";
+            Debug.Log($"ItemImporter: {importedCount}개 아이템을 생성/업데이트했습니다.");
         }
-        finally
+        catch (Exception exception)
         {
-            AssetDatabase.StopAssetEditing();
+            _lastStatusMessage = $"임포트 중 예외 발생: {exception.Message}";
+            Debug.LogError($"ItemImporter: 임포트 중 치명적 예외가 발생했습니다.\n{exception}");
         }
+    }
 
-        if (addressableSettings != null)
-        {
-            EditorUtility.SetDirty(addressableSettings);
-        }
-
-        AssetDatabase.SaveAssets();
-        AssetDatabase.Refresh();
-
-        _lastStatusMessage = $"{importedCount}개 아이템 생성/업데이트 완료";
-        Debug.Log($"ItemImporter: {importedCount}개 아이템을 생성/업데이트했습니다.");
+    private sealed class CategoryValidationCache
+    {
+        public HashSet<string> MainNames;
+        public HashSet<string> MiddleNames;
+        public HashSet<string> SubNames;
+        public Dictionary<string, HashSet<string>> MainToMiddle;
+        public Dictionary<string, HashSet<string>> MiddleToSub;
+        public bool IsValid;
     }
 
     private static bool ValidateItemRows(List<List<string>> rows, Dictionary<string, int> headerMap)
     {
+        CategoryValidationCache cache = BuildCategoryValidationCache();
+
+        if (cache == null || !cache.IsValid)
+        {
+            Debug.LogWarning("ItemImporter Validation: 카테고리 캐시를 로드하지 못해 카테고리 검증을 건너뜁니다.");
+        }
+
         bool hasError = false;
         Dictionary<string, int> itemIdLines = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
 
@@ -319,10 +389,99 @@ public sealed class ItemImporter : EditorWindow
                 }
             }
 
-            ValidateCategoryCombination(row, headerMap, lineNumber, itemId, ref hasError);
+            if (cache != null && cache.IsValid)
+            {
+                ValidateCategoryCombination(row, headerMap, lineNumber, itemId, cache, ref hasError);
+            }
         }
 
         return !hasError;
+    }
+
+    private static CategoryValidationCache BuildCategoryValidationCache()
+    {
+        var cache = new CategoryValidationCache
+        {
+            MainNames = new HashSet<string>(StringComparer.Ordinal),
+            MiddleNames = new HashSet<string>(StringComparer.Ordinal),
+            SubNames = new HashSet<string>(StringComparer.Ordinal),
+            MainToMiddle = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal),
+            MiddleToSub = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal)
+        };
+
+        Type mainType = FindTypeByName("ItemMainCategory");
+        Type middleType = FindTypeByName("ItemMiddleCategory");
+        Type subType = FindTypeByName("ItemSubCategory");
+
+        if (mainType == null || !mainType.IsEnum || middleType == null || !middleType.IsEnum || subType == null || !subType.IsEnum)
+        {
+            return null;
+        }
+
+        foreach (string name in Enum.GetNames(mainType))
+        {
+            cache.MainNames.Add(name);
+        }
+
+        foreach (string name in Enum.GetNames(middleType))
+        {
+            cache.MiddleNames.Add(name);
+        }
+
+        foreach (string name in Enum.GetNames(subType))
+        {
+            cache.SubNames.Add(name);
+        }
+
+        if (!TryBuildMainToMiddleCache(cache) || !TryBuildMiddleToSubCache(cache))
+        {
+            return null;
+        }
+
+        cache.IsValid = true;
+        return cache;
+    }
+
+    private static bool TryBuildMainToMiddleCache(CategoryValidationCache cache)
+    {
+        if (!TryGetCategoryMapAllPairs("MainToMiddleMap", out var pairs))
+        {
+            return false;
+        }
+
+        foreach (var (mainKey, middleValues) in pairs)
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string v in middleValues)
+            {
+                set.Add(v);
+            }
+
+            cache.MainToMiddle[mainKey] = set;
+        }
+
+        return true;
+    }
+
+    private static bool TryBuildMiddleToSubCache(CategoryValidationCache cache)
+    {
+        if (!TryGetCategoryMapAllPairs("MiddleToSubMap", out var pairs))
+        {
+            return false;
+        }
+
+        foreach (var (middleKey, subValues) in pairs)
+        {
+            var set = new HashSet<string>(StringComparer.Ordinal);
+            foreach (string v in subValues)
+            {
+                set.Add(v);
+            }
+
+            cache.MiddleToSub[middleKey] = set;
+        }
+
+        return true;
     }
 
     private static void ValidateCategoryCombination(
@@ -330,54 +489,109 @@ public sealed class ItemImporter : EditorWindow
         Dictionary<string, int> headerMap,
         int lineNumber,
         string itemId,
+        CategoryValidationCache cache,
         ref bool hasError)
     {
         string mainRaw = GetCell(row, headerMap, "MainCategory");
         string middleRaw = GetCell(row, headerMap, "MiddleCategory");
         string subRaw = GetCell(row, headerMap, "SubCategory");
 
-        if (!TryResolveGeneratedEnumName("ItemMainCategory", mainRaw, "None", out string mainCategory))
+        string mainCategory = ResolveToCachedName(mainRaw, "None", cache.MainNames);
+        string middleCategory = ResolveToCachedName(middleRaw, "None", cache.MiddleNames);
+        string subCategory = ResolveToCachedName(subRaw, "None", cache.SubNames);
+
+        if (mainCategory == null || middleCategory == null || subCategory == null)
         {
-            Debug.LogWarning("ItemImporter Validation: 생성된 카테고리 Enum 또는 매핑을 찾을 수 없어 MainCategory 검증을 건너뜁니다.");
             return;
         }
 
-        if (!TryResolveGeneratedEnumName("ItemMiddleCategory", middleRaw, "None", out string middleCategory))
-        {
-            Debug.LogWarning("ItemImporter Validation: 생성된 카테고리 Enum 또는 매핑을 찾을 수 없어 MiddleCategory 검증을 건너뜁니다.");
-            return;
-        }
-
-        if (!TryResolveGeneratedEnumName("ItemSubCategory", subRaw, "None", out string subCategory))
-        {
-            Debug.LogWarning("ItemImporter Validation: 생성된 카테고리 Enum 또는 매핑을 찾을 수 없어 SubCategory 검증을 건너뜁니다.");
-            return;
-        }
-
-        if (!TryGetCategoryMapValues("MainToMiddleMap", mainCategory, out List<string> allowedMiddles))
-        {
-            Debug.LogWarning("ItemImporter Validation: MainToMiddleMap을 찾지 못해 카테고리 검증을 건너뜁니다.");
-            return;
-        }
-
-        if (!allowedMiddles.Contains(middleCategory))
+        if (!cache.MainToMiddle.TryGetValue(mainCategory, out HashSet<string> allowedMiddles) || !allowedMiddles.Contains(middleCategory))
         {
             Debug.LogError($"ItemImporter Validation: {lineNumber}번째 줄의 아이템(ItemId: {itemId})은 MainCategory '{mainCategory}'에 MiddleCategory '{middleCategory}'를 사용할 수 없습니다.");
             hasError = true;
             return;
         }
 
-        if (!TryGetCategoryMapValues("MiddleToSubMap", middleCategory, out List<string> allowedSubs))
-        {
-            Debug.LogWarning("ItemImporter Validation: MiddleToSubMap을 찾지 못해 카테고리 검증을 건너뜁니다.");
-            return;
-        }
-
-        if (!allowedSubs.Contains(subCategory))
+        if (!cache.MiddleToSub.TryGetValue(middleCategory, out HashSet<string> allowedSubs) || !allowedSubs.Contains(subCategory))
         {
             Debug.LogError($"ItemImporter Validation: {lineNumber}번째 줄의 아이템(ItemId: {itemId})은 MiddleCategory '{middleCategory}'에 SubCategory '{subCategory}'를 사용할 수 없습니다.");
             hasError = true;
         }
+    }
+
+    private static string ResolveToCachedName(string rawValue, string fallback, HashSet<string> validNames)
+    {
+        string sanitized = string.IsNullOrWhiteSpace(rawValue)
+            ? fallback
+            : SanitizeEnumMemberName(rawValue.Trim());
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+        {
+            sanitized = fallback;
+        }
+
+        return validNames.Contains(sanitized) ? sanitized : null;
+    }
+
+    private static bool TryGetCategoryMapAllPairs(string fieldName, out List<(string Key, List<string> Values)> allPairs)
+    {
+        allPairs = new List<(string, List<string>)>();
+        Type mapContainerType = FindTypeByName("CategoryDefinitionMaps");
+
+        if (mapContainerType == null)
+        {
+            return false;
+        }
+
+        FieldInfo fieldInfo = mapContainerType.GetField(fieldName, BindingFlags.Public | BindingFlags.Static);
+        if (fieldInfo == null)
+        {
+            return false;
+        }
+
+        object fieldValue = fieldInfo.GetValue(null);
+        if (fieldValue is not IEnumerable enumerable)
+        {
+            return false;
+        }
+
+        foreach (object entry in enumerable)
+        {
+            if (entry == null)
+            {
+                continue;
+            }
+
+            Type entryType = entry.GetType();
+            PropertyInfo keyProperty = entryType.GetProperty("Key");
+            PropertyInfo valueProperty = entryType.GetProperty("Value");
+
+            if (keyProperty == null || valueProperty == null)
+            {
+                continue;
+            }
+
+            object keyObject = keyProperty.GetValue(entry);
+            object valueObject = valueProperty.GetValue(entry);
+
+            if (valueObject is not IEnumerable valueEnumerable)
+            {
+                continue;
+            }
+
+            var values = new List<string>();
+            foreach (object value in valueEnumerable)
+            {
+                if (value != null)
+                {
+                    values.Add(value.ToString());
+                }
+            }
+
+            allPairs.Add((keyObject?.ToString() ?? string.Empty, values));
+        }
+
+        return allPairs.Count > 0;
     }
 
     private static bool TryParseCategoryEnum<TEnum>(string rawValue, TEnum emptyFallback, out TEnum parsedValue)
@@ -401,14 +615,16 @@ public sealed class ItemImporter : EditorWindow
             return;
         }
 
-        EditorUtility.DisplayProgressBar("Category Sync", "Downloading category CSV data...", 0.1f);
+        _lastStatusMessage = "카테고리 CSV 다운로드 중...";
+        Repaint();
 
-        using UnityWebRequest request = UnityWebRequest.Get(_categorySheetUrl);
-        UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+        string convertedCategoryUrl = ConvertGoogleSheetUrlToCsv(_categorySheetUrl);
+        using UnityWebRequest request = UnityWebRequest.Get(convertedCategoryUrl);
+        request.timeout = 30;
 
-        while (!operation.isDone)
+        if (!await WaitForWebRequestAsync(request, "Category Sync", "Downloading category CSV data..."))
         {
-            await Task.Yield();
+            return;
         }
 
         if (request.result != UnityWebRequest.Result.Success)
@@ -418,7 +634,8 @@ public sealed class ItemImporter : EditorWindow
             return;
         }
 
-        List<List<string>> rows = ParseCsv(request.downloadHandler.text);
+        string csvText = StripUtf8Bom(request.downloadHandler.text);
+        List<List<string>> rows = ParseCsv(csvText);
 
         if (rows.Count < 2)
         {
@@ -427,14 +644,17 @@ public sealed class ItemImporter : EditorWindow
             return;
         }
 
-        Dictionary<string, int> headerMap = BuildHeaderMap(rows[0]);
+        Dictionary<string, int> rawHeaderMap = BuildHeaderMap(rows[0]);
+        Dictionary<string, int> headerMap = ResolveCategoryHeaderMap(rawHeaderMap);
 
-        if (!headerMap.ContainsKey("MainCategory")
-            || !headerMap.ContainsKey("MiddleCategory")
-            || !headerMap.ContainsKey("SubCategory"))
+        if (headerMap == null)
         {
+            string foundHeaders = string.Join(", ", rawHeaderMap.Keys);
             _lastStatusMessage = "Categories Header가 올바르지 않습니다.";
-            Debug.LogError("ItemImporter: Categories 시트는 MainCategory, MiddleCategory, SubCategory 헤더를 포함해야 합니다.");
+            Debug.LogError(
+                "ItemImporter: Categories 시트는 MainCategory, MiddleCategory, SubCategory 헤더를 포함해야 합니다.\n"
+                + $"지원 형식: 영문(MainCategory/MiddleCategory/SubCategory) 또는 한글(대분류/중분류/소분류)\n"
+                + $"실제 발견된 헤더: [{foundHeaders}]");
             return;
         }
 
@@ -558,6 +778,12 @@ public sealed class ItemImporter : EditorWindow
         string mainFolder = SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "MainCategory")));
         string middleFolder = SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "MiddleCategory")));
         string subFolder = SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "SubCategory")));
+
+        if (string.Equals(mainFolder, middleFolder, StringComparison.Ordinal) && mainFolder != "None")
+        {
+            Debug.LogWarning($"ItemImporter: 아이템 '{itemId}' - MainCategory와 MiddleCategory가 동일합니다 ({mainFolder}). 시트 데이터를 확인하세요.");
+        }
+
         string folderPath = $"{ResourceFolderPath}/{mainFolder}/{middleFolder}/{subFolder}";
 
         return new ItemImportPathInfo
@@ -1089,6 +1315,97 @@ public sealed class ItemImporter : EditorWindow
         return completionSource.Task;
     }
 
+    private static Task<bool> WaitForWebRequestAsync(UnityWebRequest request, string progressTitle, string progressInfo)
+    {
+        TaskCompletionSource<bool> tcs = new TaskCompletionSource<bool>();
+        UnityWebRequestAsyncOperation operation = request.SendWebRequest();
+        float elapsed = 0f;
+        const float maxWaitSeconds = 120f;
+
+        void Poll()
+        {
+            if (operation.isDone)
+            {
+                EditorUtility.ClearProgressBar();
+                tcs.TrySetResult(true);
+                return;
+            }
+
+            elapsed += 0.05f;
+            if (elapsed >= maxWaitSeconds)
+            {
+                EditorUtility.ClearProgressBar();
+                Debug.LogError($"ItemImporter: CSV 다운로드 타임아웃 ({maxWaitSeconds}초)");
+                request.Abort();
+                tcs.TrySetResult(false);
+                return;
+            }
+
+            float progress = Mathf.Clamp01(0.1f + (elapsed / maxWaitSeconds) * 0.5f);
+            if (EditorUtility.DisplayCancelableProgressBar(progressTitle, progressInfo, progress))
+            {
+                EditorUtility.ClearProgressBar();
+                request.Abort();
+                tcs.TrySetResult(false);
+                return;
+            }
+
+            EditorApplication.delayCall += Poll;
+        }
+
+        EditorApplication.delayCall += Poll;
+        return tcs.Task;
+    }
+
+    private static string ConvertGoogleSheetUrlToCsv(string rawUrl)
+    {
+        if (string.IsNullOrWhiteSpace(rawUrl))
+        {
+            return string.Empty;
+        }
+
+        string trimmedUrl = rawUrl.Trim();
+
+        if (!trimmedUrl.Contains("docs.google.com/spreadsheets/d/", StringComparison.OrdinalIgnoreCase))
+        {
+            return trimmedUrl;
+        }
+
+        Match match = Regex.Match(
+            trimmedUrl,
+            @"https?://docs\.google\.com/spreadsheets/d/([^/?#]+)",
+            RegexOptions.IgnoreCase);
+
+        if (!match.Success)
+        {
+            return trimmedUrl;
+        }
+
+        string sheetId = match.Groups[1].Value;
+        string gid = string.Empty;
+
+        Match gidQueryMatch = Regex.Match(trimmedUrl, @"[?&]gid=(\d+)", RegexOptions.IgnoreCase);
+        Match gidFragmentMatch = Regex.Match(trimmedUrl, @"#gid=(\d+)", RegexOptions.IgnoreCase);
+
+        if (gidQueryMatch.Success)
+        {
+            gid = gidQueryMatch.Groups[1].Value;
+        }
+        else if (gidFragmentMatch.Success)
+        {
+            gid = gidFragmentMatch.Groups[1].Value;
+        }
+
+        string convertedUrl = $"https://docs.google.com/spreadsheets/d/{sheetId}/export?format=csv";
+
+        if (!string.IsNullOrWhiteSpace(gid))
+        {
+            convertedUrl += $"&gid={gid}";
+        }
+
+        return convertedUrl;
+    }
+
     private static bool TryResolveGeneratedEnumName(string enumTypeName, string rawValue, string fallbackName, out string resolvedName)
     {
         resolvedName = fallbackName;
@@ -1335,6 +1652,25 @@ public sealed class ItemImporter : EditorWindow
         ApplyDynamicStatModifiers(itemData, row, headerMap);
     }
 
+    private static readonly Dictionary<string, StatType> StatNameAliases = new Dictionary<string, StatType>(StringComparer.OrdinalIgnoreCase)
+    {
+        ["MaxHP"] = StatType.Hp, ["Max HP"] = StatType.Hp, ["HP"] = StatType.Hp, ["Health"] = StatType.Hp, ["체력"] = StatType.Hp,
+        ["MaxMP"] = StatType.Mp, ["Max MP"] = StatType.Mp, ["MP"] = StatType.Mp, ["Mana"] = StatType.Mp, ["마나"] = StatType.Mp,
+        ["SP"] = StatType.Sp, ["Stamina"] = StatType.Sp, ["스태미나"] = StatType.Sp,
+        ["Attack"] = StatType.PhysAtk, ["Physical Attack"] = StatType.PhysAtk, ["PhysAtk"] = StatType.PhysAtk, ["물리공격"] = StatType.PhysAtk,
+        ["Magic Attack"] = StatType.MagAtk, ["MagAtk"] = StatType.MagAtk, ["마법공격"] = StatType.MagAtk,
+        ["Accuracy"] = StatType.Accuracy, ["명중"] = StatType.Accuracy,
+        ["Crit"] = StatType.CritRate, ["Critical"] = StatType.CritRate, ["CritRate"] = StatType.CritRate, ["치명타"] = StatType.CritRate,
+        ["Defense"] = StatType.PhysDef, ["Physical Defense"] = StatType.PhysDef, ["PhysDef"] = StatType.PhysDef, ["물리방어"] = StatType.PhysDef,
+        ["Magic Defense"] = StatType.MagDef, ["MagDef"] = StatType.MagDef, ["마법방어"] = StatType.MagDef,
+        ["Evasion"] = StatType.Evasion, ["회피"] = StatType.Evasion,
+        ["GuardRate"] = StatType.GuardRate, ["Guard"] = StatType.GuardRate, ["막기"] = StatType.GuardRate,
+        ["StatusInflict"] = StatType.StatusInflict, ["상태이상부여"] = StatType.StatusInflict,
+        ["StatusResist"] = StatType.StatusResist, ["상태이상저항"] = StatType.StatusResist,
+        ["Speed"] = StatType.Speed, ["이동속도"] = StatType.Speed,
+        ["Luck"] = StatType.Luck, ["운"] = StatType.Luck
+    };
+
     private static void ApplyDynamicStatModifiers(ItemData itemData, List<string> row, Dictionary<string, int> headerMap)
     {
         foreach (KeyValuePair<string, int> headerEntry in headerMap)
@@ -1359,9 +1695,9 @@ public sealed class ItemImporter : EditorWindow
                 continue;
             }
 
-            if (!Enum.TryParse(statName, true, out StatType statType))
+            if (!TryResolveStatType(statName, out StatType statType))
             {
-                Debug.LogWarning($"ItemImporter: 알 수 없는 Stat 헤더를 건너뜁니다 - {headerEntry.Key}");
+                Debug.LogWarning($"ItemImporter: 알 수 없는 Stat 헤더를 건너뜁니다 - {headerEntry.Key} (시트값: '{statName}')");
                 continue;
             }
 
@@ -1371,6 +1707,22 @@ public sealed class ItemImporter : EditorWindow
                 Value = statValue
             });
         }
+    }
+
+    private static bool TryResolveStatType(string statName, out StatType statType)
+    {
+        if (Enum.TryParse(statName.Trim(), true, out statType))
+        {
+            return true;
+        }
+
+        if (StatNameAliases.TryGetValue(statName.Trim(), out statType))
+        {
+            return true;
+        }
+
+        statType = default;
+        return false;
     }
 
     private static bool TryParseFloat(string rawValue, out float parsedValue)
@@ -1386,7 +1738,14 @@ public sealed class ItemImporter : EditorWindow
             return;
         }
 
+        if (ItemIconCache.TryGetValue(itemData.ItemId, out Sprite cachedIcon))
+        {
+            itemData.ItemIcon = cachedIcon;
+            return;
+        }
+
         Sprite loadedIcon = LoadItemIcon(itemData.ItemId);
+        ItemIconCache[itemData.ItemId] = loadedIcon;
 
         if (loadedIcon != null)
         {
@@ -1406,7 +1765,12 @@ public sealed class ItemImporter : EditorWindow
         foreach (string extension in extensions)
         {
             string path = $"{IconFolderPath}/{itemId}{extension}";
-            Debug.Log($"[Icon Search] 시도 중인 경로: {path}");
+            string absolutePath = GetAbsoluteProjectPath(path);
+
+            if (!File.Exists(absolutePath))
+            {
+                continue;
+            }
 
             Sprite sprite = TryLoadSpriteAssetAtPath(path);
 
@@ -1501,6 +1865,114 @@ public sealed class ItemImporter : EditorWindow
         }
 
         return Enum.TryParse(rawValue.Trim(), true, out TEnum parsedValue) ? parsedValue : fallbackValue;
+    }
+
+    private static string StripUtf8Bom(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+        {
+            return text;
+        }
+
+        if (text.Length >= 1 && text[0] == '\uFEFF')
+        {
+            return text.Substring(1);
+        }
+
+        return text;
+    }
+
+    private static Dictionary<string, int> ResolveCategoryHeaderMap(Dictionary<string, int> rawHeaderMap)
+    {
+        if (rawHeaderMap == null)
+        {
+            return null;
+        }
+
+        string[] mainAliases = { "MainCategory", "Main Category", "대분류" };
+        string[] middleAliases = { "MiddleCategory", "Middle Category", "중분류" };
+        string[] subAliases = { "SubCategory", "Sub Category", "소분류" };
+
+        int? mainIdx = TryGetIndexFromAliases(rawHeaderMap, mainAliases);
+        int? middleIdx = TryGetIndexFromAliases(rawHeaderMap, middleAliases);
+        int? subIdx = TryGetIndexFromAliases(rawHeaderMap, subAliases);
+
+        if (mainIdx == null || middleIdx == null || subIdx == null)
+        {
+            return null;
+        }
+
+        return new Dictionary<string, int>(StringComparer.Ordinal)
+        {
+            ["MainCategory"] = mainIdx.Value,
+            ["MiddleCategory"] = middleIdx.Value,
+            ["SubCategory"] = subIdx.Value
+        };
+    }
+
+    private static int? TryGetIndexFromAliases(Dictionary<string, int> headerMap, string[] aliases)
+    {
+        foreach (string alias in aliases)
+        {
+            if (headerMap.TryGetValue(alias, out int idx))
+            {
+                return idx;
+            }
+        }
+
+        return null;
+    }
+
+    private static Dictionary<string, int> ResolveItemsHeaderMap(Dictionary<string, int> rawHeaderMap)
+    {
+        if (rawHeaderMap == null)
+        {
+            return null;
+        }
+
+        var resolved = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        string[] itemIdAliases = { "ItemId", "Item ID", "아이템ID", "ID" };
+        string[] itemNameAliases = { "ItemName", "Item Name", "아이템명", "Name" };
+        string[] mainAliases = { "MainCategory", "Main Category", "대분류" };
+        string[] middleAliases = { "MiddleCategory", "Middle Category", "중분류" };
+        string[] subAliases = { "SubCategory", "Sub Category", "소분류" };
+
+        if (TryGetIndexFromAliases(rawHeaderMap, itemIdAliases) is not int itemIdIdx) return null;
+        if (TryGetIndexFromAliases(rawHeaderMap, itemNameAliases) is not int itemNameIdx) return null;
+        if (TryGetIndexFromAliases(rawHeaderMap, mainAliases) is not int mainIdx) return null;
+        if (TryGetIndexFromAliases(rawHeaderMap, middleAliases) is not int middleIdx) return null;
+        if (TryGetIndexFromAliases(rawHeaderMap, subAliases) is not int subIdx) return null;
+
+        resolved["ItemId"] = itemIdIdx;
+        resolved["ItemName"] = itemNameIdx;
+        resolved["MainCategory"] = mainIdx;
+        resolved["MiddleCategory"] = middleIdx;
+        resolved["SubCategory"] = subIdx;
+
+        string[] descAliases = { "Description", "설명" };
+        string[] tierAliases = { "Tier", "티어" };
+        string[] slotAliases = { "DefaultSlot", "Default Slot", "기본슬롯" };
+        string[] gripAliases = { "GripType", "Grip Type", "손잡이타입" };
+        string[] purchaseAliases = { "PurchasePrice", "Purchase Price", "구매가" };
+        string[] saleAliases = { "SalePrice", "Sale Price", "판매가" };
+
+        if (TryGetIndexFromAliases(rawHeaderMap, descAliases) is int descIdx) resolved["Description"] = descIdx;
+        if (TryGetIndexFromAliases(rawHeaderMap, tierAliases) is int tierIdx) resolved["Tier"] = tierIdx;
+        if (TryGetIndexFromAliases(rawHeaderMap, slotAliases) is int slotIdx) resolved["DefaultSlot"] = slotIdx;
+        if (TryGetIndexFromAliases(rawHeaderMap, gripAliases) is int gripIdx) resolved["GripType"] = gripIdx;
+        if (TryGetIndexFromAliases(rawHeaderMap, purchaseAliases) is int purchaseIdx) resolved["PurchasePrice"] = purchaseIdx;
+        if (TryGetIndexFromAliases(rawHeaderMap, saleAliases) is int saleIdx) resolved["SalePrice"] = saleIdx;
+
+        foreach (var kv in rawHeaderMap)
+        {
+            if (kv.Key.StartsWith("Stat_", StringComparison.OrdinalIgnoreCase) && !resolved.ContainsKey(kv.Key))
+            {
+                resolved[kv.Key] = kv.Value;
+            }
+        }
+
+        return resolved;
     }
 
     private static Dictionary<string, int> BuildHeaderMap(List<string> headerRow)
