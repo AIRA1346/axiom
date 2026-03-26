@@ -12,6 +12,8 @@ public sealed class UIManager : MonoBehaviour
     [SerializeField] private GameObject _equipmentPanel;
     [SerializeField] private GameObject _inventoryPanel;
     [SerializeField] private GameObject _shopPanel;
+    [SerializeField] private GameObject _encyclopediaPanel;
+    [SerializeField] private GameObject _codexPanel;
     [SerializeField] private GameObject _testStandbyPanel;
     [SerializeField] private GameObject _testInProgressPanel;
     [SerializeField] private GameObject _resultScreenPanel;
@@ -95,6 +97,16 @@ public sealed class UIManager : MonoBehaviour
             Debug.LogError("UIManager: _shopPanel is not assigned.");
         }
 
+        if (_encyclopediaPanel == null)
+        {
+            Debug.LogError("UIManager: _encyclopediaPanel is not assigned.");
+        }
+
+        if (_codexPanel == null)
+        {
+            Debug.LogError("UIManager: _codexPanel is not assigned.");
+        }
+
         if (_testInProgressPanel == null)
         {
             Debug.LogError("UIManager: _testInProgressPanel is not assigned.");
@@ -152,6 +164,14 @@ public sealed class UIManager : MonoBehaviour
                 SetPanelActive(_shopPanel, true);
                 break;
 
+            case GameState.Encyclopedia:
+                SetPanelActive(_encyclopediaPanel, true);
+                break;
+
+            case GameState.Codex:
+                SetPanelActive(_codexPanel, true);
+                break;
+
             case GameState.TestStandby:
                 SetPanelActive(_testStandbyPanel, true);
                 break;
@@ -204,6 +224,8 @@ public sealed class UIManager : MonoBehaviour
         SetPanelActive(_equipmentPanel, isActive);
         SetPanelActive(_inventoryPanel, isActive);
         SetPanelActive(_shopPanel, isActive);
+        SetPanelActive(_encyclopediaPanel, isActive);
+        SetPanelActive(_codexPanel, isActive);
         SetPanelActive(_testStandbyPanel, isActive);
         SetPanelActive(_testInProgressPanel, isActive);
         SetPanelActive(_resultScreenPanel, isActive);

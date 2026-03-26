@@ -1,29 +1,33 @@
-# Unity Project Rules: Official Skill Assessment Game
+# G.S.I Project: Official Skill Assessment Game - Master Rules
 
-## 1. Naming Conventions (Standard C# & Unity)
-- Classes, Structs, Enums, and Methods: PascalCase (e.g., `GameManager`, `CalculateScore`, `InputHandler`).
-- Local Variables and Parameters: camelCase (e.g., `targetSpeed`, `hitCount`).
-- Private/Protected Fields: camelCase with an underscore prefix (e.g., `_currentScore`, `_isTestRunning`).
-- Use descriptive and clear names. Avoid abbreviations unless universally understood.
+## 1. Naming Conventions (업계 표준 명명 규칙)
+- **PascalCase**: Classes, Structs, Enums, Methods, Public Properties, Filenames. (예: `ItemDatabase.cs`, `PurchaseItem()`)
+- **camelCase**: Local Variables, Method Parameters. (예: `itemId`, `currentCredit`)
+- **_camelCase**: Private Fields. (예: `_inventoryManager`, `_isInitialized`)
+- **Consistency**: 유니티 인스펙터에 노출된 이름과 코드 내 변수명을 일치시킨다.
 
-## 2. Cross-Platform Integration & Layout
-- Target Platforms: PC (Steam) and Mobile (Android, iOS).
-- Screen Orientation: Landscape strictly (Target Aspect Ratio: 16:9).
-- Input System: Input logic must seamlessly handle and unify Mouse Clicks (PC) and Touch Inputs (Mobile) without duplicating logic.
-- UI Canvas MUST use "Scale With Screen Size" to ensure consistent proportions across different landscape resolutions.
+## 2. Technical Philosophy (기술 철학 및 성능)
+- **Performance**: 120 FPS 유지를 최우선으로 한다.
+  - `Update()` 사용 지양, 이벤트 기반(Action/UnityEvent) 프로그래밍 지향.
+  - **예외**: 입력 폴링(InputManager), 스크롤 가상화 갱신, 물리 연산 등 표준 Unity 패턴이 필수인 경우만 허용. 이 경우 매 프레임 무거운 연산 금지.
+  - 무거운 연산(데이터 로드 등)은 반드시 `async/await`를 사용한다.
+  - `async void`는 이벤트 핸들러(Unity 콜백)에서만 사용. 메서드는 `async Task`를 기본으로 한다.
+- **UI Virtualization**: 50개 이상의 항목을 표시하는 리스트형 UI는 반드시 Virtualized Scroll View로 셀을 재사용한다. 소규모 리스트(예: 20개 미만)는 일반 스크롤 допусти.
+- **Visual Tone**: 무채색(Achromatic), 공식적(Official), 절제된(Clean) 분위기를 유지한다.
 
-## 3. Design Philosophy & Visual Tone
-- Aesthetic: Achromatic (Grayscale, Black, White, Charcoal).
-- Vibe: Heavy, official, formal, clean, and highly intuitive. 
-- Concept: The environment should feel like a strict, standardized testing facility. 
-- Avoid unnecessary animations, flashy particle effects, or vibrant colors unless specifically required for critical visual feedback (e.g., a subtle red for an error/miss).
+## 3. Data & Resource (10만 개 데이터 대응)
+- **Hierarchy**: `Resources/items/[MainCategory]/[MiddleCategory]/[SubCategory]/[Tier]/` 4단계 위계 경로를 준수한다. (슬래시 구분, ItemMetadata.GetResourcePath() 형식과 일치)
+- **Binary System**: `ItemMetadata.bin`(StreamingAssets) 바이너리 데이터를 우선 사용한다.
+  - `Resources.LoadAll`은 절대 금지. 대량 로드는 반드시 바이너리 메타데이터 + 개별 `LoadAsync` 조합 사용.
+  - `Resources.LoadAsync`는 UI 셀 Bind 시 개별 아이템 로드에 허용.
+- **Addressables**: 아이템 에셋 그룹(Items_*)은 Addressables로 관리. 빌드 시 번들 분리 대상.
+- **Safety**: 모든 참조 변수는 사용 전 `null` 체크를 수행하고, 주석은 반드시 **한국어**로 작성한다.
 
-## 4. Architecture & Coding Style
-- Single Responsibility Principle (SRP): Each script must have only one job. Separate UI updating logic from core game mechanics and scoring logic.
-- Decoupling: Use UnityEvents, C# Actions, or Delegates for communication between managers (e.g., `InputManager` broadcasts an event, `ScoreManager` listens to it). Do not use `GameObject.Find()`.
-- State Management: Use Enums or a simple State Machine to manage game phases (e.g., `MainMenu`, `TestInProgress`, `ResultScreen`).
+## 4. AI Interaction (AI 협업 지침)
+- **Standard First**: AI는 임의의 규칙보다 C# 및 유니티 공식 문서의 표준 관습을 우선하여 코드를 생성한다. 규칙 간 충돌 시 본 항목이 우선한다.
+- **Encapsulation**: 필드는 `[SerializeField] private`를 기본으로 하고 프로퍼티로 노출한다.
+- **Logging**: `Debug.Log`는 개발 중 디버깅용. 릴리스 빌드에서는 조건부 컴파일(`#if UNITY_EDITOR`) 또는 로깅 레벨로 분리한다.
 
-## 5. AI Assistant Workflow (Vibe Coding Best Practices)
-- Keep scripts short, modular, and focused. If a script exceeds 200 lines, consider refactoring.
-- Always include clear summary comments above complex mathematical formulas, scoring algorithms, or tracking logic so the AI understands the core intent.
-- When generating code, ensure public variables are exposed to the Unity Inspector using `[SerializeField]` rather than making them public, to maintain encapsulation.
+## 5. 예외·폴백 정책
+- 기존 에셋 구조(recipes, items 하위 리소스)는 마이그레이션 전까지 `Resources.LoadAll` 폴백 허용. 새 코드에서는 사용 금지.
+- 규칙이 현실적으로 지키기 어려운 경우, 위반 이유를 주석으로 명시한다.

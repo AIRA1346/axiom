@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-CON-CMB-TRP-000003-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-CON-CMB-TRP-000003-01
+  ItemName: "\uAC15\uB825\uD55C \uBC88\uAC1C \uC870\uC81C\uC57D"
+  ItemIcon: {fileID: 0}
+  Description: "\uB2E8\uC21C\uD558\uAC8C \uC81C\uC791\uB41C \uD568\uC815 \uC544\uC774\uD15C.
+    \uC9C0\uBA74\uC5D0 \uC124\uCE58\uD558\uBA74 \uD1B5\uACFC\uD558\uB294 \uC801\uC5D0\uAC8C
+    \uC790\uB3D9\uC73C\uB85C \uBC1C\uB3D9\uB418\uC5B4 \uD53C\uD574\uB97C \uC785\uD78C\uB2E4."
+  Tier: 0
+  MainCategory: 1
+  MiddleCategory: 2
+  SubCategory: 8
+  DefaultSlot: 1
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

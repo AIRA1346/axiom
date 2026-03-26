@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-MAT-NAT-LQD-000003-02
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-MAT-NAT-LQD-000003-02
+  ItemName: "\uACE0\uB300\uC758 \uC6A9 \uACAC\uBCF8"
+  ItemIcon: {fileID: 0}
+  Description: "\uC219\uB828\uB41C \uC7A5\uC778\uC758 \uC190\uAE38\uC774 \uB290\uAEF4\uC9C0\uB294
+    \uC561\uCCB4 \uC7AC\uB8CC. \uC870\uC81C\uB098 \uC5F0\uAE08 \uACFC\uC815\uC5D0\uC11C
+    \uC6A9\uB9E4 \uB610\uB294 \uC8FC\uC694 \uC131\uBD84\uC73C\uB85C \uC0AC\uC6A9\uB418\uB294
+    \uC561\uCCB4 \uD615\uD0DC\uC758 \uC7AC\uB8CC\uB2E4."
+  Tier: 1
+  MainCategory: 9
+  MiddleCategory: 38
+  SubCategory: 168
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

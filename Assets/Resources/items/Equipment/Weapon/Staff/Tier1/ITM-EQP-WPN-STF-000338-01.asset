@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-EQP-WPN-STF-000338-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-EQP-WPN-STF-000338-01
+  ItemName: "\uD558\uAE09 \uC2E0\uC131 \uC9C0\uD321\uC774"
+  ItemIcon: {fileID: 0}
+  Description: "\uB2E8\uC21C\uD558\uAC8C \uC81C\uC791\uB41C \uC9C0\uD321\uC774. \uAC15\uB825\uD55C
+    \uB9C8\uBC95 \uC99D\uD3ED \uD6A8\uACFC\uB97C \uC9C0\uB2C8\uBA70, \uC220\uC0AC\uC758
+    \uC8FC\uBB38 \uC704\uB825\uC744 \uD55C\uCE35 \uB192\uC5EC\uC900\uB2E4. \uACF5\uACA9\uB825
+    39.7, \uCD5C\uB300 \uB9C8\uB098 67.2\uB97C \uC81C\uACF5\uD55C\uB2E4."
+  Tier: 0
+  MainCategory: 6
+  MiddleCategory: 27
+  SubCategory: 121
+  DefaultSlot: 2
+  GripType: 2
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers:
+  - Stat: 3
+    Value: 39.7
+  - Stat: 1
+    Value: 67.2

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-MAT-PRC-SML-000151-03
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-MAT-PRC-SML-000151-03
+  ItemName: "\uC815\uC81C\uB41C \uAD6C\uB9AC \uAC00\uB8E8"
+  ItemIcon: {fileID: 0}
+  Description: "\uC804\uBB38\uAC00 \uC218\uC900\uC758 \uD488\uC9C8\uC744 \uC790\uB791\uD558\uB294
+    \uC81C\uB828 \uC7AC\uB8CC. \uAD11\uC11D\uC744 \uB179\uC5EC \uBD88\uC21C\uBB3C\uC744
+    \uC81C\uAC70\uD55C \uC815\uC81C\uB41C \uAE08\uC18D \uC7AC\uB8CC\uB2E4. \uACE0\uAE09
+    \uBB34\uAE30\uC640 \uBC29\uC5B4\uAD6C\uB97C \uC81C\uC791\uD558\uB294 \uB370 \uD544\uC218\uC801\uC774\uB2E4."
+  Tier: 2
+  MainCategory: 9
+  MiddleCategory: 39
+  SubCategory: 173
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

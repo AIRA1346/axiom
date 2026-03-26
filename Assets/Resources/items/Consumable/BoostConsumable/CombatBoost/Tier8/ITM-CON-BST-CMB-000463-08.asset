@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-CON-BST-CMB-000463-08
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-CON-BST-CMB-000463-08
+  ItemName: "\uB0A0\uCE74\uB85C\uC6B4 \uC804\uD22C"
+  ItemIcon: {fileID: 0}
+  Description: "\uD0DC\uACE0\uC758 \uD798\uC774 \uC751\uCD95\uB41C \uC804\uD22C \uAC15\uD654
+    \uC544\uC774\uD15C. \uACF5\uACA9\uB825 406.4\uAC00 \uC0C1\uC2B9\uD558\uBA70,
+    \uCE58\uBA85\uD0C0 \uD655\uB960\uC774 \uC99D\uAC00\uD55C\uB2E4. \uB2E8\uAE30\uAC04\uC758
+    \uD654\uB825\uC744 \uADF9\uB300\uD654\uD558\uB294 \uB370 \uD2B9\uD654\uB41C \uC18C\uBAA8\uD488\uC774\uB2E4."
+  Tier: 7
+  MainCategory: 1
+  MiddleCategory: 1
+  SubCategory: 1
+  DefaultSlot: 1
+  GripType: 0
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers:
+  - Stat: 3
+    Value: 406.4

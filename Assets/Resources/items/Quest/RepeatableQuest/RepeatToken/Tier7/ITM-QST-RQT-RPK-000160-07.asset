@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-QST-RQT-RPK-000160-07
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-QST-RQT-RPK-000160-07
+  ItemName: "\uC2E0\uD654\uC758 \uC2A4\uD1A0\uB9AC \uBB38\uC11C"
+  ItemIcon: {fileID: 0}
+  Description: "\uD544\uBA78\uC790\uC758 \uC190\uC73C\uB85C\uB294 \uAC70\uC758 \uB9CC\uB4E4
+    \uC218 \uC5C6\uB294 \uBC18\uBCF5 \uC758\uB8B0 \uC544\uC774\uD15C. \uC77C\uC77C
+    \uB610\uB294 \uC8FC\uAC04 \uD018\uC2A4\uD2B8 \uC644\uB8CC\uB97C \uC704\uD574
+    \uC218\uC9D1\uD558\uAC70\uB098 \uC81C\uCD9C\uD558\uB294 \uC544\uC774\uD15C\uC774\uB2E4.
+    \uAFB8\uC900\uD55C \uD65C\uB3D9\uC744 \uD1B5\uD574 \uC9C0\uC18D\uC801\uC778 \uBCF4\uC0C1\uC744
+    \uC5BB\uC744 \uC218 \uC788\uB2E4."
+  Tier: 6
+  MainCategory: 12
+  MiddleCategory: 51
+  SubCategory: 220
+  DefaultSlot: 0
+  GripType: 0
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

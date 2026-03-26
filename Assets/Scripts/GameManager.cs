@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Defines the official runtime states used by the G.S.I test flow.
+/// G.S.I 공식 시험 흐름에서 사용되는 런타임 상태를 정의합니다.
 /// </summary>
 public enum TestMode
 {
@@ -23,6 +23,8 @@ public enum GameState
     Equipment,
     Inventory,
     Shop,
+    Encyclopedia,
+    Codex,
     TestStandby,
     TestInProgress,
     TestCompleted,
@@ -30,8 +32,8 @@ public enum GameState
 }
 
 /// <summary>
-/// Central state controller for the G.S.I test flow.
-/// This manager only governs state transitions and broadcasts state changes.
+/// G.S.I 시험 흐름의 중앙 상태 제어자.
+/// 상태 전환만 담당하며 변경 시 브로드캐스트합니다.
 /// </summary>
 public sealed class GameManager : MonoBehaviour
 {

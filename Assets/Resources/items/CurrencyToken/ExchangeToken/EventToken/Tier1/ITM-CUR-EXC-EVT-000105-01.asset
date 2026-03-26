@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-CUR-EXC-EVT-000105-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-CUR-EXC-EVT-000105-01
+  ItemName: "\uC77C\uBC18 \uACE8\uB4DC"
+  ItemIcon: {fileID: 0}
+  Description: "\uAE30\uCD08\uC801\uC778 \uD488\uC9C8\uC758 \uAD50\uD658 \uD1A0\uD070.
+    \uD2B9\uC815 \uCF58\uD150\uCE20\uB97C \uD074\uB9AC\uC5B4\uD558\uBA74 \uC9C0\uAE09\uB418\uB294
+    \uC804\uC6A9 \uD654\uD3D0\uB2E4. \uC804\uC6A9 \uC0C1\uC810\uC5D0\uC11C \uC804\uC6A9
+    \uC544\uC774\uD15C, \uAC15\uD654 \uC7AC\uB8CC, \uD76C\uADC0 \uC7A5\uBE44\uC640
+    \uAD50\uD658 \uAC00\uB2A5\uD558\uB2E4."
+  Tier: 0
+  MainCategory: 3
+  MiddleCategory: 13
+  SubCategory: 50
+  DefaultSlot: 0
+  GripType: 0
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

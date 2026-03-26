@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bbb281ee3bf0b054c82ac2347e9e782c, type: 3}
+  m_Name: Items_PetSummon
+  m_EditorClassIdentifier: Unity.Addressables.Editor::UnityEditor.AddressableAssets.Settings.AddressableAssetGroup
+  m_GroupName: Items_PetSummon
+  m_GUID: 3af9aff8c48cc7743989e3065df1401c
+  m_SerializeEntries:
+  - m_GUID: 4ade3654843932446a383d7d658baba8
+    m_Address: ITM-PET-EVO-ASM-000002-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 50bf4e119b5850041acfb60909135175
+    m_Address: ITM-PET-EVO-ASM-000006-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 7b466707ec94d114d889d285da3f96e7
+    m_Address: ITM-PET-EVO-ASM-000003-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: 901a1878f68e450439b04baade8b9a0e
+    m_Address: ITM-PET-EVO-ASM-000008-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: bb954161a70725f48ae8cf9723105b66
+    m_Address: ITM-PET-EVO-ASM-000009-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: cb307f96d04b3444cb802dd59a7a4783
+    m_Address: ITM-PET-EVO-ASM-000007-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: d4df73a8ad014f34bad8876196bd26f5
+    m_Address: ITM-PET-EVO-ASM-000001-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: eaa9ec15f82f46544a97e97a8b1f8118
+    m_Address: ITM-PET-EVO-ASM-000010-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: ed86024d377889a48b195063739b851d
+    m_Address: ITM-PET-EVO-ASM-000004-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  - m_GUID: f3d62c51447c6a146bd2b8354e33693f
+    m_Address: ITM-PET-EVO-ASM-000005-01
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+    FlaggedDuringContentUpdateRestriction: 0
+  m_ReadOnly: 0
+  m_Settings: {fileID: 11400000, guid: fa42665472338844ca9407ee3debe6dc, type: 2}
+  m_SchemaSet:
+    m_Schemas:
+    - {fileID: 11400000, guid: 974ea04958d7e3f47ac424cf3f746812, type: 2}
+    - {fileID: 11400000, guid: 54c94b6c2235e2b439c61b6da6961665, type: 2}

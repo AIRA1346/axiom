@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-CFT-SUP-BND-000005-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-CFT-SUP-BND-000005-01
+  ItemName: "\uD76C\uADC0 \uBB3C\uC57D \uC124\uACC4\uB3C4"
+  ItemIcon: {fileID: 0}
+  Description: "\uB2E8\uC21C\uD558\uAC8C \uC81C\uC791\uB41C \uC81C\uC791 \uBCF4\uC870
+    \uC544\uC774\uD15C. \uC7A5\uBE44 \uBC0F \uC18C\uBAA8\uD488 \uC81C\uC791 \uC2DC
+    \uC548\uC815\uC131\uACFC \uC131\uACF5\uB960\uC744 \uB192\uC774\uB294 \uB370 \uC0AC\uC6A9\uB41C\uB2E4."
+  Tier: 0
+  MainCategory: 2
+  MiddleCategory: 9
+  SubCategory: 33
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-SYS-OPR-GMI-000093-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-SYS-OPR-GMI-000093-01
+  ItemName: "\uB0A1\uC740 \uC2DC\uC98C \uC544\uC774\uD15C"
+  ItemIcon: {fileID: 0}
+  Description: "\uC6B4\uC601\uD300 \uC804\uC6A9 \uC544\uC774\uD15C. \uC77C\uBC18
+    \uD50C\uB808\uC774\uC5B4\uB294 \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB294 \uAD00\uB9AC
+    \uBC0F \uD14C\uC2A4\uD2B8 \uBAA9\uC801\uC758 \uD2B9\uC218 \uC544\uC774\uD15C\uC774\uB2E4."
+  Tier: 0
+  MainCategory: 13
+  MiddleCategory: 53
+  SubCategory: 228
+  DefaultSlot: 0
+  GripType: 0
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

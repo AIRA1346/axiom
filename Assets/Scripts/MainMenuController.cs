@@ -16,6 +16,8 @@ public sealed class MainMenuController : MonoBehaviour
     [SerializeField] private Button _equipmentButton;
     [SerializeField] private Button _inventoryButton;
     [SerializeField] private Button _shopButton;
+    [SerializeField] private Button _encyclopediaButton;
+    [SerializeField] private Button _codexButton;
     [SerializeField] private TextMeshProUGUI _tokenText;
     [SerializeField] private TextMeshProUGUI _ticketText;
 
@@ -59,6 +61,16 @@ public sealed class MainMenuController : MonoBehaviour
         if (_shopButton != null)
         {
             _shopButton.onClick.AddListener(OnShopClicked);
+        }
+
+        if (_encyclopediaButton != null)
+        {
+            _encyclopediaButton.onClick.AddListener(OnEncyclopediaClicked);
+        }
+
+        if (_codexButton != null)
+        {
+            _codexButton.onClick.AddListener(OnCodexClicked);
         }
     }
 
@@ -117,6 +129,16 @@ public sealed class MainMenuController : MonoBehaviour
         if (_shopButton != null)
         {
             _shopButton.onClick.RemoveListener(OnShopClicked);
+        }
+
+        if (_encyclopediaButton != null)
+        {
+            _encyclopediaButton.onClick.RemoveListener(OnEncyclopediaClicked);
+        }
+
+        if (_codexButton != null)
+        {
+            _codexButton.onClick.RemoveListener(OnCodexClicked);
         }
 
         if (GameManager.Instance != null)
@@ -240,6 +262,26 @@ public sealed class MainMenuController : MonoBehaviour
         GameManager.Instance.SetGameState(GameState.Inventory);
     }
 
+    private void OnEncyclopediaClicked()
+    {
+        if (GameManager.Instance == null)
+        {
+            return;
+        }
+
+        GameManager.Instance.SetGameState(GameState.Encyclopedia);
+    }
+
+    private void OnCodexClicked()
+    {
+        if (GameManager.Instance == null)
+        {
+            return;
+        }
+
+        GameManager.Instance.SetGameState(GameState.Codex);
+    }
+
     private void HandleGameStateChanged(GameState newState)
     {
         if (newState == GameState.MainMenu)
@@ -260,14 +302,14 @@ public sealed class MainMenuController : MonoBehaviour
     {
         if (_tokenText != null)
         {
-            int tokens = EconomyManager.Instance != null ? EconomyManager.Instance.Tokens : 0;
-            _tokenText.text = $"TOKENS: {tokens}";
+            int gold = EconomyManager.Instance != null ? EconomyManager.Instance.Tokens : 0;
+            _tokenText.text = $"기초 골드: {gold}";
         }
 
         if (_ticketText != null)
         {
             int tickets = EconomyManager.Instance != null ? EconomyManager.Instance.ExamTickets : 0;
-            _ticketText.text = $"TICKETS: {tickets}";
+            _ticketText.text = $"기초 티켓: {tickets}";
         }
     }
 }

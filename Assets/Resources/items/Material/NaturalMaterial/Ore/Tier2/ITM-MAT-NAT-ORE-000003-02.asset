@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-MAT-NAT-ORE-000003-02
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-MAT-NAT-ORE-000003-02
+  ItemName: "\uACE0\uC6B4 \uC6A9 \uACAC\uBCF8"
+  ItemIcon: {fileID: 0}
+  Description: "\uAFB8\uC900\uD55C \uC131\uB2A5\uC744 \uBCF4\uC5EC\uC8FC\uB294 \uAD11\uC11D.
+    \uC6D0\uC11D \uD615\uD0DC\uC758 \uAD11\uBB3C\uB85C, \uC81C\uB828 \uACFC\uC815\uC744
+    \uAC70\uCCD0 \uB2E4\uC591\uD55C \uAE08\uC18D \uC7AC\uB8CC\uB85C \uBCC0\uD658\uB41C\uB2E4.
+    \uCC44\uAD74 \uB09C\uC774\uB3C4\uC5D0 \uB530\uB77C \uD488\uC9C8\uC774 \uACB0\uC815\uB41C\uB2E4."
+  Tier: 1
+  MainCategory: 9
+  MiddleCategory: 38
+  SubCategory: 169
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

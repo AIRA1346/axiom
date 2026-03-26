@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-CON-BST-EXP-000432-03
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-CON-BST-EXP-000432-03
+  ItemName: "\uC804\uC124 \uACBD\uD5D8\uCE58"
+  ItemIcon: {fileID: 0}
+  Description: "\uC219\uB828\uB41C \uC7A5\uC778\uC774 \uC815\uC131\uAECF \uB9CC\uB4E0
+    \uACBD\uD5D8\uCE58 \uC99D\uD3ED \uC544\uC774\uD15C. \uC12D\uCDE8 \uD6C4 \uC77C\uC815
+    \uC2DC\uAC04 \uB3D9\uC548 \uD68D\uB4DD\uD558\uB294 \uACBD\uD5D8\uCE58\uB7C9\uC774
+    \uD06C\uAC8C \uC99D\uAC00\uD55C\uB2E4. \uB808\uBCA8\uC5C5\uC744 \uC55E\uB2F9\uAE30\uACE0
+    \uC2F6\uC740 \uBAA8\uD5D8\uAC00\uC5D0\uAC8C \uD544\uC218\uD488\uC774\uB2E4."
+  Tier: 2
+  MainCategory: 1
+  MiddleCategory: 1
+  SubCategory: 3
+  DefaultSlot: 1
+  GripType: 0
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

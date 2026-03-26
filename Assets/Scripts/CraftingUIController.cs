@@ -3,7 +3,10 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class CraftingUIController : MonoBehaviour
+/// <summary>
+/// 제작 UI 패널을 제어합니다. 레시피 목록과 재료 표시, 제작 버튼을 관리합니다.
+/// </summary>
+public sealed class CraftingUIController : MonoBehaviour
 {
     [SerializeField] private Transform _recipeContainer;
     [SerializeField] private GameObject _recipeSlotPrefab;
@@ -87,7 +90,7 @@ public class CraftingUIController : MonoBehaviour
 
             if (nameText != null)
             {
-                nameText.text = $"[{GetTierName(recipe.ResultItem.Tier)}] {recipe.ResultItem.ItemName} 제작 (비용: {recipe.CraftingCost} 토큰)";
+                nameText.text = $"[{GetTierName(recipe.ResultItem.Tier)}] {recipe.ResultItem.ItemName} 제작 (비용: {recipe.CraftingCost} 기초 골드)";
             }
 
             foreach (Image image in images)

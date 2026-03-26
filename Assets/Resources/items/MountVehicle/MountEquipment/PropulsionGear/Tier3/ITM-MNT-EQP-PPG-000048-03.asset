@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-MNT-EQP-PPG-000048-03
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-MNT-EQP-PPG-000048-03
+  ItemName: "\uACE0\uB300 \uB0C9\uAE30 \uBC30"
+  ItemIcon: {fileID: 0}
+  Description: "\uACE0\uAE09 \uC7AC\uB8CC\uB85C \uC81C\uC791\uB41C \uD0C8\uAC83 \uC7A5\uBE44.
+    \uC18C\uD658\uD55C \uD0C8\uAC83\uC5D0 \uC7A5\uCC29\uD558\uC5EC \uC774\uB3D9 \uC18D\uB3C4\uB098
+    \uB0B4\uAD6C\uB825\uC744 \uD5A5\uC0C1\uC2DC\uD0A8\uB2E4."
+  Tier: 2
+  MainCategory: 10
+  MiddleCategory: 42
+  SubCategory: 185
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

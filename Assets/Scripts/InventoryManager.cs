@@ -47,11 +47,18 @@ public sealed class InventoryManager : MonoBehaviour
             return;
         }
 
-        ItemData data = ItemDatabase.Instance != null
-            ? ItemDatabase.Instance.GetItem(itemId)
-            : null;
+        var db = ItemDatabase.Instance;
+        ItemData data = db != null ? db.GetItem(itemId) : null;
+        var meta = db?.GetMetadata(itemId);
+        bool isEquipment = data?.MainCategory == ItemMainCategory.Equipment
+            || (meta.HasValue && meta.Value.MainCategory == ItemMainCategory.Equipment);
 
-        if (data != null && data.MainCategory == ItemMainCategory.Equipment)
+        if (EncyclopediaManager.Instance != null)
+        {
+            EncyclopediaManager.Instance.UnlockItem(itemId);
+        }
+
+        if (isEquipment)
         {
             for (int i = 0; i < amount; i++)
             {

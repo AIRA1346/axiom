@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -13,6 +14,14 @@ using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets.Settings.GroupSchemas;
 using UnityEngine;
 using UnityEngine.Networking;
+
+[Serializable]
+public sealed class SheetEntry
+{
+    public bool IsEnabled = true;
+    public string SheetUrl = "";
+    public string MainCategory = "Material";
+}
 
 public sealed class ItemImporter : EditorWindow
 {
@@ -46,58 +55,113 @@ public sealed class ItemImporter : EditorWindow
 
     private const string ResourceFolderPath = "Assets/Resources/Items";
     private const string IconFolderPath = "Assets/UI/Icons/Items";
-    private const string SheetUrlKey = "GSI.ItemImporter.SheetUrl";
+    private const string DefaultIconFileName = "DefaultIcon";
+    private const string SheetListKey = "GSI.ItemImporter.SheetList";
     private const string CategorySheetUrlKey = "GSI.ItemImporter.CategorySheetUrl";
-    private const string DefaultSheetUrl = "https://docs.google.com/spreadsheets/d/1103KBIdVGv1VL5BWnzw7_P5ztvqOe3Dlo5hLGLQ8VTc/export?format=csv&gid=742072563";
     private const string DefaultCategorySheetUrl = "";
     private const string ItemDefinitionsPath = "Assets/Scripts/ItemDefinitions.cs";
     private const int ProgressUpdateInterval = 100;
     private const int ProgressLogInterval = 1000;
     private const int MinimumImportedItemCountForDeletion = 10;
     private const int TestModeItemLimit = 10;
+    private const int RequestTimeoutSeconds = 15;
     private static readonly Dictionary<string, Sprite> ItemIconCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
+    private static readonly string[] DefaultMainCategories = { "Material", "Equipment", "Consumable", "Crafting", "Quest", "Etc" };
 
-    private string _sheetUrl;
+    private List<SheetEntry> _sheetEntries = new List<SheetEntry>();
     private string _categorySheetUrl;
     private bool _isImporting;
     private bool _testMode = true;
     private string _lastStatusMessage = "대기 중";
+    private Vector2 _sheetListScroll;
 
     [MenuItem("Tools/Item Importer Settings")]
     private static void OpenWindow()
     {
         ItemImporter window = GetWindow<ItemImporter>("Item Importer Settings");
-        window.minSize = new Vector2(520f, 150f);
+        window.minSize = new Vector2(580f, 320f);
         window.Show();
     }
 
     private void OnEnable()
     {
-        _sheetUrl = EditorPrefs.GetString(SheetUrlKey, DefaultSheetUrl);
         _categorySheetUrl = EditorPrefs.GetString(CategorySheetUrlKey, DefaultCategorySheetUrl);
+        LoadSheetList();
     }
+
+    private void LoadSheetList()
+    {
+        string json = EditorPrefs.GetString(SheetListKey, "");
+        if (string.IsNullOrEmpty(json))
+        {
+            _sheetEntries = new List<SheetEntry> { new SheetEntry { SheetUrl = "", MainCategory = "Material" } };
+            return;
+        }
+        try
+        {
+            var wrapper = JsonUtility.FromJson<SheetListWrapper>(json);
+            _sheetEntries = wrapper?.Entries ?? new List<SheetEntry> { new SheetEntry() };
+            if (_sheetEntries.Count == 0) _sheetEntries.Add(new SheetEntry());
+        }
+        catch
+        {
+            _sheetEntries = new List<SheetEntry> { new SheetEntry() };
+        }
+    }
+
+    private void SaveSheetList()
+    {
+        var wrapper = new SheetListWrapper { Entries = _sheetEntries };
+        EditorPrefs.SetString(SheetListKey, JsonUtility.ToJson(wrapper));
+    }
+
+    [Serializable]
+    private class SheetListWrapper { public List<SheetEntry> Entries; }
 
     private void OnGUI()
     {
-        EditorGUILayout.LabelField("Item Importer Settings", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Item Importer Settings (대분류별 분할 임포트)", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
         EditorGUI.BeginDisabledGroup(_isImporting);
-        EditorGUILayout.LabelField("Google Sheet CSV URL");
 
-        string updatedUrl = EditorGUILayout.TextField(_sheetUrl ?? string.Empty);
-
-        if (updatedUrl != _sheetUrl)
+        EditorGUILayout.LabelField("Items 시트 목록 (☑=임포트 대상, URL + 대분류)", EditorStyles.boldLabel);
+        _sheetListScroll = EditorGUILayout.BeginScrollView(_sheetListScroll, GUILayout.MaxHeight(160f));
+        for (int i = 0; i < _sheetEntries.Count; i++)
         {
-            _sheetUrl = updatedUrl;
-            EditorPrefs.SetString(SheetUrlKey, _sheetUrl);
+            EditorGUILayout.BeginHorizontal();
+            bool enabled = EditorGUILayout.Toggle(_sheetEntries[i].IsEnabled, GUILayout.Width(18f));
+            if (enabled != _sheetEntries[i].IsEnabled)
+            {
+                _sheetEntries[i].IsEnabled = enabled;
+                SaveSheetList();
+            }
+            EditorGUILayout.LabelField($"{i + 1}", GUILayout.Width(18f));
+            string url = EditorGUILayout.TextField(_sheetEntries[i].SheetUrl ?? "", GUILayout.ExpandWidth(true));
+            string mainCat = EditorGUILayout.TextField(_sheetEntries[i].MainCategory ?? "Material", GUILayout.Width(95f));
+            if (url != _sheetEntries[i].SheetUrl || mainCat != _sheetEntries[i].MainCategory)
+            {
+                _sheetEntries[i].SheetUrl = url;
+                _sheetEntries[i].MainCategory = string.IsNullOrWhiteSpace(mainCat) ? "Material" : mainCat.Trim();
+                SaveSheetList();
+            }
+            if (GUILayout.Button("−", GUILayout.Width(22f)) && _sheetEntries.Count > 1)
+            {
+                _sheetEntries.RemoveAt(i);
+                SaveSheetList();
+            }
+            EditorGUILayout.EndHorizontal();
+        }
+        EditorGUILayout.EndScrollView();
+        if (GUILayout.Button("+ 시트 추가", GUILayout.Width(100f)))
+        {
+            _sheetEntries.Add(new SheetEntry { MainCategory = "Material" });
+            SaveSheetList();
         }
 
         EditorGUILayout.Space();
         EditorGUILayout.LabelField("Categories CSV URL");
-
         string updatedCategoryUrl = EditorGUILayout.TextField(_categorySheetUrl ?? string.Empty);
-
         if (updatedCategoryUrl != _categorySheetUrl)
         {
             _categorySheetUrl = updatedCategoryUrl;
@@ -105,7 +169,6 @@ public sealed class ItemImporter : EditorWindow
         }
 
         EditorGUILayout.Space();
-
         _testMode = EditorGUILayout.ToggleLeft("Test Mode (상위 10개만 생성)", _testMode);
         EditorGUILayout.Space();
 
@@ -113,14 +176,12 @@ public sealed class ItemImporter : EditorWindow
         {
             ImportItems();
         }
-
         if (GUILayout.Button("Sync Categories", GUILayout.Height(32f)))
         {
             SyncCategories();
         }
 
         EditorGUI.EndDisabledGroup();
-
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(_lastStatusMessage, MessageType.Info);
     }
@@ -175,10 +236,11 @@ public sealed class ItemImporter : EditorWindow
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(_sheetUrl))
+            var validSheets = _sheetEntries.Where(s => s.IsEnabled && !string.IsNullOrWhiteSpace(s.SheetUrl)).ToList();
+            if (validSheets.Count == 0)
             {
-                _lastStatusMessage = "Google Sheet CSV URL이 비어 있습니다.";
-                Debug.LogError("ItemImporter: Google Sheet CSV URL을 먼저 입력해 주세요.");
+                _lastStatusMessage = "임포트할 시트를 체크하고 URL을 입력해 주세요.";
+                Debug.LogError("ItemImporter: 체크된 시트가 없거나 URL이 비어 있습니다.");
                 return;
             }
 
@@ -187,129 +249,129 @@ public sealed class ItemImporter : EditorWindow
             EnsureFolderExists(ResourceFolderPath);
             Debug.Log($"ItemImporter: 아이템 저장 경로 확인 - {absoluteResourceFolderPath}");
 
-            string convertedSheetUrl = ConvertGoogleSheetUrlToCsv(_sheetUrl);
-            Debug.Log($"ItemImporter: Items CSV URL - {convertedSheetUrl}");
-
-            _lastStatusMessage = "CSV 다운로드 중...";
-            Repaint();
-
-            using UnityWebRequest request = UnityWebRequest.Get(convertedSheetUrl);
-            request.timeout = 60;
-
-            if (!await WaitForWebRequestAsync(request, "Item Importer", "Downloading CSV data..."))
-            {
-                return;
-            }
-
-            if (request.result != UnityWebRequest.Result.Success)
-            {
-                _lastStatusMessage = $"CSV 다운로드 실패: {request.error}";
-                Debug.LogError($"ItemImporter: CSV 다운로드 실패 - {request.error}");
-                return;
-            }
-
-            string csvText = StripUtf8Bom(request.downloadHandler.text);
-            List<List<string>> rows = ParseCsv(csvText);
-            int parsedItemRowCount = Mathf.Max(0, rows.Count - 1);
-            Debug.Log($"ItemImporter: 시트에서 파싱한 아이템 데이터 수 - {parsedItemRowCount}");
-
-            if (rows.Count < 2)
-            {
-                _lastStatusMessage = "가져올 데이터가 없습니다.";
-                Debug.LogWarning("ItemImporter: CSV에 가져올 데이터가 없습니다.");
-                return;
-            }
-
-            Dictionary<string, int> rawHeaderMap = BuildHeaderMap(rows[0]);
-            Dictionary<string, int> headerMap = ResolveItemsHeaderMap(rawHeaderMap);
-
-            if (headerMap == null)
-            {
-                string foundHeaders = string.Join(", ", rawHeaderMap.Keys);
-                _lastStatusMessage = "Items 시트 헤더가 올바르지 않습니다.";
-                Debug.LogError(
-                    "ItemImporter: Items 시트는 ItemId, ItemName, MainCategory, MiddleCategory, SubCategory 열을 포함해야 합니다.\n"
-                    + $"실제 발견된 헤더: [{foundHeaders}]");
-                return;
-            }
-
-            if (!ValidateItemRows(rows, headerMap))
-            {
-                _lastStatusMessage = "유효성 검사 실패. 시트를 수정한 뒤 다시 시도해 주세요.";
-                Debug.LogError("ItemImporter: 유효성 검사에 실패하여 임포트를 중단합니다. 시트를 수정한 뒤 다시 시도해 주세요.");
-                return;
-            }
-
-            int importedCount = 0;
-            int processedCount = 0;
-            int endRowExclusive = _testMode
-                ? Mathf.Min(rows.Count, 1 + TestModeItemLimit)
-                : rows.Count;
             ItemIconCache.Clear();
-
-            if (_testMode)
-            {
-                Debug.Log($"ItemImporter: Test Mode 활성화 - 상위 {Mathf.Max(0, endRowExclusive - 1)}개 아이템만 생성합니다.");
-            }
-
-            HashSet<string> importedItemIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            _defaultIconCache = null;
+            HashSet<string> ensuredFolderPaths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             Dictionary<string, string> existingAssetPathsByItemId = BuildExistingItemAssetPathMap();
             AddressableAssetSettings addressableSettings = AddressableAssetSettingsDefaultObject.Settings;
             Dictionary<string, AddressableAssetGroup> addressableGroupCache = BuildAddressableGroupCache(addressableSettings);
 
-            AssetDatabase.StartAssetEditing();
+            int totalImported = 0;
+            int totalCreated = 0;
+            int totalUpdated = 0;
+            int totalDeleted = 0;
+            var importedIdsByMainCategory = new Dictionary<string, HashSet<string>>(StringComparer.OrdinalIgnoreCase);
+            var importStopwatch = System.Diagnostics.Stopwatch.StartNew();
 
+            AssetDatabase.StartAssetEditing();
             try
             {
-                for (int rowIndex = 1; rowIndex < endRowExclusive; rowIndex++)
+                for (int sheetIdx = 0; sheetIdx < validSheets.Count; sheetIdx++)
                 {
-                    List<string> row = rows[rowIndex];
-                    string itemId = GetCell(row, headerMap, "ItemId");
+                    SheetEntry entry = validSheets[sheetIdx];
+                    string mainCategoryOverride = string.IsNullOrWhiteSpace(entry.MainCategory) ? "Material" : SanitizePathSegment(SanitizeEnumMemberName(entry.MainCategory.Trim()));
 
-                    if (string.IsNullOrWhiteSpace(itemId))
+                    _lastStatusMessage = $"시트 {sheetIdx + 1}/{validSheets.Count} ({mainCategoryOverride}) 다운로드 중...";
+                    Repaint();
+
+                    string convertedUrl = ConvertGoogleSheetUrlToCsv(entry.SheetUrl);
+                    Debug.Log($"ItemImporter: 시트 {mainCategoryOverride} - {convertedUrl}");
+
+                    using UnityWebRequest request = UnityWebRequest.Get(convertedUrl);
+                    request.timeout = RequestTimeoutSeconds;
+
+                    if (!await WaitForWebRequestAsync(request, "Item Importer", $"Downloading {mainCategoryOverride}..."))
                     {
+                        Debug.LogError($"ItemImporter: 시트 다운로드 타임아웃 또는 취소 - {mainCategoryOverride}");
                         continue;
                     }
 
-                    processedCount++;
-                    importedItemIds.Add(itemId);
-
-                    if (rowIndex == 1 || rowIndex % ProgressUpdateInterval == 0 || rowIndex == endRowExclusive - 1)
+                    if (request.result != UnityWebRequest.Result.Success)
                     {
-                        float progress = Mathf.Lerp(0.15f, 0.95f, rowIndex / (float)Mathf.Max(1, endRowExclusive - 1));
-                        EditorUtility.DisplayProgressBar("Item Importer", $"Importing {itemId}...", progress);
-                    }
-
-                    if (processedCount % ProgressLogInterval == 0)
-                    {
-                        Debug.Log($"ItemImporter: 진행 중... {processedCount}개 처리 완료");
-                    }
-
-                    ItemImportPathInfo pathInfo = BuildItemAssetPathInfo(row, headerMap, itemId);
-                    EnsureFolderExists(pathInfo.FolderPath);
-
-                    ItemData itemData = LoadOrCreateItemAsset(itemId, pathInfo.AssetPath, existingAssetPathsByItemId);
-
-                    if (itemData == null)
-                    {
-                        Debug.LogError($"ItemImporter: ItemData 생성 또는 로드에 실패했습니다 - {itemId}");
+                        _lastStatusMessage = $"CSV 다운로드 실패: {request.error}";
+                        Debug.LogError($"ItemImporter: CSV 다운로드 실패 - {request.error}\nURL: {convertedUrl}\n상세: {request.downloadHandler?.text?.Substring(0, Math.Min(200, request.downloadHandler?.text?.Length ?? 0)) ?? ""}");
                         continue;
                     }
 
-                    ApplyRowToItemData(itemData, row, headerMap);
-                    RegisterAddressableEntry(addressableSettings, addressableGroupCache, itemData, pathInfo.AssetPath);
-                    EditorUtility.SetDirty(itemData);
-                    existingAssetPathsByItemId[itemId] = pathInfo.AssetPath;
-                    importedCount++;
+                    string csvText = StripUtf8Bom(request.downloadHandler.text);
+                    List<List<string>> rows = ParseCsv(csvText);
+                    if (rows.Count < 2)
+                    {
+                        Debug.LogWarning($"ItemImporter: 시트 {mainCategoryOverride}에 데이터가 없습니다.");
+                        continue;
+                    }
+
+                    Dictionary<string, int> rawHeaderMap = BuildHeaderMap(rows[0]);
+                    Dictionary<string, int> headerMap = ResolveItemsHeaderMap(rawHeaderMap);
+                    if (headerMap == null)
+                    {
+                        string foundHeaders = string.Join(", ", rawHeaderMap.Keys);
+                        Debug.LogError($"ItemImporter: 시트 {mainCategoryOverride} 헤더 오류 - ItemId, MainCategory, MiddleCategory, SubCategory 필요. 발견: [{foundHeaders}]");
+                        continue;
+                    }
+
+                    if (!ValidateItemRows(rows, headerMap))
+                    {
+                        Debug.LogError($"ItemImporter: 시트 {mainCategoryOverride} 유효성 검사 실패.");
+                        continue;
+                    }
+
+                    int endRowExclusive = _testMode ? Mathf.Min(rows.Count, 1 + TestModeItemLimit) : rows.Count;
+                    if (_testMode) Debug.Log($"ItemImporter: Test Mode - {mainCategoryOverride} 상위 {Mathf.Max(0, endRowExclusive - 1)}개만 처리");
+
+                    HashSet<string> sheetImportedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                    int processedCount = 0;
+
+                    for (int rowIndex = 1; rowIndex < endRowExclusive; rowIndex++)
+                    {
+                        List<string> row = rows[rowIndex];
+                        string itemId = GetCell(row, headerMap, "ItemId");
+                        if (string.IsNullOrWhiteSpace(itemId)) continue;
+
+                        processedCount++;
+                        sheetImportedIds.Add(itemId);
+
+                        if (rowIndex == 1 || rowIndex % ProgressUpdateInterval == 0 || rowIndex == endRowExclusive - 1)
+                        {
+                            float p = (sheetIdx + (float)rowIndex / endRowExclusive) / validSheets.Count;
+                            EditorUtility.DisplayProgressBar("Item Importer", $"[{mainCategoryOverride}] {itemId}...", 0.1f + 0.8f * p);
+                        }
+
+                        if (processedCount % ProgressLogInterval == 0)
+                        {
+                            Debug.Log($"ItemImporter: [{mainCategoryOverride}] {processedCount}개 처리 완료");
+                        }
+
+                        ItemImportPathInfo pathInfo = BuildItemAssetPathInfo(row, headerMap, itemId, mainCategoryOverride);
+                        EnsureFolderExistsWithDisk(pathInfo.FolderPath, ensuredFolderPaths);
+
+                        (ItemData itemData, bool wasCreated) = LoadOrCreateItemAsset(itemId, pathInfo.AssetPath, existingAssetPathsByItemId);
+                        if (itemData == null)
+                        {
+                            Debug.LogError($"ItemImporter: ItemData 실패 - {itemId}");
+                            continue;
+                        }
+
+                        if (wasCreated) totalCreated++; else totalUpdated++;
+
+                        ApplyRowToItemData(itemData, row, headerMap);
+                        RegisterAddressableEntry(addressableSettings, addressableGroupCache, itemData, pathInfo.AssetPath);
+                        EditorUtility.SetDirty(itemData);
+                        existingAssetPathsByItemId[itemId] = pathInfo.AssetPath;
+                        totalImported++;
+                    }
+
+                    importedIdsByMainCategory[mainCategoryOverride] = sheetImportedIds;
+
+                    if (!_testMode && sheetImportedIds.Count >= MinimumImportedItemCountForDeletion)
+                    {
+                        totalDeleted += CleanupDeletedItemsInMainCategory(mainCategoryOverride, sheetImportedIds);
+                    }
                 }
 
                 if (_testMode)
                 {
-                    Debug.Log("ItemImporter: Test Mode에서는 삭제 동기화를 건너뜁니다.");
-                }
-                else
-                {
-                    CleanupDeletedItems(importedItemIds);
+                    Debug.Log("ItemImporter: Test Mode - 삭제 동기화 건너뜀");
                 }
             }
             finally
@@ -317,21 +379,25 @@ public sealed class ItemImporter : EditorWindow
                 AssetDatabase.StopAssetEditing();
             }
 
-            if (addressableSettings != null)
-            {
-                EditorUtility.SetDirty(addressableSettings);
-            }
+            if (addressableSettings != null) EditorUtility.SetDirty(addressableSettings);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            _lastStatusMessage = $"{importedCount}개 아이템 생성/업데이트 완료";
-            Debug.Log($"ItemImporter: {importedCount}개 아이템을 생성/업데이트했습니다.");
+            if (totalImported > 0)
+            {
+                ItemMetadataBuilder.Build();
+            }
+
+            importStopwatch.Stop();
+            _lastStatusMessage = $"{totalImported}개 아이템 처리 완료 ({totalCreated} 신규, {totalUpdated} 업데이트, {totalDeleted} 삭제)";
+
+            LogImportSummary(validSheets.Count, totalCreated, totalUpdated, totalDeleted, importStopwatch.Elapsed);
         }
         catch (Exception exception)
         {
-            _lastStatusMessage = $"임포트 중 예외 발생: {exception.Message}";
-            Debug.LogError($"ItemImporter: 임포트 중 치명적 예외가 발생했습니다.\n{exception}");
+            _lastStatusMessage = $"임포트 중 예외: {exception.Message}";
+            Debug.LogError($"ItemImporter: 예외\n{exception}");
         }
     }
 
@@ -707,33 +773,46 @@ public sealed class ItemImporter : EditorWindow
         Debug.Log("ItemImporter: ItemDefinitions.cs를 Categories 시트 기준으로 갱신했습니다.");
     }
 
-    private static void CleanupDeletedItems(HashSet<string> importedItemIds)
+    private static int CleanupDeletedItemsInMainCategory(string mainCategory, HashSet<string> importedItemIds)
     {
         if (importedItemIds == null || importedItemIds.Count == 0)
         {
-            Debug.LogWarning("ItemImporter: 시트 데이터가 비어 있어 삭제 동기화는 건너뜁니다.");
-            return;
+            Debug.LogWarning($"ItemImporter: [{mainCategory}] 시트 데이터가 비어 있어 삭제 동기화는 건너뜁니다.");
+            return 0;
         }
 
         if (importedItemIds.Count < MinimumImportedItemCountForDeletion)
         {
             Debug.LogWarning(
-                $"ItemImporter: 가져온 ItemId 수가 {importedItemIds.Count}개로 너무 적어 삭제 동기화를 건너뜁니다. "
-                + $"대량 삭제 방지 기준: {MinimumImportedItemCountForDeletion}개 이상");
-            return;
+                $"ItemImporter: [{mainCategory}] 가져온 ItemId 수가 {importedItemIds.Count}개로 삭제 동기화 건너뜀 (최소 {MinimumImportedItemCountForDeletion}개)");
+            return 0;
+        }
+
+        string safeMain = NormalizeFolderName(SanitizePathSegment(SanitizeEnumMemberName(mainCategory)));
+        string mainCategoryFolder = $"{ResourceFolderPath}/{safeMain}";
+        if (!mainCategoryFolder.StartsWith(ResourceFolderPath, StringComparison.Ordinal))
+        {
+            Debug.LogError($"ItemImporter: 잘못된 대분류 경로 - {mainCategory}");
+            return 0;
         }
 
         AddressableAssetSettings addressableSettings = AddressableAssetSettingsDefaultObject.Settings;
-        string[] guids = AssetDatabase.FindAssets("t:ItemData", new[] { ResourceFolderPath });
+        string[] guids = AssetDatabase.FindAssets("t:ItemData", new[] { mainCategoryFolder });
 
+        int deleted = 0;
         foreach (string guid in guids)
         {
             string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+            string normAssetPath = assetPath.Replace('\\', '/');
+            if (!normAssetPath.StartsWith(mainCategoryFolder + "/", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
             ItemData itemData = AssetDatabase.LoadAssetAtPath<ItemData>(assetPath);
-            string fileName = System.IO.Path.GetFileNameWithoutExtension(assetPath);
             string itemId = itemData != null && !string.IsNullOrWhiteSpace(itemData.ItemId)
                 ? itemData.ItemId
-                : fileName;
+                : System.IO.Path.GetFileNameWithoutExtension(assetPath);
 
             if (string.IsNullOrWhiteSpace(itemId) || importedItemIds.Contains(itemId))
             {
@@ -743,13 +822,32 @@ public sealed class ItemImporter : EditorWindow
             if (AssetDatabase.DeleteAsset(assetPath))
             {
                 RemoveAddressableEntry(addressableSettings, guid, itemId);
-                Debug.Log($"ItemImporter: 시트에 없는 아이템을 삭제했습니다 - {itemId}");
-            }
-            else
-            {
-                Debug.LogWarning($"ItemImporter: 아이템 삭제에 실패했습니다 - {itemId}");
+                deleted++;
             }
         }
+
+        if (deleted > 0)
+        {
+            Debug.Log($"ItemImporter: [{mainCategory}] 시트에 없는 아이템 {deleted}개 삭제 완료");
+        }
+        return deleted;
+    }
+
+    private static void LogImportSummary(int sheetsProcessed, int created, int updated, int deleted, TimeSpan elapsed)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine();
+        sb.AppendLine("═══════════════════════════════════════════════════");
+        sb.AppendLine("           Item Importer - 최종 결과 보고서");
+        sb.AppendLine("═══════════════════════════════════════════════════");
+        sb.AppendLine($"  처리된 시트 수       : {sheetsProcessed}");
+        sb.AppendLine($"  새로 생성된 아이템   : {created}");
+        sb.AppendLine($"  업데이트된 아이템   : {updated}");
+        sb.AppendLine($"  삭제된 아이템       : {deleted}");
+        sb.AppendLine($"  총 처리 아이템       : {created + updated}");
+        sb.AppendLine($"  전체 소요 시간      : {elapsed.TotalSeconds:F1}초");
+        sb.AppendLine("═══════════════════════════════════════════════════");
+        Debug.Log(sb.ToString());
     }
 
     private static Dictionary<string, string> BuildExistingItemAssetPathMap()
@@ -773,33 +871,59 @@ public sealed class ItemImporter : EditorWindow
         return assetPathMap;
     }
 
-    private static ItemImportPathInfo BuildItemAssetPathInfo(List<string> row, Dictionary<string, int> headerMap, string itemId)
+    private static ItemImportPathInfo BuildItemAssetPathInfo(List<string> row, Dictionary<string, int> headerMap, string itemId, string mainCategoryOverride)
     {
-        string mainFolder = SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "MainCategory")));
-        string middleFolder = SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "MiddleCategory")));
-        string subFolder = SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "SubCategory")));
+        string mainFolder = NormalizeFolderName(SanitizePathSegment(string.IsNullOrWhiteSpace(mainCategoryOverride) ? SanitizeEnumMemberName(GetCell(row, headerMap, "MainCategory")) : mainCategoryOverride));
+        string middleFolder = NormalizeFolderName(SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "MiddleCategory"))));
+        string subFolder = NormalizeFolderName(SanitizePathSegment(SanitizeEnumMemberName(GetCell(row, headerMap, "SubCategory"))));
+        string tierFolder = GetTierFolderName(row, headerMap);
 
         if (string.Equals(mainFolder, middleFolder, StringComparison.Ordinal) && mainFolder != "None")
         {
-            Debug.LogWarning($"ItemImporter: 아이템 '{itemId}' - MainCategory와 MiddleCategory가 동일합니다 ({mainFolder}). 시트 데이터를 확인하세요.");
+            Debug.LogWarning($"ItemImporter: 아이템 '{itemId}' - MainCategory와 MiddleCategory가 동일합니다 ({mainFolder}).");
         }
 
-        string folderPath = $"{ResourceFolderPath}/{mainFolder}/{middleFolder}/{subFolder}";
+        string safeFileName = SanitizeAssetFileName(itemId);
+        if (safeFileName != itemId)
+        {
+            Debug.LogWarning($"ItemImporter: 아이템 ID '{itemId}' -> '{safeFileName}' 저장");
+        }
+
+        string folderPath = $"{ResourceFolderPath}/{mainFolder}/{middleFolder}/{subFolder}/{tierFolder}";
 
         return new ItemImportPathInfo
         {
             FolderPath = folderPath,
-            AssetPath = $"{folderPath}/{itemId}.asset"
+            AssetPath = $"{folderPath}/{safeFileName}.asset"
         };
     }
 
-    private static ItemData LoadOrCreateItemAsset(string itemId, string targetAssetPath, Dictionary<string, string> existingAssetPathsByItemId)
+    private static string GetTierFolderName(List<string> row, Dictionary<string, int> headerMap)
+    {
+        if (!TryGetCell(row, headerMap, "Tier", out string tierValue) || string.IsNullOrWhiteSpace(tierValue))
+        {
+            return "Tier1";
+        }
+        string tier = tierValue.Trim();
+        if (Enum.TryParse<ItemTier>(tier, true, out ItemTier parsed))
+        {
+            return parsed.ToString();
+        }
+        if (int.TryParse(tier, out int tierNum) && tierNum >= 1 && tierNum <= 10)
+        {
+            return $"Tier{tierNum}";
+        }
+        string sanitized = SanitizePathSegment(SanitizeEnumMemberName(tier));
+        return string.IsNullOrWhiteSpace(sanitized) ? "Tier1" : sanitized;
+    }
+
+    private static (ItemData itemData, bool wasCreated) LoadOrCreateItemAsset(string itemId, string targetAssetPath, Dictionary<string, string> existingAssetPathsByItemId)
     {
         ItemData itemData = AssetDatabase.LoadAssetAtPath<ItemData>(targetAssetPath);
 
         if (itemData != null)
         {
-            return itemData;
+            return (itemData, false);
         }
 
         if (existingAssetPathsByItemId.TryGetValue(itemId, out string existingAssetPath)
@@ -818,7 +942,7 @@ public sealed class ItemImporter : EditorWindow
 
                 if (itemData != null)
                 {
-                    return itemData;
+                    return (itemData, false);
                 }
             }
         }
@@ -826,7 +950,7 @@ public sealed class ItemImporter : EditorWindow
         itemData = CreateInstance<ItemData>();
         itemData.name = itemId;
         AssetDatabase.CreateAsset(itemData, targetAssetPath);
-        return itemData;
+        return (itemData, true);
     }
 
     private static CategorySyncResult GenerateItemDefinitionsCode(List<List<string>> rows, Dictionary<string, int> headerMap)
@@ -1753,14 +1877,36 @@ public sealed class ItemImporter : EditorWindow
             return;
         }
 
-        Debug.LogWarning($"ItemImporter: 아이콘 이미지를 찾지 못했습니다 - {itemData.ItemId}");
+        Sprite defaultIcon = LoadDefaultIcon();
+        itemData.ItemIcon = defaultIcon;
+        if (defaultIcon == null)
+        {
+            Debug.LogWarning($"ItemImporter: Warning: Icon not found at [{IconFolderPath}/{itemData.ItemId}], null 할당");
+        }
+    }
+
+    private static Sprite _defaultIconCache;
+
+    private static Sprite LoadDefaultIcon()
+    {
+        if (_defaultIconCache != null) return _defaultIconCache;
+        string[] extensions = { ".png", ".PNG", ".jpg", ".JPG", ".jpeg", ".JPEG" };
+        foreach (string ext in extensions)
+        {
+            string path = $"{IconFolderPath}/{DefaultIconFileName}{ext}";
+            if (File.Exists(GetAbsoluteProjectPath(path)))
+            {
+                _defaultIconCache = TryLoadSpriteAssetAtPath(path) ?? TryConvertToSpriteAndReload(path);
+                return _defaultIconCache;
+            }
+        }
+        return null;
     }
 
     private static Sprite LoadItemIcon(string itemId)
     {
         string[] extensions = { ".png", ".PNG", ".jpg", ".JPG", ".jpeg", ".JPEG" };
-        string existingAssetPath = null;
-        bool foundExistingFileWithoutSprite = false;
+        string firstCheckedPath = null;
 
         foreach (string extension in extensions)
         {
@@ -1772,38 +1918,18 @@ public sealed class ItemImporter : EditorWindow
                 continue;
             }
 
+            if (firstCheckedPath == null) firstCheckedPath = path;
+
             Sprite sprite = TryLoadSpriteAssetAtPath(path);
+            if (sprite != null) return sprite;
 
-            if (sprite != null)
-            {
-                Debug.Log($"[Icon Search] Sprite 찾기 성공: {path}");
-                return sprite;
-            }
-
-            UnityEngine.Object mainAsset = AssetDatabase.LoadMainAssetAtPath(path);
-
-            if (mainAsset != null)
-            {
-                if (existingAssetPath == null)
-                {
-                    existingAssetPath = path;
-                }
-
-                Sprite recoveredSprite = TryConvertToSpriteAndReload(path);
-
-                if (recoveredSprite != null)
-                {
-                    Debug.Log($"[Icon Search] Sprite 자동 복구 성공: {path}");
-                    return recoveredSprite;
-                }
-
-                foundExistingFileWithoutSprite = true;
-            }
+            Sprite recovered = TryConvertToSpriteAndReload(path);
+            if (recovered != null) return recovered;
         }
 
-        if (foundExistingFileWithoutSprite && !string.IsNullOrWhiteSpace(existingAssetPath))
+        if (firstCheckedPath != null)
         {
-            Debug.LogWarning($"ItemImporter: 파일은 존재하나 그 내부에 Sprite 개체가 하나도 없습니다. 경로: {existingAssetPath}");
+            Debug.LogWarning($"ItemImporter: Warning: Icon not found at [{firstCheckedPath}] (파일 존재하나 Sprite 로드 실패), null/DefaultIcon 시도");
         }
 
         return null;
@@ -2083,16 +2209,45 @@ public sealed class ItemImporter : EditorWindow
         return rows;
     }
 
-    private static void EnsureFolderExists(string folderPath)
+    private static void EnsureFolderExistsWithDisk(string folderPath, HashSet<string> ensuredCache = null)
     {
-        if (string.IsNullOrWhiteSpace(folderPath) || AssetDatabase.IsValidFolder(folderPath))
+        if (string.IsNullOrWhiteSpace(folderPath))
         {
             return;
         }
 
         string normalizedPath = folderPath.Replace('\\', '/');
-        string[] segments = normalizedPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
+        if (ensuredCache != null && ensuredCache.Contains(normalizedPath))
+        {
+            return;
+        }
 
+        string absolutePath = GetAbsoluteProjectPath(normalizedPath);
+        Directory.CreateDirectory(absolutePath);
+        ensuredCache?.Add(normalizedPath);
+        EnsureFolderExists(normalizedPath, ensuredCache);
+    }
+
+    private static void EnsureFolderExists(string folderPath, HashSet<string> ensuredCache = null)
+    {
+        if (string.IsNullOrWhiteSpace(folderPath))
+        {
+            return;
+        }
+
+        string normalizedPath = folderPath.Replace('\\', '/');
+        if (ensuredCache != null && ensuredCache.Contains(normalizedPath))
+        {
+            return;
+        }
+
+        if (AssetDatabase.IsValidFolder(normalizedPath))
+        {
+            ensuredCache?.Add(normalizedPath);
+            return;
+        }
+
+        string[] segments = normalizedPath.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
         if (segments.Length == 0 || segments[0] != "Assets")
         {
             Debug.LogError($"ItemImporter: 잘못된 폴더 경로입니다 - {folderPath}");
@@ -2105,13 +2260,36 @@ public sealed class ItemImporter : EditorWindow
         {
             string nextPath = $"{currentPath}/{segments[i]}";
 
+            if (ensuredCache != null && ensuredCache.Contains(nextPath))
+            {
+                currentPath = nextPath;
+                continue;
+            }
+
             if (!AssetDatabase.IsValidFolder(nextPath))
             {
                 AssetDatabase.CreateFolder(currentPath, segments[i]);
             }
 
+            ensuredCache?.Add(nextPath);
             currentPath = nextPath;
         }
+    }
+
+    private static string NormalizeFolderName(string segment)
+    {
+        if (string.IsNullOrWhiteSpace(segment) || segment == "None")
+        {
+            return segment;
+        }
+
+        Match match = Regex.Match(segment, @"^(.+?)\s+\d+$");
+        if (match.Success && !string.IsNullOrWhiteSpace(match.Groups[1].Value))
+        {
+            return match.Groups[1].Value.Trim();
+        }
+
+        return segment;
     }
 
     private static string SanitizePathSegment(string segment)
@@ -2137,5 +2315,27 @@ public sealed class ItemImporter : EditorWindow
         }
 
         return builder.ToString();
+    }
+
+    private static string SanitizeAssetFileName(string itemId)
+    {
+        if (string.IsNullOrWhiteSpace(itemId))
+        {
+            return "Unknown";
+        }
+
+        string sanitized = SanitizePathSegment(itemId.Trim());
+
+        if (string.IsNullOrWhiteSpace(sanitized))
+        {
+            return "Unknown";
+        }
+
+        if (sanitized.Length > 200)
+        {
+            sanitized = sanitized.Substring(0, 200);
+        }
+
+        return sanitized;
     }
 }

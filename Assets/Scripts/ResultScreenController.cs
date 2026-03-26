@@ -154,7 +154,7 @@ public sealed class ResultScreenController : MonoBehaviour
 
             if (_rewardText != null)
             {
-                _rewardText.text = "REWARD: 0 TOKENS";
+                _rewardText.text = "REWARD: 0 기초 골드";
             }
         }
         else
@@ -165,7 +165,7 @@ public sealed class ResultScreenController : MonoBehaviour
 
             if (_rewardText != null)
             {
-                _rewardText.text = $"REWARD: +{ScoreManager.Instance.LastEarnedTokens} TOKENS";
+                _rewardText.text = $"REWARD: +{ScoreManager.Instance.LastEarnedTokens} 기초 골드";
             }
         }
 

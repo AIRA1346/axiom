@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-EQP-WPN-DAG-000135-02
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-EQP-WPN-DAG-000135-02
+  ItemName: "\uBCF4\uD1B5 \uC554\uC0B4 \uB2E8\uAC80"
+  ItemIcon: {fileID: 0}
+  Description: "\uC77C\uBC18\uC801\uC778 \uC6A9\uB3C4\uC5D0 \uCDA9\uBD84\uD55C \uB2E8\uAC80.
+    \uBE60\uB978 \uACF5\uACA9 \uC18D\uB3C4\uC640 \uB6F0\uC5B4\uB09C \uCE58\uBA85\uD0C0
+    \uC131\uB2A5\uC774 \uD2B9\uC9D5\uC774\uB2E4. \uACF5\uACA9\uB825 96.9, \uACF5\uACA9
+    \uC18D\uB3C4 2.2\uB85C \uC554\uC0B4\uC790\uC640 \uB3C4\uC801 \uACC4\uC5F4\uC5D0\uAC8C
+    \uCD5C\uC801\uD654\uB418\uC5B4 \uC788\uB2E4."
+  Tier: 1
+  MainCategory: 6
+  MiddleCategory: 27
+  SubCategory: 116
+  DefaultSlot: 2
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers:
+  - Stat: 3
+    Value: 96.9

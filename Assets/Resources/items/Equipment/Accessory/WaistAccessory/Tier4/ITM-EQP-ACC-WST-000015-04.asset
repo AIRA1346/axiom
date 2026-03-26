@@ -1,0 +1,34 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-EQP-ACC-WST-000015-04
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-EQP-ACC-WST-000015-04
+  ItemName: "\uC2E0\uC131\uD55C \uB9C8\uB098\uC758 \uBE0C\uB85C\uCE58"
+  ItemIcon: {fileID: 0}
+  Description: "\uAC15\uB825\uD55C \uB9C8\uBC95\uC774 \uAE43\uB4E0 \uD5C8\uB9AC \uC7A5\uC2DD.
+    \uD5C8\uB9AC\uC5D0 \uCC28\uB294 \uC7A5\uC2E0\uAD6C\uB85C, \uCC29\uC6A9\uC790\uC758
+    \uB0B4\uAD6C\uB825\uC744 \uAC15\uD654\uD55C\uB2E4. \uBC29\uC5B4\uB825 65.2, \uCD5C\uB300
+    \uCCB4\uB825 104.2\uB97C \uC18C\uB7C9 \uCD94\uAC00\uD55C\uB2E4."
+  Tier: 3
+  MainCategory: 6
+  MiddleCategory: 24
+  SubCategory: 98
+  DefaultSlot: 16
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers:
+  - Stat: 8
+    Value: 65.2
+  - Stat: 0
+    Value: 104.2

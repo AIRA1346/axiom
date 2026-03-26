@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-CON-RCV-MPR-000382-01
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-CON-RCV-MPR-000382-01
+  ItemName: "\uC0C1\uAE09 \uB9C8\uB098"
+  ItemIcon: {fileID: 0}
+  Description: "\uC544\uC9C1 \uB2E4\uB4EC\uC5B4\uC9C0\uC9C0 \uC54A\uC740 \uB9C8\uB098
+    \uD68C\uBCF5 \uC544\uC774\uD15C. \uC12D\uCDE8 \uD6C4 65.1\uC758 \uB9C8\uB098\uB97C
+    \uC989\uC2DC \uBCF4\uCDA9\uD558\uBA70, \uCD08\uB2F9 3.1\uC758 \uB9C8\uB098 \uC7AC\uC0DD
+    \uD6A8\uACFC\uB97C \uC81C\uACF5\uD55C\uB2E4. \uB9C8\uBC95\uC0AC \uACC4\uC5F4\uC5D0\uAC8C
+    \uD544\uC218\uC801\uC778 \uC18C\uBAA8\uD488\uC774\uB2E4."
+  Tier: 0
+  MainCategory: 1
+  MiddleCategory: 5
+  SubCategory: 18
+  DefaultSlot: 1
+  GripType: 0
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers:
+  - Stat: 1
+    Value: 65.1

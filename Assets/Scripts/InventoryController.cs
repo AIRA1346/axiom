@@ -4,11 +4,10 @@ using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.Events;
 
 /// <summary>
-/// Controls the inventory panel UI and item selling interactions.
-/// This component only reads inventory data and updates inventory-related UI.
+/// 인벤토리 패널 UI 및 아이템 판매 상호작용을 제어합니다.
+/// 도감과 동일하게 대/중/소분류 드롭다운 및 1000개 단위 페이지네이션을 지원합니다.
 /// </summary>
 public sealed class InventoryController : MonoBehaviour
 {
@@ -16,105 +15,63 @@ public sealed class InventoryController : MonoBehaviour
     {
         public ItemInstance Instance;
         public ItemData Data;
+        public ItemMetadata? Meta;
     }
 
+    [Header("Scroll View")]
     [SerializeField] private Transform _itemContainer;
     [SerializeField] private GameObject _itemSlotPrefab;
+    [SerializeField] private VirtualizedInventoryScrollView _virtualizedScrollView;
+
+    [Header("Category Selection")]
+    [SerializeField] private SimpleCategoryDropdown _mainCategoryDropdown;
+    [SerializeField] private SimpleCategoryDropdown _middleCategoryDropdown;
+    [SerializeField] private SimpleCategoryDropdown _subCategoryDropdown;
+
+    [Header("Navigation")]
     [SerializeField] private Button _exitButton;
-    [SerializeField] private Button _filterAllBtn;
-    [SerializeField] private Button _filterEquipBtn;
-    [SerializeField] private Button _filterMaterialBtn;
-    [SerializeField] private Button _filterCosmeticBtn;
-    [SerializeField] private Button _filterConsumableBtn;
-    [SerializeField] private Button _filterArtifactBtn;
-    [SerializeField] private Button _filterEtcBtn;
 
-    private ItemMainCategory _currentMainFilter = ItemMainCategory.None;
-    private ItemMiddleCategory _currentMiddleFilter = ItemMiddleCategory.None;
+    [Header("Pagination")]
+    [SerializeField] private Button _prevPageButton;
+    [SerializeField] private Button _nextPageButton;
+    [SerializeField] private TextMeshProUGUI _pageText;
+    [SerializeField] private int _pageSize = 1000;
 
-    private UnityAction _filterAllAction;
-    private UnityAction _filterEquipAction;
-    private UnityAction _filterMaterialAction;
-    private UnityAction _filterCosmeticAction;
-    private UnityAction _filterConsumableAction;
-    private UnityAction _filterArtifactAction;
-    private UnityAction _filterEtcAction;
+    private ItemMainCategory _currentMain = ItemMainCategory.None;
+    private ItemMiddleCategory _currentMiddle = ItemMiddleCategory.None;
+    private ItemSubCategory _currentSub = ItemSubCategory.None;
+    private int _currentPage;
+
+    private readonly List<InventoryDisplayEntry> _filteredEntries = new List<InventoryDisplayEntry>();
+    private readonly List<InventoryDisplayEntry> _pageEntries = new List<InventoryDisplayEntry>();
 
     private void Awake()
     {
+        if (_virtualizedScrollView != null)
+        {
+            _virtualizedScrollView.OnSellRequested += HandleSellRequested;
+        }
+
         if (_exitButton != null)
         {
             _exitButton.onClick.AddListener(OnExitClicked);
         }
 
-        if (_filterAllAction == null)
+        if (_mainCategoryDropdown != null)
+            _mainCategoryDropdown.onValueChanged.AddListener(OnMainCategoryChanged);
+        if (_middleCategoryDropdown != null)
+            _middleCategoryDropdown.onValueChanged.AddListener(OnMiddleCategoryChanged);
+        if (_subCategoryDropdown != null)
+            _subCategoryDropdown.onValueChanged.AddListener(OnSubCategoryChanged);
+
+        if (_prevPageButton != null)
         {
-            _filterAllAction = () => SetFilter(ItemMainCategory.None);
+            _prevPageButton.onClick.AddListener(GoToPrevPage);
         }
 
-        if (_filterEquipAction == null)
+        if (_nextPageButton != null)
         {
-            _filterEquipAction = () => SetFilter(ParseMainCategoryOrNone("Equipment"));
-        }
-
-        if (_filterMaterialAction == null)
-        {
-            _filterMaterialAction = () => SetFilter(ParseMainCategoryOrNone("Material"));
-        }
-
-        if (_filterCosmeticAction == null)
-        {
-            _filterCosmeticAction = () => SetFilter(ParseMainCategoryOrNone("Cosmetic"));
-        }
-
-        if (_filterConsumableAction == null)
-        {
-            _filterConsumableAction = () => SetFilter(ParseMainCategoryOrNone("Consumable"));
-        }
-
-        if (_filterArtifactAction == null)
-        {
-            _filterArtifactAction = () => SetFilter(ParseMainCategoryOrNone("Artifact"));
-        }
-
-        if (_filterEtcAction == null)
-        {
-            _filterEtcAction = () => SetFilter(ParseMainCategoryOrNone("Etc"));
-        }
-
-        if (_filterAllBtn != null)
-        {
-            _filterAllBtn.onClick.AddListener(_filterAllAction);
-        }
-
-        if (_filterEquipBtn != null)
-        {
-            _filterEquipBtn.onClick.AddListener(_filterEquipAction);
-        }
-
-        if (_filterMaterialBtn != null)
-        {
-            _filterMaterialBtn.onClick.AddListener(_filterMaterialAction);
-        }
-
-        if (_filterCosmeticBtn != null)
-        {
-            _filterCosmeticBtn.onClick.AddListener(_filterCosmeticAction);
-        }
-
-        if (_filterConsumableBtn != null)
-        {
-            _filterConsumableBtn.onClick.AddListener(_filterConsumableAction);
-        }
-
-        if (_filterArtifactBtn != null)
-        {
-            _filterArtifactBtn.onClick.AddListener(_filterArtifactAction);
-        }
-
-        if (_filterEtcBtn != null)
-        {
-            _filterEtcBtn.onClick.AddListener(_filterEtcAction);
+            _nextPageButton.onClick.AddListener(GoToNextPage);
         }
     }
 
@@ -125,227 +82,360 @@ public sealed class InventoryController : MonoBehaviour
             GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
         }
 
-        RefreshInventoryUI();
+        RefreshCategoryOptions();
+        ApplyFiltersAndRefresh();
+    }
+
+    private void OnEnable()
+    {
+        RefreshCategoryOptions();
+        ApplyFiltersAndRefresh();
     }
 
     private void OnDestroy()
     {
+        if (_virtualizedScrollView != null)
+        {
+            _virtualizedScrollView.OnSellRequested -= HandleSellRequested;
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
         }
 
-        if (_exitButton != null)
-        {
-            _exitButton.onClick.RemoveListener(OnExitClicked);
-        }
+        if (_exitButton != null) _exitButton.onClick.RemoveListener(OnExitClicked);
+        if (_mainCategoryDropdown != null) _mainCategoryDropdown.onValueChanged?.RemoveListener(OnMainCategoryChanged);
+        if (_middleCategoryDropdown != null) _middleCategoryDropdown.onValueChanged?.RemoveListener(OnMiddleCategoryChanged);
+        if (_subCategoryDropdown != null) _subCategoryDropdown.onValueChanged?.RemoveListener(OnSubCategoryChanged);
+        if (_prevPageButton != null) _prevPageButton.onClick.RemoveListener(GoToPrevPage);
+        if (_nextPageButton != null) _nextPageButton.onClick.RemoveListener(GoToNextPage);
+    }
 
-        if (_filterAllBtn != null && _filterAllAction != null)
-        {
-            _filterAllBtn.onClick.RemoveListener(_filterAllAction);
-        }
+    private void RefreshCategoryOptions()
+    {
+        RefreshMainCategoryOptions();
+        RefreshMiddleCategoryOptions();
+        RefreshSubCategoryOptions();
+    }
 
-        if (_filterEquipBtn != null && _filterEquipAction != null)
-        {
-            _filterEquipBtn.onClick.RemoveListener(_filterEquipAction);
-        }
+    private void RefreshMainCategoryOptions()
+    {
+        if (_mainCategoryDropdown == null) return;
+        _mainCategoryDropdown.ClearOptions();
+        var options = new List<string> { "전체" };
+        options.AddRange(System.Enum.GetNames(typeof(ItemMainCategory)));
+        _mainCategoryDropdown.AddOptions(options);
+        _mainCategoryDropdown.SetValueWithoutNotify(_currentMain == ItemMainCategory.None ? 0 : (int)_currentMain + 1);
+    }
 
-        if (_filterMaterialBtn != null && _filterMaterialAction != null)
-        {
-            _filterMaterialBtn.onClick.RemoveListener(_filterMaterialAction);
-        }
+    private void RefreshMiddleCategoryOptions()
+    {
+        if (_middleCategoryDropdown == null) return;
+        var validMiddles = GetValidMiddleCategories(_currentMain);
+        if (!validMiddles.Contains(_currentMiddle)) _currentMiddle = ItemMiddleCategory.None;
+        _middleCategoryDropdown.ClearOptions();
+        var options = validMiddles.Select(m => m == ItemMiddleCategory.None ? "전체" : m.ToString()).ToList();
+        _middleCategoryDropdown.AddOptions(options);
+        int idx = validMiddles.IndexOf(_currentMiddle);
+        _middleCategoryDropdown.SetValueWithoutNotify(idx >= 0 ? idx : 0);
+    }
 
-        if (_filterCosmeticBtn != null && _filterCosmeticAction != null)
-        {
-            _filterCosmeticBtn.onClick.RemoveListener(_filterCosmeticAction);
-        }
+    private void RefreshSubCategoryOptions()
+    {
+        if (_subCategoryDropdown == null) return;
+        var validSubs = GetValidSubCategories(_currentMiddle);
+        if (!validSubs.Contains(_currentSub)) _currentSub = ItemSubCategory.None;
+        _subCategoryDropdown.ClearOptions();
+        var options = validSubs.Select(s => s == ItemSubCategory.None ? "전체" : s.ToString()).ToList();
+        _subCategoryDropdown.AddOptions(options);
+        int idx = validSubs.IndexOf(_currentSub);
+        _subCategoryDropdown.SetValueWithoutNotify(idx >= 0 ? idx : 0);
+    }
 
-        if (_filterConsumableBtn != null && _filterConsumableAction != null)
-        {
-            _filterConsumableBtn.onClick.RemoveListener(_filterConsumableAction);
-        }
+    private static List<ItemMiddleCategory> GetValidMiddleCategories(ItemMainCategory main)
+    {
+        if (CategoryDefinitionMaps.MainToMiddleMap.TryGetValue(main, out var arr))
+            return new List<ItemMiddleCategory>(arr);
+        return new List<ItemMiddleCategory> { ItemMiddleCategory.None };
+    }
 
-        if (_filterArtifactBtn != null && _filterArtifactAction != null)
-        {
-            _filterArtifactBtn.onClick.RemoveListener(_filterArtifactAction);
-        }
+    private static List<ItemSubCategory> GetValidSubCategories(ItemMiddleCategory middle)
+    {
+        if (CategoryDefinitionMaps.MiddleToSubMap.TryGetValue(middle, out var arr))
+            return new List<ItemSubCategory>(arr);
+        return new List<ItemSubCategory> { ItemSubCategory.None };
+    }
 
-        if (_filterEtcBtn != null && _filterEtcAction != null)
-        {
-            _filterEtcBtn.onClick.RemoveListener(_filterEtcAction);
-        }
+    private void OnMainCategoryChanged(int index)
+    {
+        _currentMain = index <= 0 ? ItemMainCategory.None : (ItemMainCategory)(index - 1);
+        _currentMiddle = ItemMiddleCategory.None;
+        _currentSub = ItemSubCategory.None;
+        RefreshMiddleCategoryOptions();
+        RefreshSubCategoryOptions();
+        ApplyFiltersAndRefresh();
+    }
+
+    private void OnMiddleCategoryChanged(int index)
+    {
+        var validMiddles = GetValidMiddleCategories(_currentMain);
+        _currentMiddle = index >= 0 && index < validMiddles.Count ? validMiddles[index] : ItemMiddleCategory.None;
+        _currentSub = ItemSubCategory.None;
+        RefreshSubCategoryOptions();
+        ApplyFiltersAndRefresh();
+    }
+
+    private void OnSubCategoryChanged(int index)
+    {
+        var validSubs = GetValidSubCategories(_currentMiddle);
+        _currentSub = index >= 0 && index < validSubs.Count ? validSubs[index] : ItemSubCategory.None;
+        ApplyFiltersAndRefresh();
+    }
+
+    public void GoToPrevPage()
+    {
+        if (_currentPage <= 0) return;
+        _currentPage--;
+        ApplyPageSlice();
+        RefreshPagination();
+    }
+
+    public void GoToNextPage()
+    {
+        int totalPages = GetTotalPageCount();
+        if (_currentPage >= totalPages - 1) return;
+        _currentPage++;
+        ApplyPageSlice();
+        RefreshPagination();
+    }
+
+    private int GetTotalPageCount()
+    {
+        int total = _filteredEntries.Count;
+        if (total <= 0) return 0;
+        return (total + _pageSize - 1) / _pageSize;
+    }
+
+    private void RefreshPagination()
+    {
+        int totalPages = GetTotalPageCount();
+        int current = _currentPage + 1;
+        if (_prevPageButton != null) _prevPageButton.interactable = _currentPage > 0;
+        if (_nextPageButton != null) _nextPageButton.interactable = totalPages > 1 && _currentPage < totalPages - 1;
+        if (_pageText != null) _pageText.text = totalPages <= 0 ? "1 / 1" : $"{current} / {totalPages}";
     }
 
     /// <summary>
-    /// Rebuilds the inventory item list UI from the latest stored quantities.
+    /// 카테고리 필터를 적용하고, 페이지네이션 후 UI를 갱신합니다.
     /// </summary>
-    private void RefreshInventoryUI()
+    private void ApplyFiltersAndRefresh()
     {
-        if (_itemContainer == null
-            || _itemSlotPrefab == null
-            || InventoryManager.Instance == null
-            || ItemDatabase.Instance == null)
+        if (InventoryManager.Instance == null || ItemDatabase.Instance == null)
         {
             return;
         }
 
-        for (int i = _itemContainer.childCount - 1; i >= 0; i--)
-        {
-            Destroy(_itemContainer.GetChild(i).gameObject);
-        }
-
         List<InventoryDisplayEntry> validEntries = new List<InventoryDisplayEntry>();
-
         foreach (ItemInstance instance in InventoryManager.Instance.GetAllInstances())
         {
-            if (instance == null || instance.Count < 1)
-            {
-                continue;
-            }
-
+            if (instance == null || instance.Count < 1) continue;
             ItemData data = ItemDatabase.Instance.GetItem(instance.ItemId);
-
-            if (data == null)
-            {
-                continue;
-            }
-
-            validEntries.Add(new InventoryDisplayEntry
-            {
-                Instance = instance,
-                Data = data
-            });
+            ItemMetadata? meta = ItemDatabase.Instance?.GetMetadata(instance.ItemId);
+            bool isKnownCurrency = instance.ItemId == EconomyManager.GoldItemId || instance.ItemId == EconomyManager.TicketItemId;
+            if (data == null && !meta.HasValue && !isKnownCurrency) continue;
+            validEntries.Add(new InventoryDisplayEntry { Instance = instance, Data = data, Meta = meta });
         }
 
-        IEnumerable<InventoryDisplayEntry> filteredEntries = validEntries;
+        IEnumerable<InventoryDisplayEntry> filtered = validEntries;
+        if (_currentMain != ItemMainCategory.None)
+            filtered = filtered.Where(e => GetMainCategory(e) == _currentMain);
+        if (_currentMiddle != ItemMiddleCategory.None)
+            filtered = filtered.Where(e => GetMiddleCategory(e) == _currentMiddle);
+        if (_currentSub != ItemSubCategory.None)
+            filtered = filtered.Where(e => GetSubCategory(e) == _currentSub);
 
-        if (_currentMainFilter != ItemMainCategory.None)
+        _filteredEntries.Clear();
+        _filteredEntries.AddRange(filtered
+            .OrderBy(e => GetMainCategory(e))
+            .ThenByDescending(e => GetTier(e))
+            .ThenByDescending(e => e.Instance.EnhanceLevel)
+            .ThenBy(e => GetItemName(e)));
+
+        _currentPage = 0;
+        ApplyPageSlice();
+        RefreshPagination();
+    }
+
+    private void ApplyPageSlice()
+    {
+        _pageEntries.Clear();
+        int total = _filteredEntries.Count;
+        int pageCount = GetTotalPageCount();
+        if (pageCount <= 0)
         {
-            filteredEntries = filteredEntries.Where(entry => entry.Data.MainCategory == _currentMainFilter);
+            ApplyEntriesToUI(_pageEntries);
+            return;
         }
-
-        if (_currentMiddleFilter != ItemMiddleCategory.None)
+        int start = _currentPage * _pageSize;
+        int end = Mathf.Min(start + _pageSize, total);
+        for (int i = start; i < end; i++)
         {
-            filteredEntries = filteredEntries.Where(entry => entry.Data.MiddleCategory == _currentMiddleFilter);
+            _pageEntries.Add(_filteredEntries[i]);
         }
+        ApplyEntriesToUI(_pageEntries);
+    }
 
-        List<InventoryDisplayEntry> sortedInstances = filteredEntries
-            .OrderBy(entry => entry.Data.MainCategory)
-            .ThenByDescending(entry => entry.Data.Tier)
-            .ThenByDescending(entry => entry.Instance.EnhanceLevel)
-            .ThenBy(entry => entry.Data.ItemName)
-            .ToList();
-
-        foreach (InventoryDisplayEntry entry in sortedInstances)
+    private void ApplyEntriesToUI(List<InventoryDisplayEntry> entries)
+    {
+        if (_virtualizedScrollView != null)
         {
-            ItemInstance instance = entry.Instance;
-            ItemData data = entry.Data;
-            string itemId = instance.ItemId;
-            string instanceId = instance.InstanceId;
-            int count = instance.Count;
-            int enhanceLevel = instance.EnhanceLevel;
+            var slotDataList = entries.Select(ConvertToSlotData).ToList();
+            _virtualizedScrollView.SetEntries(slotDataList);
+        }
+        else if (_itemContainer != null && _itemSlotPrefab != null)
+        {
+            for (int i = _itemContainer.childCount - 1; i >= 0; i--)
+                Destroy(_itemContainer.GetChild(i).gameObject);
+            foreach (var entry in entries)
+                CreateLegacySlot(entry);
+        }
+    }
 
-            GameObject itemSlotObject = Instantiate(_itemSlotPrefab, _itemContainer);
-            TextMeshProUGUI[] texts = itemSlotObject.GetComponentsInChildren<TextMeshProUGUI>(true);
-            Image[] images = itemSlotObject.GetComponentsInChildren<Image>(true);
-            Button sellButton = itemSlotObject.GetComponentInChildren<Button>(true);
+    private void HandleSellRequested(string instanceId, int price)
+    {
+        if (price <= 0 || EconomyManager.Instance == null || InventoryManager.Instance == null) return;
+        if (InventoryManager.Instance.RemoveItemByInstance(instanceId, 1))
+        {
+            EconomyManager.Instance.AddTokens(price);
+            ApplyFiltersAndRefresh();
+        }
+    }
 
-            TextMeshProUGUI itemText = texts.Length > 0 ? texts[0] : null;
-            TextMeshProUGUI buttonText = texts.Length > 1 ? texts[1] : null;
-            Image itemIconImage = null;
+    private VirtualizedInventoryScrollView.InventorySlotData ConvertToSlotData(InventoryDisplayEntry entry)
+    {
+        var instance = entry.Instance;
+        var data = entry.Data;
+        var meta = entry.Meta;
+        return new VirtualizedInventoryScrollView.InventorySlotData
+        {
+            InstanceId = instance.InstanceId,
+            ItemId = instance.ItemId,
+            DisplayName = GetItemName(entry),
+            Tier = GetTier(entry),
+            Count = instance.Count,
+            EnhanceLevel = instance.EnhanceLevel,
+            SalePrice = data?.SalePrice ?? meta?.SalePrice ?? 0,
+            Icon = data?.ItemIcon,
+            IsEquipped = EquipmentManager.Instance != null && EquipmentManager.Instance.IsEquipped(instance.InstanceId),
+            IsCurrency = instance.ItemId == EconomyManager.GoldItemId || instance.ItemId == EconomyManager.TicketItemId
+        };
+    }
 
+    private void CreateLegacySlot(InventoryDisplayEntry entry)
+    {
+        ItemInstance instance = entry.Instance;
+        ItemData data = entry.Data;
+        ItemMetadata? meta = entry.Meta;
+        string itemId = instance.ItemId;
+        string itemName = GetItemName(entry);
+        ItemTier tier = GetTier(entry);
+        int salePrice = data?.SalePrice ?? meta?.SalePrice ?? 0;
+        Sprite icon = data?.ItemIcon;
+        string instanceId = instance.InstanceId;
+        int count = instance.Count;
+        int enhanceLevel = instance.EnhanceLevel;
+
+        GameObject itemSlotObject = Instantiate(_itemSlotPrefab, _itemContainer);
+        TextMeshProUGUI[] texts = itemSlotObject.GetComponentsInChildren<TextMeshProUGUI>(true);
+        Image[] images = itemSlotObject.GetComponentsInChildren<Image>(true);
+        Button sellButton = itemSlotObject.GetComponentInChildren<Button>(true);
+
+        TextMeshProUGUI itemText = texts != null && texts.Length > 0 ? texts[0] : null;
+        TextMeshProUGUI buttonText = texts != null && texts.Length > 1 ? texts[1] : null;
+        Image itemIconImage = null;
+        if (images != null)
+        {
             foreach (Image image in images)
             {
-                if (sellButton != null && image == sellButton.targetGraphic)
-                {
-                    continue;
-                }
-
+                if (sellButton != null && image == sellButton.targetGraphic) continue;
                 itemIconImage = image;
                 break;
             }
+        }
 
-            if (itemText != null)
+        if (itemText != null)
+        {
+            itemText.text = $"[{GetTierName(tier)}] {itemName} {(enhanceLevel > 0 ? $"+{enhanceLevel} " : string.Empty)}x{count}";
+        }
+        if (itemIconImage != null) itemIconImage.sprite = icon;
+
+        bool isEquipped = EquipmentManager.Instance != null && EquipmentManager.Instance.IsEquipped(instanceId);
+        bool isCurrency = instance.ItemId == EconomyManager.GoldItemId || instance.ItemId == EconomyManager.TicketItemId;
+
+        if (buttonText != null)
+        {
+            if (isEquipped) buttonText.text = "[ 장착 중 ]";
+            else if (isCurrency) buttonText.text = "[ 통화 ]";
+            else buttonText.text = salePrice > 0 ? $"{salePrice} 기초 골드에 판매" : "판매 불가";
+        }
+
+        if (sellButton != null)
+        {
+            sellButton.interactable = !isEquipped && !isCurrency && salePrice > 0;
+            if (!isCurrency && salePrice > 0)
             {
-                itemText.text = $"[{GetTierName(data.Tier)}] {data.ItemName} {(enhanceLevel > 0 ? $"+{enhanceLevel} " : string.Empty)}x{count}";
-            }
-
-            if (itemIconImage != null && data.ItemIcon != null)
-            {
-                itemIconImage.sprite = data.ItemIcon;
-            }
-
-            bool isEquipped = EquipmentManager.Instance != null && EquipmentManager.Instance.IsEquipped(instanceId);
-
-            if (buttonText != null)
-            {
-                if (isEquipped)
-                {
-                    buttonText.text = "[ 장착 중 ]";
-                }
-                else
-                {
-                    buttonText.text = data.SalePrice > 0
-                        ? $"{data.SalePrice} 토큰에 판매"
-                        : "판매 불가";
-                }
-            }
-
-            if (sellButton != null)
-            {
-                if (isEquipped)
-                {
-                    sellButton.interactable = false;
-                }
-                else
-                {
-                    sellButton.interactable = data.SalePrice > 0;
-                }
-
-                sellButton.onClick.RemoveAllListeners();
+                int price = salePrice;
                 sellButton.onClick.AddListener(() =>
                 {
-                    if (data.SalePrice <= 0 || EconomyManager.Instance == null)
+                    if (price <= 0 || EconomyManager.Instance == null) return;
+                    if (InventoryManager.Instance != null && InventoryManager.Instance.RemoveItemByInstance(instanceId, 1))
                     {
-                        return;
-                    }
-
-                    if (InventoryManager.Instance.RemoveItemByInstance(instanceId, 1))
-                    {
-                        EconomyManager.Instance.AddTokens(data.SalePrice);
-                        RefreshInventoryUI();
+                        EconomyManager.Instance.AddTokens(price);
+                        ApplyFiltersAndRefresh();
                     }
                 });
             }
         }
     }
 
-    private void SetFilter(ItemMainCategory filter)
-    {
-        _currentMainFilter = filter;
-        _currentMiddleFilter = ItemMiddleCategory.None;
-        RefreshInventoryUI();
-    }
-
-    private void SetMiddleFilter(ItemMiddleCategory filter)
-    {
-        _currentMiddleFilter = filter;
-        RefreshInventoryUI();
-    }
-
-    private ItemMainCategory ParseMainCategoryOrNone(string categoryName)
-    {
-        return Enum.TryParse(categoryName, true, out ItemMainCategory parsedCategory)
-            ? parsedCategory
-            : ItemMainCategory.None;
-    }
-
     private void HandleGameStateChanged(GameState newState)
     {
         if (newState == GameState.Inventory)
-        {
-            RefreshInventoryUI();
-        }
+            ApplyFiltersAndRefresh();
+    }
+
+    private static ItemMainCategory GetMainCategory(InventoryDisplayEntry entry)
+    {
+        if (entry.Data != null) return entry.Data.MainCategory;
+        return entry.Meta.HasValue ? entry.Meta.Value.MainCategory : ItemMainCategory.None;
+    }
+
+    private static ItemMiddleCategory GetMiddleCategory(InventoryDisplayEntry entry)
+    {
+        if (entry.Data != null) return entry.Data.MiddleCategory;
+        return entry.Meta.HasValue ? entry.Meta.Value.MiddleCategory : ItemMiddleCategory.None;
+    }
+
+    private static ItemSubCategory GetSubCategory(InventoryDisplayEntry entry)
+    {
+        if (entry.Data != null) return entry.Data.SubCategory;
+        return entry.Meta.HasValue ? entry.Meta.Value.SubCategory : ItemSubCategory.None;
+    }
+
+    private static ItemTier GetTier(InventoryDisplayEntry entry)
+    {
+        if (entry.Data != null) return entry.Data.Tier;
+        return entry.Meta.HasValue ? entry.Meta.Value.Tier : ItemTier.Tier1;
+    }
+
+    private static string GetItemName(InventoryDisplayEntry entry)
+    {
+        if (entry.Data != null && !string.IsNullOrEmpty(entry.Data.ItemName)) return entry.Data.ItemName;
+        if (entry.Meta.HasValue && !string.IsNullOrEmpty(entry.Meta.Value.ItemName)) return entry.Meta.Value.ItemName;
+        if (entry.Instance.ItemId == EconomyManager.GoldItemId) return "기초 골드";
+        if (entry.Instance.ItemId == EconomyManager.TicketItemId) return "기초 티켓";
+        return entry.Instance.ItemId;
     }
 
     private string GetTierName(ItemTier tier)

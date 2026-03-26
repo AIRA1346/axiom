@@ -19,7 +19,10 @@ public struct SlotUIElement
     public TextMeshProUGUI ItemNameText;
 }
 
-public class EquipmentUIController : MonoBehaviour
+/// <summary>
+/// 장비 UI 패널을 제어합니다. 슬롯별 장착 상태, 스탯 표시, 장비 선택 패널을 관리합니다.
+/// </summary>
+public sealed class EquipmentUIController : MonoBehaviour
 {
     [FormerlySerializedAs("slot_uis")]
     [SerializeField] private List<SlotUIElement> _slotUis;
@@ -85,11 +88,11 @@ public class EquipmentUIController : MonoBehaviour
 
         if (EquipmentManager.Instance != null)
         {
-            EquipmentManager.Instance.OnEquipmentChanged += RefreshUi;
+            EquipmentManager.Instance.OnEquipmentChanged += RefreshUI;
         }
 
         CloseSelectionPanel();
-        RefreshUi();
+        RefreshUI();
     }
 
     private void OnDestroy()
@@ -111,7 +114,7 @@ public class EquipmentUIController : MonoBehaviour
 
         if (EquipmentManager.Instance != null)
         {
-            EquipmentManager.Instance.OnEquipmentChanged -= RefreshUi;
+            EquipmentManager.Instance.OnEquipmentChanged -= RefreshUI;
         }
     }
 
@@ -119,17 +122,17 @@ public class EquipmentUIController : MonoBehaviour
     {
         if (newState == GameState.Equipment)
         {
-            RefreshUi();
+            RefreshUI();
         }
     }
 
-    private void RefreshUi()
+    private void RefreshUI()
     {
-        RefreshSlotUi();
-        RefreshStatsUi();
+        RefreshSlotUI();
+        RefreshStatsUI();
     }
 
-    private void RefreshSlotUi()
+    private void RefreshSlotUI()
     {
         if (_slotUis == null || EquipmentManager.Instance == null)
         {
@@ -161,7 +164,7 @@ public class EquipmentUIController : MonoBehaviour
         }
     }
 
-    private void RefreshStatsUi()
+    private void RefreshStatsUI()
     {
         if (_statsDisplayText == null)
         {
@@ -215,7 +218,7 @@ public class EquipmentUIController : MonoBehaviour
                 }
 
                 CloseSelectionPanel();
-                RefreshUi();
+                RefreshUI();
             });
         }
 
@@ -261,7 +264,7 @@ public class EquipmentUIController : MonoBehaviour
                 {
                     EquipmentManager.Instance.EquipFromInventory(instanceId, targetSlot);
                     CloseSelectionPanel();
-                    RefreshUi();
+                    RefreshUI();
                 });
             }
         }

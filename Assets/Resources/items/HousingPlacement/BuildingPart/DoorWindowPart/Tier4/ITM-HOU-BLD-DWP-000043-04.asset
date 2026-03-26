@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-HOU-BLD-DWP-000043-04
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-HOU-BLD-DWP-000043-04
+  ItemName: "\uC544\uB291\uD55C \uCCA0\uC81C \uD683\uBD88"
+  ItemIcon: {fileID: 0}
+  Description: "\uBCA0\uD14C\uB791 \uBAA8\uD5D8\uAC00\uB4E4\uC774 \uC120\uD638\uD558\uB294
+    \uAC74\uCD95 \uBD80\uD488. \uD558\uC6B0\uC9D5 \uAC74\uBB3C\uC758 \uAD6C\uC870\uB97C
+    \uC774\uB8E8\uB294 \uD575\uC2EC \uBD80\uC7AC\uB2E4. \uC124\uACC4\uC5D0 \uB530\uB77C
+    \uC870\uD569\uD558\uC5EC \uB3C5\uCC3D\uC801\uC778 \uACF5\uAC04\uC744 \uB9CC\uB4E4
+    \uC218 \uC788\uB2E4."
+  Tier: 3
+  MainCategory: 7
+  MiddleCategory: 28
+  SubCategory: 125
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

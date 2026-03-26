@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6df3ef816ef043c4cb34eb0c720ead16, type: 3}
+  m_Name: ITM-DOC-LIC-CRT-000016-02
+  m_EditorClassIdentifier: Assembly-CSharp::ItemData
+  ItemId: ITM-DOC-LIC-CRT-000016-02
+  ItemName: "\uC77C\uBC18 \uC655\uAD6D \uBC31\uACFC\uC0AC\uC804"
+  ItemIcon: {fileID: 0}
+  Description: "\uC77C\uBC18\uC801\uC778 \uC6A9\uB3C4\uC5D0 \uCDA9\uBD84\uD55C \uC99D\uBA85
+    \uC11C\uB958. \uD2B9\uC815 \uC9C0\uC5ED \uCD9C\uC785\uC774\uB098 \uC11C\uBE44\uC2A4
+    \uC774\uC6A9\uC744 \uD5C8\uAC00\uD558\uB294 \uACF5\uC2DD \uBB38\uC11C\uB2E4.
+    \uC720\uD6A8 \uAE30\uAC04\uC774 \uC788\uC744 \uC218 \uC788\uC73C\uB2C8 \uC8FC\uC758\uAC00
+    \uD544\uC694\uD558\uB2E4."
+  Tier: 1
+  MainCategory: 4
+  MiddleCategory: 17
+  SubCategory: 65
+  DefaultSlot: 0
+  GripType: 1
+  PurchasePrice: 100
+  SalePrice: 50
+  StatModifiers: []

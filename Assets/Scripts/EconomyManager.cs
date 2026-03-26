@@ -2,22 +2,28 @@ using System;
 using UnityEngine;
 
 /// <summary>
-/// Manages the local economy state for tokens and official exam tickets.
-/// This manager only loads, stores, and updates persistent economy values.
+/// 토큰·응시권을 인벤토리 아이템으로 통일 관리합니다.
+/// 기초 골드(ITM-CUR-BAS-CPR-000096-01), 기초 티켓(ITM-CUR-BAS-CPR-000086-01)을 사용합니다.
 /// </summary>
 public sealed class EconomyManager : MonoBehaviour
 {
-    private const string TokensKey = "GSITokens";
-    private const string ExamTicketsKey = "GSIExamTickets";
-    private const int DefaultTokens = 0;
-    private const int DefaultExamTickets = 3;
+    /// <summary>기초 골드 (기존 토큰 대체)</summary>
+    public const string GoldItemId = "ITM-CUR-BAS-CPR-000096-01";
+
+    /// <summary>기초 티켓 (기존 응시권 대체)</summary>
+    public const string TicketItemId = "ITM-CUR-BAS-CPR-000086-01";
+
+    private const string MigratedKey = "GSIEconomyMigratedToItems";
+    private const string LegacyTokensKey = "GSITokens";
+    private const string LegacyExamTicketsKey = "GSIExamTickets";
+    private const int DefaultTicketCount = 3;
 
     public static EconomyManager Instance { get; private set; }
 
     public event Action OnEconomyChanged;
 
-    public int Tokens { get; private set; }
-    public int ExamTickets { get; private set; }
+    public int Tokens => GetGoldCount();
+    public int ExamTickets => GetTicketCount();
 
     private void Awake()
     {
@@ -29,70 +35,135 @@ public sealed class EconomyManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
-        LoadEconomyData();
+    }
+
+    private void Start()
+    {
+        MigrateLegacyEconomyIfNeeded();
+    }
+
+    private int GetGoldCount()
+    {
+        return InventoryManager.Instance != null ? InventoryManager.Instance.GetItemCount(GoldItemId) : 0;
+    }
+
+    private int GetTicketCount()
+    {
+        return InventoryManager.Instance != null ? InventoryManager.Instance.GetItemCount(TicketItemId) : 0;
     }
 
     /// <summary>
-    /// Adds tokens and saves the updated balance.
+    /// 기존 PlayerPrefs 기반 토큰/응시권을 인벤토리 아이템으로 마이그레이션합니다.
+    /// </summary>
+    private void MigrateLegacyEconomyIfNeeded()
+    {
+        if (PlayerPrefs.GetInt(MigratedKey, 0) != 0)
+        {
+            return;
+        }
+
+        if (InventoryManager.Instance == null)
+        {
+            return;
+        }
+
+        int oldTokens = PlayerPrefs.GetInt(LegacyTokensKey, 0);
+        int oldTickets = PlayerPrefs.GetInt(LegacyExamTicketsKey, DefaultTicketCount);
+
+        if (oldTokens > 0)
+        {
+            InventoryManager.Instance.AddItem(GoldItemId, oldTokens);
+        }
+
+        if (oldTickets > 0)
+        {
+            InventoryManager.Instance.AddItem(TicketItemId, oldTickets);
+        }
+
+        PlayerPrefs.DeleteKey(LegacyTokensKey);
+        PlayerPrefs.DeleteKey(LegacyExamTicketsKey);
+        PlayerPrefs.SetInt(MigratedKey, 1);
+        PlayerPrefs.Save();
+
+        OnEconomyChanged?.Invoke();
+    }
+
+    /// <summary>
+    /// 기초 골드를 지급합니다.
     /// </summary>
     public void AddTokens(int amount)
     {
-        if (amount <= 0)
+        if (amount <= 0 || InventoryManager.Instance == null)
         {
             return;
         }
 
-        Tokens += amount;
-        Debug.Log($"EconomyManager: 토큰 {amount} 지급됨. 현재 총 토큰: {Tokens}");
-        SaveEconomyData();
+        InventoryManager.Instance.AddItem(GoldItemId, amount);
+        OnEconomyChanged?.Invoke();
     }
 
     /// <summary>
-    /// Spends tokens when the balance is sufficient.
+    /// 기초 골드를 차감합니다. 잔액이 부족하면 false.
     /// </summary>
     public bool SpendTokens(int amount)
     {
-        if (amount <= 0 || Tokens < amount)
+        if (amount <= 0 || InventoryManager.Instance == null)
         {
             return false;
         }
 
-        Tokens -= amount;
-        SaveEconomyData();
-        return true;
+        if (GetGoldCount() < amount)
+        {
+            return false;
+        }
+
+        bool ok = InventoryManager.Instance.RemoveItem(GoldItemId, amount);
+        if (ok)
+        {
+            OnEconomyChanged?.Invoke();
+        }
+        return ok;
     }
 
     /// <summary>
-    /// Adds exam tickets and saves the updated count.
+    /// 기초 티켓을 지급합니다.
     /// </summary>
     public void AddTickets(int amount)
     {
-        if (amount <= 0)
+        if (amount <= 0 || InventoryManager.Instance == null)
         {
             return;
         }
 
-        ExamTickets += amount;
-        SaveEconomyData();
+        InventoryManager.Instance.AddItem(TicketItemId, amount);
+        OnEconomyChanged?.Invoke();
     }
 
     /// <summary>
-    /// Uses one exam ticket when available.
+    /// 기초 티켓 1개를 사용합니다.
     /// </summary>
     public bool UseTicket()
     {
-        if (ExamTickets <= 0)
+        if (InventoryManager.Instance == null)
         {
             return false;
         }
 
-        ExamTickets--;
-        SaveEconomyData();
-        return true;
+        if (GetTicketCount() <= 0)
+        {
+            return false;
+        }
+
+        bool ok = InventoryManager.Instance.RemoveItem(TicketItemId, 1);
+        if (ok)
+        {
+            OnEconomyChanged?.Invoke();
+        }
+        return ok;
     }
 
     /// <summary>
-    /// Rewards tokens based on the official tier result and returns the granted amount.
+    /// 공식 시험 등급에 따른 기초 골드 보상 지급.
     /// </summary>
     public int RewardTokensForTier(string tier)
     {
@@ -100,50 +171,19 @@ public sealed class EconomyManager : MonoBehaviour
 
         switch (tier)
         {
-            case "S":
-                rewardAmount = 50;
-                break;
-
-            case "A":
-                rewardAmount = 30;
-                break;
-
-            case "B":
-                rewardAmount = 20;
-                break;
-
-            case "C":
-                rewardAmount = 10;
-                break;
-
+            case "S": rewardAmount = 50; break;
+            case "A": rewardAmount = 30; break;
+            case "B": rewardAmount = 20; break;
+            case "C": rewardAmount = 10; break;
             case "F":
-            default:
-                rewardAmount = 0;
-                break;
+            default: rewardAmount = 0; break;
         }
 
-        AddTokens(rewardAmount);
+        if (rewardAmount > 0)
+        {
+            AddTokens(rewardAmount);
+        }
         return rewardAmount;
-    }
-
-    /// <summary>
-    /// Loads the persistent token and ticket values.
-    /// </summary>
-    private void LoadEconomyData()
-    {
-        Tokens = PlayerPrefs.GetInt(TokensKey, DefaultTokens);
-        ExamTickets = PlayerPrefs.GetInt(ExamTicketsKey, DefaultExamTickets);
-    }
-
-    /// <summary>
-    /// Saves the current token and ticket values immediately.
-    /// </summary>
-    private void SaveEconomyData()
-    {
-        PlayerPrefs.SetInt(TokensKey, Tokens);
-        PlayerPrefs.SetInt(ExamTicketsKey, ExamTickets);
-        PlayerPrefs.Save();
-        OnEconomyChanged?.Invoke();
     }
 
     private void OnDestroy()
