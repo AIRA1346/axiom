@@ -7,14 +7,13 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Assets/CodexCSVs/ 폴더 내 모든 CSV를 읽어 CodexIndex.bin과 본문 .txt를 빌드합니다.
-/// 각 CSV 파일명(예: Bio.csv)이 해당 시트의 LargeCat(대분류)로 자동 할당됩니다.
-/// 10만 개 데이터 대응. Clean Build(기존 파일 삭제 후 재생성).
+/// ADDS(ARCHÉ Decimal Deepening System) 도서관 빌드.
+/// Assets/CodexCSVs/ CSV를 읽어 Clean Build 후 CodexIndex.bin과 Resources/CodexContents/*.txt를 생성합니다.
 /// </summary>
 public static class CodexDataBuilder
 {
     private const string BinaryMagic = "CDXI";
-    private const int BinaryVersion = 1;
+    private const int BinaryVersion = 2;
     private const string CsvInputFolder = "Assets/CodexCSVs";
     private const string IndexOutputPath = "Assets/StreamingAssets/CodexIndex.bin";
     private const string ContentOutputFolder = "Assets/Resources/CodexContents";
@@ -23,21 +22,48 @@ public static class CodexDataBuilder
     private const int ProgressUpdateInterval = 2000;
     private static readonly char[] InvalidFilenameChars = Path.GetInvalidFileNameChars();
 
-    /// <summary>CSV 필수 컬럼. LargeCat 비어 있으면 파일명으로 자동 보정.</summary>
-    private static readonly string[] RequiredColumns = { "Id", "Title", "LargeCat", "MidCat", "SmallCat", "Summary", "Content" };
+    /// <summary>사용자 취소 등으로 처리 중단.</summary>
+    private const int ProgressCancelled = -1;
 
-    /// <summary>
-    /// Assets/CodexCSVs/ 폴더 내 모든 CSV를 한 번에 빌드합니다.
-    /// Tools > Codex > Build All Codex Databases 에서 호출됩니다.
-    /// </summary>
+    /// <summary>Id 형식 또는 Id↔Lv1/Lv2 불일치로 빌드 즉시 중단.</summary>
+    private const int IdValidationAborted = -2;
+
+    /// <summary>CSV 필수 컬럼. Id는 KNO-Lv1-Lv2-6자리이며 Lv1·Lv2 열과 반드시 일치해야 합니다.</summary>
+    private static readonly string[] RequiredColumns =
+    {
+        "Id", "Title", "Lv1", "Lv2", "Lv3", "Lv4", "Lv5", "Lv6", "Lv7", "Lv8", "Lv9", "Summary", "Content"
+    };
+
+    /// <summary>StreamingAssets에 CodexIndex.bin(v2)을 씁니다. count=0도 유효한 산출물입니다.</summary>
+    private static void WriteCodexIndexToStreamingAssets(string projectRoot, List<CodexMetadata> entries)
+    {
+        if (entries == null)
+        {
+            entries = new List<CodexMetadata>();
+        }
+
+        string fullBinPath = Path.Combine(projectRoot, IndexOutputPath).Replace("\\", "/");
+        string binDir = Path.GetDirectoryName(fullBinPath);
+        if (!string.IsNullOrEmpty(binDir))
+        {
+            Directory.CreateDirectory(binDir);
+        }
+
+        WriteBinaryIndex(fullBinPath, entries);
+    }
+
+    /// <summary>검증 실패 시 본문 폴더를 비우고 빈 색인만 남겨 런타임과 동기화합니다.</summary>
+    private static void ResetCodexOutputsToEmpty(string projectRoot, string contentDir)
+    {
+        CleanContentFolder(contentDir);
+        WriteCodexIndexToStreamingAssets(projectRoot, new List<CodexMetadata>());
+    }
+
     public static void BuildAllFromFolder()
     {
         BuildAllInternal();
     }
 
-    /// <summary>
-    /// 단일 CSV 파일 선택 대화상자로 빌드 (레거시 호환).
-    /// </summary>
     public static void BuildFromCsv()
     {
         string lastPath = EditorPrefs.GetString(EditorPrefsCsvPath, "");
@@ -52,9 +78,6 @@ public static class CodexDataBuilder
         BuildFromSingleFile(csvPath);
     }
 
-    /// <summary>
-    /// 지정 경로의 단일 CSV에서 빌드합니다. (배치/CI용)
-    /// </summary>
     public static void BuildFromPath(string csvPath)
     {
         if (string.IsNullOrWhiteSpace(csvPath) || !File.Exists(csvPath))
@@ -66,11 +89,7 @@ public static class CodexDataBuilder
         BuildFromSingleFile(csvPath);
     }
 
-    /// <summary>
-    /// CodexImporter에서 다운로드한 구글 시트 CSV 텍스트들로 빌드합니다.
-    /// Clean Build 후 CodexIndex.bin과 본문 .txt를 생성합니다.
-    /// </summary>
-    /// <param name="downloadedSheets">(csvText, largeCat, sourceName) 리스트</param>
+    /// <summary>구글 시트에서 내려받은 CSV 텍스트들로 Clean Build합니다.</summary>
     public static void BuildFromDownloadedSheets(List<(string csvText, string largeCat, string sourceName)> downloadedSheets)
     {
         if (downloadedSheets == null || downloadedSheets.Count == 0)
@@ -81,7 +100,6 @@ public static class CodexDataBuilder
 
         string projectRoot = Path.GetDirectoryName(Application.dataPath) ?? Application.dataPath;
         string contentDir = Path.Combine(projectRoot, ContentOutputFolder).Replace("\\", "/");
-        string fullBinPath = Path.Combine(projectRoot, IndexOutputPath).Replace("\\", "/");
 
         var metadataList = new List<CodexMetadata>();
         var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -95,12 +113,21 @@ public static class CodexDataBuilder
 
             for (int i = 0; i < downloadedSheets.Count; i++)
             {
-                var (csvText, largeCat, sourceName) = downloadedSheets[i];
+                (string csvText, _, string sourceName) = downloadedSheets[i];
                 float progress = 0.1f + (float)i / downloadedSheets.Count * 0.7f;
                 EditorUtility.DisplayProgressBar("Codex 빌드", $"{sourceName} ({i + 1}/{downloadedSheets.Count})...", progress);
 
-                int rowCount = ProcessCsvFromText(csvText, largeCat, sourceName, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
-                if (rowCount < 0)
+                int rowCount = ProcessCsvFromText(csvText, sourceName, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
+                if (rowCount == IdValidationAborted)
+                {
+                    EditorUtility.ClearProgressBar();
+                    ResetCodexOutputsToEmpty(projectRoot, contentDir);
+                    AssetDatabase.Refresh();
+                    Debug.LogError("[CodexDataBuilder] Id/Lv1/Lv2 검증 실패로 빌드를 중단하고 빈 CodexIndex.bin(v2)으로 동기화했습니다.");
+                    return;
+                }
+
+                if (rowCount == ProgressCancelled)
                 {
                     EditorUtility.ClearProgressBar();
                     return;
@@ -115,16 +142,11 @@ public static class CodexDataBuilder
             }
 
             EditorUtility.DisplayProgressBar("Codex 빌드", "바이너리 색인 쓰는 중...", 0.9f);
-            string binDir = Path.GetDirectoryName(fullBinPath);
-            if (!string.IsNullOrEmpty(binDir))
-            {
-                Directory.CreateDirectory(binDir);
-            }
-            WriteBinaryIndex(fullBinPath, metadataList);
+            WriteCodexIndexToStreamingAssets(projectRoot, metadataList);
 
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
-            Debug.Log($"[CodexDataBuilder] 완료 (구글 시트): {downloadedSheets.Count}개 시트, 색인 {metadataList.Count}건, 본문 {contentWritten}개.");
+            Debug.Log($"[CodexDataBuilder] 완료 (구글 시트): {downloadedSheets.Count}개 시트, 색인 {metadataList.Count}건, 본문 {contentWritten}개. {IndexOutputPath} 갱신됨.");
         }
         catch (Exception ex)
         {
@@ -133,9 +155,6 @@ public static class CodexDataBuilder
         }
     }
 
-    /// <summary>
-    /// CodexCSVs 폴더 내 모든 CSV를 순회하며 Clean Build 수행.
-    /// </summary>
     private static void BuildAllInternal()
     {
         string projectRoot = Path.GetDirectoryName(Application.dataPath) ?? Application.dataPath;
@@ -145,18 +164,10 @@ public static class CodexDataBuilder
         if (!Directory.Exists(csvFolderPath))
         {
             Directory.CreateDirectory(csvFolderPath);
-            Debug.LogWarning($"[CodexDataBuilder] {CsvInputFolder} 폴더가 없어 생성했습니다. CSV 파일을 넣은 뒤 다시 빌드하세요.");
-            return;
         }
 
         string[] csvFiles = Directory.GetFiles(csvFolderPath, "*.csv", SearchOption.AllDirectories)
             .Where(f => !Path.GetFileName(f).StartsWith("~")).ToArray();
-
-        if (csvFiles.Length == 0)
-        {
-            Debug.LogWarning($"[CodexDataBuilder] {CsvInputFolder}에 CSV 파일이 없습니다.");
-            return;
-        }
 
         var metadataList = new List<CodexMetadata>();
         var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -165,22 +176,37 @@ public static class CodexDataBuilder
 
         try
         {
-            // 1. Clean Build: 기존 CodexContents 내 .txt 전부 삭제
             EditorUtility.DisplayProgressBar("Codex 빌드", "기존 본문 파일 삭제 중...", 0f);
             CleanContentFolder(contentDir);
 
-            // 2. 각 CSV 파일 순회 (파일명 = LargeCat)
+            if (csvFiles.Length == 0)
+            {
+                WriteCodexIndexToStreamingAssets(projectRoot, metadataList);
+                EditorUtility.ClearProgressBar();
+                AssetDatabase.Refresh();
+                Debug.LogWarning($"[CodexDataBuilder] CSV가 없어 빈 CodexIndex.bin(v2)만 생성했습니다. {CsvInputFolder}에 CSV를 넣고 다시 빌드하세요.");
+                return;
+            }
+
             for (int fileIdx = 0; fileIdx < csvFiles.Length; fileIdx++)
             {
                 string csvPath = csvFiles[fileIdx].Replace("\\", "/");
-                string fileName = Path.GetFileNameWithoutExtension(csvPath);
-                string largeCat = string.IsNullOrWhiteSpace(fileName) ? "기타" : fileName.Trim();
+                string fileName = Path.GetFileName(csvPath);
 
                 float fileProgress = 0.1f + (float)fileIdx / csvFiles.Length * 0.7f;
-                EditorUtility.DisplayProgressBar("Codex 빌드", $"{fileName}.csv ({fileIdx + 1}/{csvFiles.Length})...", fileProgress);
+                EditorUtility.DisplayProgressBar("Codex 빌드", $"{fileName} ({fileIdx + 1}/{csvFiles.Length})...", fileProgress);
 
-                int rowCount = ProcessSingleCsvFile(csvPath, largeCat, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
-                if (rowCount < 0)
+                int rowCount = ProcessSingleCsvFile(csvPath, fileName, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
+                if (rowCount == IdValidationAborted)
+                {
+                    EditorUtility.ClearProgressBar();
+                    ResetCodexOutputsToEmpty(projectRoot, contentDir);
+                    AssetDatabase.Refresh();
+                    Debug.LogError("[CodexDataBuilder] Id/Lv1/Lv2 검증 실패로 빌드를 중단하고 빈 CodexIndex.bin(v2)으로 동기화했습니다.");
+                    return;
+                }
+
+                if (rowCount == ProgressCancelled)
                 {
                     EditorUtility.ClearProgressBar();
                     return;
@@ -194,21 +220,13 @@ public static class CodexDataBuilder
                 return;
             }
 
-            // 3. CodexIndex.bin 새로 생성
             EditorUtility.DisplayProgressBar("Codex 빌드", "바이너리 색인 쓰는 중...", 0.9f);
-            string fullBinPath = Path.Combine(projectRoot, IndexOutputPath).Replace("\\", "/");
-            string binDir = Path.GetDirectoryName(fullBinPath);
-            if (!string.IsNullOrEmpty(binDir))
-            {
-                Directory.CreateDirectory(binDir);
-            }
-
-            WriteBinaryIndex(fullBinPath, metadataList);
+            WriteCodexIndexToStreamingAssets(projectRoot, metadataList);
 
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
 
-            Debug.Log($"[CodexDataBuilder] 완료: {csvFiles.Length}개 시트, 색인 {metadataList.Count}건, 본문 {contentWritten}개. CodexIndex.bin, {ContentOutputFolder}");
+            Debug.Log($"[CodexDataBuilder] 완료: {csvFiles.Length}개 CSV, 색인 {metadataList.Count}건, 본문 {contentWritten}개. {IndexOutputPath}, {ContentOutputFolder}");
         }
         catch (Exception ex)
         {
@@ -217,15 +235,11 @@ public static class CodexDataBuilder
         }
     }
 
-    /// <summary>
-    /// 단일 CSV 파일만 빌드. (기존 동작, LargeCat은 CSV 또는 '기타')
-    /// </summary>
     private static void BuildFromSingleFile(string csvPath)
     {
         string projectRoot = Path.GetDirectoryName(Application.dataPath) ?? Application.dataPath;
         string contentDir = Path.Combine(projectRoot, ContentOutputFolder).Replace("\\", "/");
-        string largeCat = Path.GetFileNameWithoutExtension(csvPath);
-        if (string.IsNullOrWhiteSpace(largeCat)) largeCat = "기타";
+        string label = Path.GetFileName(csvPath);
 
         var metadataList = new List<CodexMetadata>();
         var seenIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -237,22 +251,33 @@ public static class CodexDataBuilder
             EditorUtility.DisplayProgressBar("Codex 빌드", "기존 본문 파일 삭제 중...", 0f);
             CleanContentFolder(contentDir);
 
-            int rowCount = ProcessSingleCsvFile(csvPath, largeCat, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
-            if (rowCount < 0 || hasDuplicateError)
+            int rowCount = ProcessSingleCsvFile(csvPath, label, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
+            if (rowCount == IdValidationAborted)
             {
                 EditorUtility.ClearProgressBar();
+                ResetCodexOutputsToEmpty(projectRoot, contentDir);
+                AssetDatabase.Refresh();
+                Debug.LogError("[CodexDataBuilder] Id/Lv1/Lv2 검증 실패로 빌드를 중단하고 빈 CodexIndex.bin(v2)으로 동기화했습니다.");
+                return;
+            }
+
+            if (rowCount == ProgressCancelled || hasDuplicateError)
+            {
+                EditorUtility.ClearProgressBar();
+                if (hasDuplicateError)
+                {
+                    Debug.LogError("[CodexDataBuilder] ID 중복이 감지되어 빌드를 중단했습니다.");
+                }
+
                 return;
             }
 
             EditorUtility.DisplayProgressBar("Codex 빌드", "바이너리 색인 쓰는 중...", 0.9f);
-            string fullBinPath = Path.Combine(projectRoot, IndexOutputPath).Replace("\\", "/");
-            string binDir = Path.GetDirectoryName(fullBinPath);
-            if (!string.IsNullOrEmpty(binDir)) Directory.CreateDirectory(binDir);
-            WriteBinaryIndex(fullBinPath, metadataList);
+            WriteCodexIndexToStreamingAssets(projectRoot, metadataList);
 
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
-            Debug.Log($"[CodexDataBuilder] 완료: 색인 {metadataList.Count}건, 본문 {contentWritten}개.");
+            Debug.Log($"[CodexDataBuilder] 완료: 색인 {metadataList.Count}건, 본문 {contentWritten}개. {IndexOutputPath} 갱신됨.");
         }
         catch (Exception ex)
         {
@@ -261,9 +286,6 @@ public static class CodexDataBuilder
         }
     }
 
-    /// <summary>
-    /// CodexContents 폴더 내 기존 .txt 파일을 모두 삭제합니다.
-    /// </summary>
     private static void CleanContentFolder(string contentDir)
     {
         if (!Directory.Exists(contentDir))
@@ -286,41 +308,31 @@ public static class CodexDataBuilder
         }
     }
 
-    /// <summary>
-    /// 단일 CSV 파일을 읽어 메타데이터와 본문을 처리합니다.
-    /// 반환: 처리된 행 수. 취소 시 -1.
-    /// </summary>
-    private static int ProcessSingleCsvFile(string csvPath, string largeCat, List<CodexMetadata> metadataList,
+    private static int ProcessSingleCsvFile(string csvPath, string sourceName, List<CodexMetadata> metadataList,
         HashSet<string> seenIds, string contentDir, ref int contentWritten, ref bool hasDuplicateError)
     {
         using (var reader = new StreamReader(csvPath, Encoding.UTF8, detectEncodingFromByteOrderMarks: true))
         {
-            return ProcessCsvFromReader(reader, largeCat, Path.GetFileName(csvPath), metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
+            return ProcessCsvFromReader(reader, sourceName, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
         }
     }
 
-    /// <summary>
-    /// CSV 텍스트를 파싱해 메타데이터와 본문을 처리합니다. (구글 시트 다운로드용)
-    /// </summary>
-    private static int ProcessCsvFromText(string csvText, string largeCat, string sourceName, List<CodexMetadata> metadataList,
+    private static int ProcessCsvFromText(string csvText, string sourceName, List<CodexMetadata> metadataList,
         HashSet<string> seenIds, string contentDir, ref int contentWritten, ref bool hasDuplicateError)
     {
         if (string.IsNullOrEmpty(csvText))
         {
             Debug.LogError($"[CodexDataBuilder] CSV 내용이 비어 있습니다: {sourceName}");
-            return -1;
+            return ProgressCancelled;
         }
 
         using (var reader = new StringReader(csvText))
         {
-            return ProcessCsvFromReader(reader, largeCat, sourceName, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
+            return ProcessCsvFromReader(reader, sourceName, metadataList, seenIds, contentDir, ref contentWritten, ref hasDuplicateError);
         }
     }
 
-    /// <summary>
-    /// TextReader에서 CSV를 읽어 메타데이터와 본문을 처리합니다.
-    /// </summary>
-    private static int ProcessCsvFromReader(TextReader reader, string largeCat, string sourceName, List<CodexMetadata> metadataList,
+    private static int ProcessCsvFromReader(TextReader reader, string sourceName, List<CodexMetadata> metadataList,
         HashSet<string> seenIds, string contentDir, ref int contentWritten, ref bool hasDuplicateError)
     {
         int processedCount = 0;
@@ -329,13 +341,13 @@ public static class CodexDataBuilder
         if (headerRow == null || headerRow.Length == 0)
         {
             Debug.LogError($"[CodexDataBuilder] CSV 헤더가 비어 있습니다: {sourceName}");
-            return -1;
+            return ProgressCancelled;
         }
 
-        var columnMap = BuildColumnMap(headerRow);
+        Dictionary<string, int> columnMap = BuildColumnMap(headerRow);
         if (columnMap == null)
         {
-            return -1;
+            return ProgressCancelled;
         }
 
         while (reader.ReadLine() is string firstLine)
@@ -350,7 +362,7 @@ public static class CodexDataBuilder
             {
                 if (EditorUtility.DisplayCancelableProgressBar("Codex 빌드", $"{sourceName} {processedCount}행...", 0.5f))
                 {
-                    return -1;
+                    return ProgressCancelled;
                 }
             }
 
@@ -359,8 +371,13 @@ public static class CodexDataBuilder
                 continue;
             }
 
-            if (!TryParseRowFromParts(parts, columnMap, largeCat, out CodexMetadata meta, out string content))
+            if (!TryParseAddsRow(parts, columnMap, sourceName, out CodexMetadata meta, out string content, out bool abortDueToInvalidId))
             {
+                if (abortDueToInvalidId)
+                {
+                    return IdValidationAborted;
+                }
+
                 continue;
             }
 
@@ -376,7 +393,7 @@ public static class CodexDataBuilder
                 continue;
             }
 
-            meta.Depth = 3;
+            meta.Depth = 9;
             meta.SortOrder = metadataList.Count;
             meta.HasBody = !string.IsNullOrWhiteSpace(content);
             metadataList.Add(meta);
@@ -403,7 +420,6 @@ public static class CodexDataBuilder
         return processedCount;
     }
 
-    /// <summary>따옴표로 감싼 다중 줄 필드를 포함해 CSV 한 행 전체를 읽습니다.</summary>
     private static bool TryReadCsvRow(TextReader reader, string firstLine, out string[] parts)
     {
         parts = null;
@@ -411,7 +427,10 @@ public static class CodexDataBuilder
         int quoteCount = 0;
         foreach (char c in firstLine)
         {
-            if (c == '"') quoteCount++;
+            if (c == '"')
+            {
+                quoteCount++;
+            }
         }
 
         while (quoteCount % 2 != 0)
@@ -425,7 +444,10 @@ public static class CodexDataBuilder
             sb.Append('\n').Append(next);
             foreach (char c in next)
             {
-                if (c == '"') quoteCount++;
+                if (c == '"')
+                {
+                    quoteCount++;
+                }
             }
         }
 
@@ -433,65 +455,129 @@ public static class CodexDataBuilder
         return parts != null && parts.Length > 0;
     }
 
-    private static bool TryParseRowFromParts(string[] parts, Dictionary<string, int> columnMap, string largeCatOverride, out CodexMetadata meta, out string content)
+    private static bool TryParseAddsRow(string[] parts, Dictionary<string, int> columnMap, string sourceName,
+        out CodexMetadata meta, out string content, out bool abortBuildDueToInvalidId)
     {
         meta = default;
         content = null;
+        abortBuildDueToInvalidId = false;
 
-        if (!columnMap.ContainsKey("Content") || !columnMap.ContainsKey("Id"))
+        if (parts == null || columnMap == null)
         {
             return false;
         }
 
-        int contentCol = columnMap["Content"];
-        int idCol = columnMap["Id"];
-        if (parts == null || parts.Length <= Math.Max(contentCol, idCol))
+        string Get(string col)
+        {
+            if (!columnMap.TryGetValue(col, out int idx) || idx < 0 || idx >= parts.Length)
+            {
+                return "";
+            }
+
+            return (parts[idx] ?? "").Trim();
+        }
+
+        string id = Get("Id");
+        string title = Get("Title");
+        string lv1 = Get("Lv1");
+        string lv2 = Get("Lv2");
+        string lv3 = Get("Lv3");
+        string lv4 = Get("Lv4");
+        string lv5 = Get("Lv5");
+        string lv6 = Get("Lv6");
+        string lv7 = Get("Lv7");
+        string lv8 = Get("Lv8");
+        string lv9 = Get("Lv9");
+        string summary = Get("Summary");
+        content = Get("Content");
+
+        if (string.IsNullOrWhiteSpace(id))
         {
             return false;
         }
 
-        string Get(int col)
+        if (!TryValidateAddsId(id, lv1, lv2, sourceName, out string idError))
         {
-            return col < parts.Length ? (parts[col] ?? "").Trim() : "";
+            Debug.LogError($"[CodexDataBuilder] 빌드 즉시 중단: {idError} (소스: {sourceName}, Id={id})");
+            abortBuildDueToInvalidId = true;
+            return false;
         }
 
-        meta.Id = Get(idCol);
-        meta.Title = Get(columnMap["Title"]);
-        string csvLargeCat = columnMap.ContainsKey("LargeCat") ? Get(columnMap["LargeCat"]) : "";
-        meta.LargeCat = !string.IsNullOrWhiteSpace(csvLargeCat) ? csvLargeCat : largeCatOverride;
-        meta.MidCat = columnMap.ContainsKey("MidCat") ? Get(columnMap["MidCat"]) : "";
-        meta.SmallCat = columnMap.ContainsKey("SmallCat") ? Get(columnMap["SmallCat"]) : "";
-        meta.Summary = columnMap.ContainsKey("Summary") ? Get(columnMap["Summary"]) : "";
-        content = Get(contentCol);
-
-        if (string.IsNullOrWhiteSpace(meta.LargeCat))
+        meta = new CodexMetadata
         {
-            meta.LargeCat = "기타";
+            Id = id,
+            Title = title,
+            Summary = summary,
+            Level1Root = lv1,
+            Level2Source = lv2,
+            Level3Field = lv3,
+            Level4Nature = lv4,
+            Level5Lineage = lv5,
+            Level6Role = lv6,
+            Level7Rank = lv7,
+            Level8Species = lv8,
+            Level9Identity = lv9,
+            Depth = 9,
+            SortOrder = 0,
+            HasBody = false
+        };
+
+        return true;
+    }
+
+    /// <summary>Id가 KNO-[Lv1]-[Lv2]-[6자리 숫자] 형식이며 CSV의 Lv1·Lv2와 일치하는지 검증합니다.</summary>
+    private static bool TryValidateAddsId(string id, string lv1, string lv2, string sourceName, out string error)
+    {
+        error = null;
+        if (string.IsNullOrWhiteSpace(sourceName))
+        {
+            sourceName = "?";
         }
 
-        // SmallCat 비어 있으면 Id에서 추출 (KNO-대-중-소-일련번호 형식)
-        if (string.IsNullOrWhiteSpace(meta.SmallCat) && !string.IsNullOrWhiteSpace(meta.Id))
+        if (string.IsNullOrWhiteSpace(id))
         {
-            var idParts = meta.Id.Split('-');
-            if (idParts.Length >= 5)
-            {
-                meta.SmallCat = idParts[3]?.Trim() ?? "";
-            }
+            error = "Id가 비어 있습니다.";
+            return false;
         }
 
-        if (string.IsNullOrWhiteSpace(meta.MidCat) && !string.IsNullOrWhiteSpace(meta.Id))
+        string[] segments = id.Split('-');
+        if (segments.Length != 4)
         {
-            var idParts = meta.Id.Split('-');
-            if (idParts.Length >= 5)
-            {
-                meta.MidCat = idParts[2]?.Trim() ?? "";
-            }
+            error = "Id는 KNO-Lv1-Lv2-6자리(총 4구간) 형식이어야 합니다.";
+            return false;
+        }
+
+        if (!string.Equals(segments[0], "KNO", StringComparison.OrdinalIgnoreCase))
+        {
+            error = "Id는 KNO로 시작해야 합니다.";
+            return false;
+        }
+
+        string idLv1 = segments[1]?.Trim() ?? "";
+        string idLv2 = segments[2]?.Trim() ?? "";
+        string serial = segments[3]?.Trim() ?? "";
+
+        if (serial.Length != 6 || !serial.All(char.IsDigit))
+        {
+            error = "Id 마지막 구간은 6자리 숫자(일련번호)여야 합니다.";
+            return false;
+        }
+
+        if (!string.Equals(idLv1, lv1?.Trim() ?? "", StringComparison.OrdinalIgnoreCase))
+        {
+            error = $"Id의 위계1({idLv1})과 열 Lv1({lv1})이 일치하지 않습니다.";
+            return false;
+        }
+
+        if (!string.Equals(idLv2, lv2?.Trim() ?? "", StringComparison.OrdinalIgnoreCase))
+        {
+            error = $"Id의 위계2({idLv2})과 열 Lv2({lv2})이 일치하지 않습니다.";
+            return false;
         }
 
         return true;
     }
 
-    /// <summary>CSV 한 행을 파싱. 따옴표 안의 쉼표·줄바꿈을 처리합니다.</summary>
     private static string[] ParseCsvLine(string line)
     {
         if (string.IsNullOrEmpty(line))
@@ -527,10 +613,6 @@ public static class CodexDataBuilder
         return result.ToArray();
     }
 
-    /// <summary>
-    /// CSV 헤더로 컬럼 인덱스 맵 생성.
-    /// LargeCat 비어 있으면 파일명(largeCatOverride)으로 보정됩니다.
-    /// </summary>
     private static Dictionary<string, int> BuildColumnMap(string[] headers)
     {
         var map = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
@@ -547,7 +629,7 @@ public static class CodexDataBuilder
         {
             if (!map.ContainsKey(req))
             {
-                Debug.LogError($"[CodexDataBuilder] 필수 컬럼 누락: {req}. 필요: Id, Title, LargeCat, MidCat, SmallCat, Summary, Content");
+                Debug.LogError($"[CodexDataBuilder] 필수 컬럼 누락: {req}. 필요: {string.Join(", ", RequiredColumns)}");
                 return null;
             }
         }
@@ -555,7 +637,6 @@ public static class CodexDataBuilder
         return map;
     }
 
-    /// <summary>파일명으로 사용할 수 없거나 위험한 문자를 제거합니다.</summary>
     private static string SanitizeFilename(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -595,15 +676,20 @@ public static class CodexDataBuilder
             writer.Write(BinaryVersion);
             writer.Write(list.Count);
 
-            foreach (var m in list)
+            foreach (CodexMetadata m in list)
             {
                 writer.Write(m.Id ?? "");
                 writer.Write(m.Title ?? "");
-                writer.Write(m.LargeCat ?? "");
-                writer.Write(m.MidCat ?? "");
-                writer.Write(m.SmallCat ?? "");
                 writer.Write(m.Summary ?? "");
-                writer.Write(m.Depth);
+                writer.Write(m.Level1Root ?? "");
+                writer.Write(m.Level2Source ?? "");
+                writer.Write(m.Level3Field ?? "");
+                writer.Write(m.Level4Nature ?? "");
+                writer.Write(m.Level5Lineage ?? "");
+                writer.Write(m.Level6Role ?? "");
+                writer.Write(m.Level7Rank ?? "");
+                writer.Write(m.Level8Species ?? "");
+                writer.Write(m.Level9Identity ?? "");
                 writer.Write(m.SortOrder);
                 writer.Write(m.HasBody);
             }

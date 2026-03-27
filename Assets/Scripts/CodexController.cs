@@ -235,10 +235,10 @@ public sealed class CodexController : MonoBehaviour
         }
     }
 
-    private void UpdateBreadcrumb(CodexMetadata data)
+    private void UpdateBreadcrumb(CodexMetadata? data)
     {
         _breadcrumbPath.Clear();
-        if (data == null)
+        if (!data.HasValue)
         {
             if (_breadcrumbText != null)
             {
@@ -248,22 +248,23 @@ public sealed class CodexController : MonoBehaviour
             return;
         }
 
+        CodexMetadata m = data.Value;
         for (int i = 0; i < 9; i++)
         {
-            string seg = CodexManager.GetLevelValue(data, i);
+            string seg = CodexManager.GetLevelValue(m, i);
             if (!string.IsNullOrWhiteSpace(seg))
             {
                 _breadcrumbPath.Add(seg.Trim());
             }
         }
 
-        if (!string.IsNullOrWhiteSpace(data.Title))
+        if (!string.IsNullOrWhiteSpace(m.Title))
         {
-            _breadcrumbPath.Add(data.Title.Trim());
+            _breadcrumbPath.Add(m.Title.Trim());
         }
-        else if (!string.IsNullOrWhiteSpace(data.Id))
+        else if (!string.IsNullOrWhiteSpace(m.Id))
         {
-            _breadcrumbPath.Add(data.Id.Trim());
+            _breadcrumbPath.Add(m.Id.Trim());
         }
 
         if (_breadcrumbText != null)

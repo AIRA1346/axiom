@@ -46,7 +46,9 @@ public sealed class UIManager : MonoBehaviour
         }
 
         GameManager.Instance.OnGameStateChanged += UpdateUIState;
+#if UNITY_EDITOR
         Debug.Log("UIManager: GameManager 이벤트 구독 완료.");
+#endif
     }
 
     /// <summary>
@@ -138,7 +140,9 @@ public sealed class UIManager : MonoBehaviour
     /// </summary>
     private void UpdateUIState(GameState gameState)
     {
+#if UNITY_EDITOR
         Debug.Log($"UIManager: UI 상태 전환 시도 -> {gameState}");
+#endif
         SetAllPanels(false);
 
         switch (gameState)

@@ -15,6 +15,7 @@ public sealed class CodexSheetEntry
 {
     public bool IsEnabled = true;
     public string SheetUrl = "";
+    /// <summary>진행 표시용 시트 이름(CSV 컬럼 Lv1~Lv9와 무관)</summary>
     public string LargeCat = "Norm";
 }
 
@@ -78,12 +79,12 @@ public sealed class CodexImporter : EditorWindow
 
     private void OnGUI()
     {
-        EditorGUILayout.LabelField("Codex Importer Settings (대분류별 구글 시트)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("Codex Importer Settings (ADDS / 구글 시트)", EditorStyles.boldLabel);
         EditorGUILayout.Space();
 
         EditorGUI.BeginDisabledGroup(_isImporting);
 
-        EditorGUILayout.LabelField("시트 목록 (☑=임포트 대상, 구글 시트 URL + 대분류)", EditorStyles.boldLabel);
+        EditorGUILayout.LabelField("시트 목록 (☑=임포트 대상, URL + 진행 표시명)", EditorStyles.boldLabel);
         _sheetListScroll = EditorGUILayout.BeginScrollView(_sheetListScroll, GUILayout.MaxHeight(180f));
         for (int i = 0; i < _sheetEntries.Count; i++)
         {
@@ -120,7 +121,7 @@ public sealed class CodexImporter : EditorWindow
         EditorGUILayout.Space();
         EditorGUILayout.HelpBox(
             "구글 시트 공유 URL을 붙여넣으세요. 첫 시트 또는 #gid=로 지정한 시트가 CSV로 내보내집니다.\n" +
-            "필수 컬럼: Id, Title, LargeCat, MidCat, SmallCat, Summary, Content",
+            "필수 컬럼: Id, Title, Lv1~Lv9, Summary, Content. Id는 KNO-Lv1-Lv2-6자리 숫자이며 Lv1·Lv2 열과 일치해야 합니다.",
             MessageType.Info);
         EditorGUILayout.Space();
 

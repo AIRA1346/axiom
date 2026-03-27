@@ -55,13 +55,16 @@ public sealed class GameManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"{gameObject.name}의 중복된 매니저 파괴됨.");
+#endif
             Destroy(gameObject);
             return;
         }
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        SteamworksService.InitializePlaceholder();
     }
 
     private void Start()
@@ -80,6 +83,7 @@ public sealed class GameManager : MonoBehaviour
 
         if (Instance == this)
         {
+            SteamworksService.ShutdownPlaceholder();
             Instance = null;
         }
     }
@@ -132,7 +136,9 @@ public sealed class GameManager : MonoBehaviour
 
         InputManager.Instance.OnInputDown += HandleInputDown;
         _isInputSubscribed = true;
+#if UNITY_EDITOR
         Debug.Log("GameManager: InputManager 이벤트 구독 완료.");
+#endif
     }
 
     /// <summary>
@@ -154,7 +160,9 @@ public sealed class GameManager : MonoBehaviour
     /// </summary>
     private void HandleInputDown(Vector2 screenPosition)
     {
+#if UNITY_EDITOR
         Debug.Log($"GameManager: HandleInputDown 진입 성공! 현재 상태: {CurrentState}");
+#endif
         switch (CurrentState)
         {
             case GameState.MainMenu:
@@ -174,7 +182,9 @@ public sealed class GameManager : MonoBehaviour
 
             case GameState.TestStandby:
                 SetGameState(GameState.TestInProgress);
+#if UNITY_EDITOR
                 Debug.Log("G.S.I: Test Started.");
+#endif
                 break;
 
             case GameState.TestInProgress:

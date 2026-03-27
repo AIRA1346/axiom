@@ -195,11 +195,15 @@ public sealed class MainMenuController : MonoBehaviour
             GameManager.Instance.SetTestType(TestType.OfficialExam);
             GameManager.Instance.SetTestMode(TestMode.Reaction);
             GameManager.Instance.SetGameState(GameState.TestStandby);
+#if UNITY_EDITOR
             Debug.Log("공식 시험 진입!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("응시권 부족!");
+#endif
     }
 
     private void OnAimExamClicked()
@@ -215,11 +219,15 @@ public sealed class MainMenuController : MonoBehaviour
             GameManager.Instance.SetTestType(TestType.OfficialExam);
             GameManager.Instance.SetTestMode(TestMode.AimPrecision);
             GameManager.Instance.SetGameState(GameState.TestStandby);
+#if UNITY_EDITOR
             Debug.Log("공식 시험 진입!");
+#endif
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("응시권 부족!");
+#endif
     }
 
     private void OnShopClicked()

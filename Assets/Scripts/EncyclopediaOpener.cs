@@ -25,7 +25,9 @@ public sealed class EncyclopediaOpener : MonoBehaviour
         }
         else
         {
+#if UNITY_EDITOR
             Debug.LogWarning("[EncyclopediaOpener] GameManager를 찾을 수 없습니다.");
+#endif
         }
     }
 }

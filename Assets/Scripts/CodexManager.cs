@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
-/// ARCHÉ 범우주 표준 도서관(Codex) 허브. ADDS 색인은 CodexIndex.bin만 로드하며 메모리에 상주합니다.
+/// ARCHÉ 도서관(Codex) 허브. ADDS 색인은 CodexIndex.bin만 로드하며 메모리에 상주합니다.
 /// 본문은 Resources/CodexContents/[ID].txt를 항목 선택 시에만 비동기 로드합니다.
 /// </summary>
 public sealed class CodexManager : MonoBehaviour
@@ -91,7 +91,7 @@ public sealed class CodexManager : MonoBehaviour
         _indexBuilt = true;
     }
 
-    /// <summary>CodexIndex.bin (ADDS v1) 로드. Header: CDXI + Version + Count.</summary>
+    /// <summary>CodexIndex.bin (ADDS) 로드. Header: CDXI + Version + Count.</summary>
     private bool TryLoadFromBinary(string path)
     {
         try

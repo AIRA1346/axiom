@@ -40,7 +40,9 @@ public class ItemDatabase : MonoBehaviour
 
         if (!UseMetadataOnly)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("[ItemDatabase] ItemMetadata.bin 없음. 기존 LoadAll 방식으로 폴백합니다.");
+#endif
             LoadAllItemsFallback();
         }
 

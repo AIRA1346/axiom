@@ -29,7 +29,7 @@ public static class CodexSetupHelper
     [MenuItem("Tools/Codex/4. Add CodexManager to Scene")]
     public static void AddCodexManagerToScene()
     {
-        if (Object.FindObjectOfType<CodexManager>() != null)
+        if (Object.FindFirstObjectByType<CodexManager>(FindObjectsInactive.Exclude) != null)
         {
             Debug.Log("[Codex] CodexManager가 이미 씬에 있습니다.");
             return;

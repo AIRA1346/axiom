@@ -249,29 +249,37 @@ public sealed class SimpleCategoryDropdown : MonoBehaviour
     {
         pos = default;
 #if ENABLE_INPUT_SYSTEM
-        var mouse = Mouse.current;
+        Mouse mouse = Mouse.current;
         if (mouse != null && mouse.leftButton.wasPressedThisFrame)
         {
             pos = mouse.position.ReadValue();
             return true;
         }
-        var touch = Touchscreen.current;
+
+        Touchscreen touch = Touchscreen.current;
         if (touch != null && touch.primaryTouch.press.wasPressedThisFrame)
         {
             pos = touch.primaryTouch.position.ReadValue();
             return true;
         }
-#endif
+
+        return false;
+#elif ENABLE_LEGACY_INPUT_MANAGER
         if (Input.GetMouseButtonDown(0))
         {
             pos = Input.mousePosition;
             return true;
         }
+
         if (Input.touchCount > 0 && Input.GetTouch(0).phase == UnityEngine.TouchPhase.Began)
         {
             pos = Input.GetTouch(0).position;
             return true;
         }
+
         return false;
+#else
+        return false;
+#endif
     }
 }

@@ -58,7 +58,9 @@ public sealed class IntroController : MonoBehaviour
         }
         if (ItemDatabase.Instance == null || !ItemDatabase.Instance.IsInitialLoadComplete)
         {
+#if UNITY_EDITOR
             Debug.LogWarning("[IntroController] ItemDatabase 로딩 타임아웃. 메인 씬으로 진행합니다.");
+#endif
         }
         yield return new WaitForSecondsRealtime(_phaseDisplayDuration * 0.5f);
 

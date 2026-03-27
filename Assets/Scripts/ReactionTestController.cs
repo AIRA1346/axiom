@@ -155,7 +155,9 @@ public sealed class ReactionTestController : MonoBehaviour
                 ScoreManager.Instance.MarkFailed();
             }
 
+#if UNITY_EDITOR
             Debug.Log("부정 출발! 테스트 실패.");
+#endif
             StopReactionTest();
             GameManager.Instance.SetGameState(GameState.ResultScreen);
             return;
@@ -169,7 +171,9 @@ public sealed class ReactionTestController : MonoBehaviour
                 ScoreManager.Instance.SaveTestTime(reactionTime);
             }
 
+#if UNITY_EDITOR
             Debug.Log($"반응 속도: {reactionTime:F3}초");
+#endif
             StopReactionTest();
             GameManager.Instance.SetGameState(GameState.ResultScreen);
         }

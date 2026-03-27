@@ -1,29 +1,18 @@
 using System;
 using UnityEngine;
+#if ENABLE_INPUT_SYSTEM
+using UnityEngine.InputSystem;
+#endif
 
 /// <summary>
-/// Detects a single unified pointer input across mouse and touch devices.
-/// This manager only reports input state changes and screen positions.
+/// 마우스·터치를 단일 포인터 입력으로 통합합니다. 새 Input System 전용(구 Input Manager 비활성 프로젝트 대응).
 /// </summary>
 public sealed class InputManager : MonoBehaviour
 {
     public static InputManager Instance { get; private set; }
 
-    /// <summary>
-    /// Invoked once when a unified input begins.
-    /// Returns the screen position where the press or touch started.
-    /// </summary>
     public event Action<Vector2> OnInputDown;
-
-    /// <summary>
-    /// Invoked while a unified input is being held or dragged.
-    /// Returns the current screen position every frame during the hold.
-    /// </summary>
     public event Action<Vector2> OnInputHold;
-
-    /// <summary>
-    /// Invoked once when the active unified input is released.
-    /// </summary>
     public event Action OnInputUp;
 
     private bool _isPointerHeld;
@@ -32,7 +21,9 @@ public sealed class InputManager : MonoBehaviour
     {
         if (Instance != null && Instance != this)
         {
+#if UNITY_EDITOR
             Debug.LogWarning($"{gameObject.name}의 중복된 매니저 파괴됨.");
+#endif
             Destroy(gameObject);
             return;
         }
@@ -43,19 +34,95 @@ public sealed class InputManager : MonoBehaviour
 
     private void Update()
     {
+#if ENABLE_INPUT_SYSTEM
         if (TryHandleTouchInput())
         {
             return;
         }
 
         HandleMouseInput();
+#else
+        LegacyUpdate();
+#endif
     }
 
-    /// <summary>
-    /// Prioritizes touch on mobile and touch-enabled devices.
-    /// Returns true when touch input was processed this frame.
-    /// </summary>
+#if ENABLE_INPUT_SYSTEM
     private bool TryHandleTouchInput()
+    {
+        Touchscreen ts = Touchscreen.current;
+        if (ts == null)
+        {
+            return false;
+        }
+
+        var press = ts.primaryTouch.press;
+        Vector2 screenPosition = ts.primaryTouch.position.ReadValue();
+
+        if (press.wasPressedThisFrame)
+        {
+            _isPointerHeld = true;
+            OnInputDown?.Invoke(screenPosition);
+            return true;
+        }
+
+        if (_isPointerHeld && press.isPressed)
+        {
+            OnInputHold?.Invoke(screenPosition);
+            return true;
+        }
+
+        if (_isPointerHeld && press.wasReleasedThisFrame)
+        {
+            _isPointerHeld = false;
+            OnInputUp?.Invoke();
+            return true;
+        }
+
+        return press.isPressed;
+    }
+
+    private void HandleMouseInput()
+    {
+        Mouse mouse = Mouse.current;
+        if (mouse == null)
+        {
+            return;
+        }
+
+        Vector2 screenPosition = mouse.position.ReadValue();
+
+        if (mouse.leftButton.wasPressedThisFrame)
+        {
+#if UNITY_EDITOR
+            Debug.Log($"InputManager: 화면 클릭 감지됨! 좌표: {screenPosition}");
+#endif
+            _isPointerHeld = true;
+            OnInputDown?.Invoke(screenPosition);
+        }
+
+        if (_isPointerHeld && mouse.leftButton.isPressed)
+        {
+            OnInputHold?.Invoke(screenPosition);
+        }
+
+        if (_isPointerHeld && mouse.leftButton.wasReleasedThisFrame)
+        {
+            _isPointerHeld = false;
+            OnInputUp?.Invoke();
+        }
+    }
+#else
+    private void LegacyUpdate()
+    {
+        if (TryLegacyTouch())
+        {
+            return;
+        }
+
+        HandleLegacyMouse();
+    }
+
+    private bool TryLegacyTouch()
     {
         if (Input.touchCount <= 0)
         {
@@ -78,6 +145,7 @@ public sealed class InputManager : MonoBehaviour
                 {
                     OnInputHold?.Invoke(screenPosition);
                 }
+
                 break;
 
             case TouchPhase.Ended:
@@ -87,22 +155,22 @@ public sealed class InputManager : MonoBehaviour
                     _isPointerHeld = false;
                     OnInputUp?.Invoke();
                 }
+
                 break;
         }
 
         return true;
     }
 
-    /// <summary>
-    /// Handles a mouse left-click as the same unified input used by touch.
-    /// </summary>
-    private void HandleMouseInput()
+    private void HandleLegacyMouse()
     {
         Vector2 screenPosition = Input.mousePosition;
 
         if (Input.GetMouseButtonDown(0))
         {
+#if UNITY_EDITOR
             Debug.Log($"InputManager: 화면 클릭 감지됨! 좌표: {screenPosition}");
+#endif
             _isPointerHeld = true;
             OnInputDown?.Invoke(screenPosition);
         }
@@ -118,6 +186,7 @@ public sealed class InputManager : MonoBehaviour
             OnInputUp?.Invoke();
         }
     }
+#endif
 
     private void OnDestroy()
     {

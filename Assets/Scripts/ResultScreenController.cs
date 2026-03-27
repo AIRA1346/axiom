@@ -78,7 +78,9 @@ public sealed class ResultScreenController : MonoBehaviour
             return;
         }
 
+#if UNITY_EDITOR
         Debug.Log("티켓 부족으로 재도전 불가!");
+#endif
         GameManager.Instance.SetGameState(GameState.MainMenu);
     }
 

@@ -163,7 +163,9 @@ public sealed class ItemMetadataBinaryLoader
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"[ItemMetadataBinaryLoader] {_list.Count}개 메타데이터 로드 완료 (바이너리)");
+#endif
     }
 
     private void LoadFromTextFallback(string path)
@@ -182,7 +184,9 @@ public sealed class ItemMetadataBinaryLoader
             }
         }
 
+#if UNITY_EDITOR
         Debug.Log($"[ItemMetadataBinaryLoader] {_list.Count}개 메타데이터 로드 완료 (텍스트 폴백)");
+#endif
     }
 
     private static bool TryParseTextLine(string line, out ItemMetadata meta)

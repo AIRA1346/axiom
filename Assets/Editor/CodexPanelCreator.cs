@@ -4,7 +4,7 @@ using UnityEditor;
 using TMPro;
 
 /// <summary>
-/// 범우주 표준 도서관 CodexPanel을 생성하는 에디터 도구.
+/// ARCHÉ ADDS 도서관(Codex) 패널을 생성하는 에디터 도구.
 /// Menu: Tools > Create Codex Panel
 /// Split View: 좌측 목차(Navigation) + 우측 본문(Viewer). 무채색 공식 문서 톤.
 /// </summary>
@@ -74,7 +74,7 @@ public static class CodexPanelCreator
         breadcrumbRect.anchoredPosition = new Vector2(0, 0);
         breadcrumbRect.sizeDelta = new Vector2(-200, 28);
         var breadcrumbText = breadcrumbObj.AddComponent<TextMeshProUGUI>();
-        breadcrumbText.text = "범우주 표준 도서관";
+        breadcrumbText.text = "ARCHÉ · 도서관";
         breadcrumbText.fontSize = 14;
         breadcrumbText.color = new Color(0.9f, 0.9f, 0.9f, 1f);
         breadcrumbText.alignment = TextAlignmentOptions.Center;

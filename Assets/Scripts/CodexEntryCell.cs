@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 
 /// <summary>
-/// 도서관 목차 셀 클릭 처리. ScrollRect 내에서 안정적으로 동작합니다.
+/// ADDS 도서관 플랫 트리 목차 셀 클릭 처리. ScrollRect 내에서 안정적으로 동작합니다.
 /// </summary>
 public sealed class CodexEntryCell : MonoBehaviour, IPointerClickHandler
 {
