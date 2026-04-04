@@ -1,0 +1,39 @@
+# P0: ItemMetadata(샤딩)·Addressables 주소·Codex 본문(.txt) 일관성 검사 (EditMode 테스트)
+#
+# 필수 설정:
+#   Repository → Settings → Secrets and variables → Actions
+#   - UNITY_LICENSE: Unity Personal/Plus/Pro 라이선스 (game-ci 활성화 가이드: https://game.ci/docs/github/activation)
+#
+# Unity 버전은 ProjectSettings/ProjectVersion.txt 와 맞출 것.
+
+name: P0 Data Validation
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - 'Assets/**'
+      - 'ProjectSettings/**'
+      - 'Packages/**'
+      - '.github/workflows/p0-data-validation.yml'
+
+jobs:
+  editmode-tests:
+    name: EditMode (P0)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Run EditMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        with:
+          unityVersion: 6000.3.10f1
+          projectPath: .
+          testMode: editmode
+          artifactsPath: test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

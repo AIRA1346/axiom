@@ -9,7 +9,7 @@ public static class ShopConfigCreator
 {
     private const string AssetPath = "Assets/Config/ShopConfig.asset";
 
-    [MenuItem("GSI/Create Shop Config")]
+    [MenuItem("Tools/ARCHÉ/Shop/Create Shop Config")]
     public static void Create()
     {
         var existing = AssetDatabase.LoadAssetAtPath<ShopConfig>(AssetPath);

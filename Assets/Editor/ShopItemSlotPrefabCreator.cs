@@ -11,7 +11,7 @@ public static class ShopItemSlotPrefabCreator
 {
     private const string PrefabPath = "Assets/Prefabs/ShopItemSlotPrefab.prefab";
 
-    [MenuItem("Tools/Create Shop Item Slot Prefab")]
+    [MenuItem("Tools/ARCHÉ/Shop/Create Shop Item Slot Prefab")]
     public static void Create()
     {
         GameObject root = new GameObject("ShopItemSlot");

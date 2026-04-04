@@ -21,12 +21,21 @@ public sealed class ItemMetadataBuildPipeline : IPreprocessBuildWithReport
 
         try
         {
-            ItemMetadataBuilder.Build(Application.isBatchMode);
+            if (!ItemMetadataBuilder.Build(Application.isBatchMode))
+            {
+                throw new BuildFailedException(
+                    "[ItemMetadataBuildPipeline] ItemMetadata 빌드 또는 검증(샤딩·Addressables 주소) 실패. 콘솔 로그를 확인하세요.");
+            }
         }
         catch (System.Exception ex)
         {
+            if (ex is BuildFailedException)
+            {
+                throw;
+            }
+
             var wrapper = new System.Exception(
-                $"[ItemMetadataBuildPipeline] ItemMetadata.bin 빌드 실패. 빌드를 중단합니다.", ex);
+                "[ItemMetadataBuildPipeline] ItemMetadata 빌드 중 예외. 빌드를 중단합니다.", ex);
             throw new BuildFailedException(wrapper);
         }
     }

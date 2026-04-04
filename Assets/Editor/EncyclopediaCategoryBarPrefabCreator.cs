@@ -11,7 +11,7 @@ public static class EncyclopediaCategoryBarPrefabCreator
 {
     private const string PrefabPath = "Assets/Prefabs/EncyclopediaCategoryBarPrefab.prefab";
 
-    [MenuItem("Tools/Create Encyclopedia Category Bar Prefab")]
+    [MenuItem("Tools/ARCHÉ/Encyclopedia/Create Category Bar Prefab")]
     public static void Create()
     {
         GameObject root = new GameObject("CategoryBar");

@@ -1,0 +1,16 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b7f4a2c1e8d3465a9b0c1d2e3f4a5b6c, type: 3}
+  m_Name: RecipeManifest
+  m_EditorClassIdentifier: ArchE.Game::RecipeManifest
+  _recipes:
+  - {fileID: 11400000, guid: ca33a4782bdb1ae47ae35945ff482c02, type: 2}

@@ -7,7 +7,7 @@ public static class ItemExporter
 {
     private const string ItemsFolderPath = "Assets/Resources/Items";
 
-    [MenuItem("Tools/Export Items to CSV")]
+    [MenuItem("Tools/ARCHÉ/Items/Export Items to CSV")]
     private static void ExportItemsToCsv()
     {
         string savePath = EditorUtility.SaveFilePanel(

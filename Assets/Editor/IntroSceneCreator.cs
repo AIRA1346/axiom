@@ -5,16 +5,15 @@ using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// IntroScene을 자동 생성합니다. Tools > Create Intro Scene
+/// IntroScene을 자동 생성합니다. Tools > ARCHÉ > Setup
 /// 무채색 UI, ItemDatabase, IntroController 포함.
 /// </summary>
 public static class IntroSceneCreator
 {
     private const string ScenePath = "Assets/Scenes/IntroScene.unity";
 
-    [MenuItem("Tools/Create Intro Scene")]
-    [MenuItem("Assets/Create Intro Scene")]
-    [MenuItem("GSI/Create Intro Scene")]
+    [MenuItem("Tools/ARCHÉ/Setup/Create Intro Scene")]
+    [MenuItem("Assets/ARCHÉ/Create Intro Scene")]
     public static void Create()
     {
         if (!AssetDatabase.IsValidFolder("Assets/Scenes"))

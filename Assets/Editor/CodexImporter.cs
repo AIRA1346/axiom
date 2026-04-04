@@ -29,7 +29,7 @@ public sealed class CodexImporter : EditorWindow
     private string _lastStatusMessage = "대기 중";
     private Vector2 _sheetListScroll;
 
-    [MenuItem("Tools/Codex Importer Settings")]
+    [MenuItem("Tools/ARCHÉ/Google Sheet/Codex Importer")]
     public static void OpenWindow()
     {
         CodexImporter window = GetWindow<CodexImporter>("Codex Importer Settings");
@@ -127,7 +127,7 @@ public sealed class CodexImporter : EditorWindow
 
         if (GUILayout.Button("Import from Google Sheets", GUILayout.Height(36f)))
         {
-            ImportFromSheets();
+            RunImportWithCallback(null);
         }
 
         EditorGUI.EndDisabledGroup();
@@ -135,10 +135,12 @@ public sealed class CodexImporter : EditorWindow
         EditorGUILayout.HelpBox(_lastStatusMessage, MessageType.Info);
     }
 
-    private void ImportFromSheets()
+    /// <summary>버튼 및 구글 시트 통합 파이프라인용. Codex 임포트 완료 후 콜백.</summary>
+    public void RunImportWithCallback(Action onComplete)
     {
         if (_isImporting)
         {
+            onComplete?.Invoke();
             return;
         }
 
@@ -151,6 +153,7 @@ public sealed class CodexImporter : EditorWindow
             _isImporting = false;
             EditorUtility.ClearProgressBar();
             Repaint();
+            onComplete?.Invoke();
         });
     }
 

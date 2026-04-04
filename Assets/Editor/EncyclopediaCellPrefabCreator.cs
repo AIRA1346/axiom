@@ -11,7 +11,7 @@ public static class EncyclopediaCellPrefabCreator
 {
     private const string PrefabPath = "Assets/Prefabs/EncyclopediaCellPrefab.prefab";
 
-    [MenuItem("Tools/Create Encyclopedia Cell Prefab")]
+    [MenuItem("Tools/ARCHÉ/Encyclopedia/Create Cell Prefab")]
     public static void CreateEncyclopediaCellPrefab()
     {
         GameObject root = new GameObject("EncyclopediaCell");

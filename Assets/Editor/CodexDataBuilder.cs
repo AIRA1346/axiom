@@ -9,6 +9,7 @@ using UnityEngine;
 /// <summary>
 /// ADDS(ARCHÉ Decimal Deepening System) 도서관 빌드.
 /// Assets/CodexCSVs/ CSV를 읽어 Clean Build 후 CodexIndex.bin과 Resources/CodexContents/*.txt를 생성합니다.
+/// 성공 시 CodexContentFileValidator를 자동 호출해 본문 .txt 누락을 로그합니다.
 /// </summary>
 public static class CodexDataBuilder
 {
@@ -147,6 +148,7 @@ public static class CodexDataBuilder
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
             Debug.Log($"[CodexDataBuilder] 완료 (구글 시트): {downloadedSheets.Count}개 시트, 색인 {metadataList.Count}건, 본문 {contentWritten}개. {IndexOutputPath} 갱신됨.");
+            RunCodexPostBuildValidation();
         }
         catch (Exception ex)
         {
@@ -185,6 +187,7 @@ public static class CodexDataBuilder
                 EditorUtility.ClearProgressBar();
                 AssetDatabase.Refresh();
                 Debug.LogWarning($"[CodexDataBuilder] CSV가 없어 빈 CodexIndex.bin(v2)만 생성했습니다. {CsvInputFolder}에 CSV를 넣고 다시 빌드하세요.");
+                RunCodexPostBuildValidation();
                 return;
             }
 
@@ -227,6 +230,7 @@ public static class CodexDataBuilder
             AssetDatabase.Refresh();
 
             Debug.Log($"[CodexDataBuilder] 완료: {csvFiles.Length}개 CSV, 색인 {metadataList.Count}건, 본문 {contentWritten}개. {IndexOutputPath}, {ContentOutputFolder}");
+            RunCodexPostBuildValidation();
         }
         catch (Exception ex)
         {
@@ -278,12 +282,19 @@ public static class CodexDataBuilder
             EditorUtility.ClearProgressBar();
             AssetDatabase.Refresh();
             Debug.Log($"[CodexDataBuilder] 완료: 색인 {metadataList.Count}건, 본문 {contentWritten}개. {IndexOutputPath} 갱신됨.");
+            RunCodexPostBuildValidation();
         }
         catch (Exception ex)
         {
             EditorUtility.ClearProgressBar();
             Debug.LogError($"[CodexDataBuilder] 빌드 실패: {ex.Message}");
         }
+    }
+
+    /// <summary>색인·본문 쓴 뒤 Resources txt와 일치하는지 자동 검증 (로그만).</summary>
+    private static void RunCodexPostBuildValidation()
+    {
+        CodexContentFileValidator.Validate(true);
     }
 
     private static void CleanContentFolder(string contentDir)

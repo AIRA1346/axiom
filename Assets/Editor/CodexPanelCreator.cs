@@ -5,14 +5,13 @@ using TMPro;
 
 /// <summary>
 /// ARCHÉ ADDS 도서관(Codex) 패널을 생성하는 에디터 도구.
-/// Menu: Tools > Create Codex Panel
+/// Menu: Tools > ARCHÉ > Codex > Create Panel Prefab
 /// Split View: 좌측 목차(Navigation) + 우측 본문(Viewer). 무채색 공식 문서 톤.
 /// </summary>
 public static class CodexPanelCreator
 {
     private const string PrefabPath = "Assets/Prefabs/CodexPanelPrefab.prefab";
 
-    [MenuItem("Tools/Create Codex Panel Prefab")]
     public static void CreateCodexPanelPrefab()
     {
         GameObject root = new GameObject("CodexPanel");

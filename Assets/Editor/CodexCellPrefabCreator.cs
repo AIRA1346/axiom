@@ -5,14 +5,13 @@ using TMPro;
 
 /// <summary>
 /// 도서관 목차 셀 프리팹을 생성하는 에디터 도구.
-/// Menu: Tools > Create Codex Cell Prefab
+/// Menu: Tools > ARCHÉ > Codex > Create Cell Prefab
 /// 무채색(Black, White, Gray) 공식 문서 톤.
 /// </summary>
 public static class CodexCellPrefabCreator
 {
     private const string PrefabPath = "Assets/Prefabs/CodexCellPrefab.prefab";
 
-    [MenuItem("Tools/Create Codex Cell Prefab")]
     public static void CreateCodexCellPrefab()
     {
         GameObject root = new GameObject("CodexCell");

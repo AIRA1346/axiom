@@ -12,7 +12,7 @@ public static class EncyclopediaPaginationPrefabCreator
 {
     private const string PrefabPath = "Assets/Prefabs/EncyclopediaPaginationPrefab.prefab";
 
-    [MenuItem("Tools/Create Encyclopedia Pagination Prefab")]
+    [MenuItem("Tools/ARCHÉ/Encyclopedia/Create Pagination Prefab")]
     public static void Create()
     {
         GameObject root = new GameObject("EncyclopediaPagination");

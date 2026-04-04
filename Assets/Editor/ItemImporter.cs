@@ -59,11 +59,10 @@ public sealed class ItemImporter : EditorWindow
     private const string SheetListKey = "GSI.ItemImporter.SheetList";
     private const string CategorySheetUrlKey = "GSI.ItemImporter.CategorySheetUrl";
     private const string DefaultCategorySheetUrl = "";
-    private const string ItemDefinitionsPath = "Assets/Scripts/ItemDefinitions.cs";
+    private const string ItemDefinitionsPath = "Assets/Scripts/Items/ItemDefinitions.cs";
     private const int ProgressUpdateInterval = 100;
     private const int ProgressLogInterval = 1000;
     private const int MinimumImportedItemCountForDeletion = 10;
-    private const int TestModeItemLimit = 10;
     private const int RequestTimeoutSeconds = 15;
     private static readonly Dictionary<string, Sprite> ItemIconCache = new Dictionary<string, Sprite>(StringComparer.OrdinalIgnoreCase);
     private static readonly string[] DefaultMainCategories = { "Material", "Equipment", "Consumable", "Crafting", "Quest", "Etc" };
@@ -71,11 +70,10 @@ public sealed class ItemImporter : EditorWindow
     private List<SheetEntry> _sheetEntries = new List<SheetEntry>();
     private string _categorySheetUrl;
     private bool _isImporting;
-    private bool _testMode = true;
     private string _lastStatusMessage = "대기 중";
     private Vector2 _sheetListScroll;
 
-    [MenuItem("Tools/Item Importer Settings")]
+    [MenuItem("Tools/ARCHÉ/Google Sheet/Item Importer")]
     private static void OpenWindow()
     {
         ItemImporter window = GetWindow<ItemImporter>("Item Importer Settings");
@@ -169,8 +167,6 @@ public sealed class ItemImporter : EditorWindow
         }
 
         EditorGUILayout.Space();
-        _testMode = EditorGUILayout.ToggleLeft("Test Mode (상위 10개만 생성)", _testMode);
-        EditorGUILayout.Space();
 
         if (GUILayout.Button("Import Items", GUILayout.Height(32f)))
         {
@@ -188,8 +184,20 @@ public sealed class ItemImporter : EditorWindow
 
     private async void ImportItems()
     {
+        await RunImportInternalAsync(null);
+    }
+
+    /// <summary>구글 시트 통합 파이프라인: 아이템 임포트 완료 후 콜백.</summary>
+    public void RunImportWithCallback(Action onComplete)
+    {
+        _ = RunImportInternalAsync(onComplete);
+    }
+
+    private async Task RunImportInternalAsync(Action onComplete)
+    {
         if (_isImporting)
         {
+            onComplete?.Invoke();
             return;
         }
 
@@ -206,6 +214,7 @@ public sealed class ItemImporter : EditorWindow
             _isImporting = false;
             EditorUtility.ClearProgressBar();
             Repaint();
+            onComplete?.Invoke();
         }
     }
 
@@ -316,8 +325,7 @@ public sealed class ItemImporter : EditorWindow
                         continue;
                     }
 
-                    int endRowExclusive = _testMode ? Mathf.Min(rows.Count, 1 + TestModeItemLimit) : rows.Count;
-                    if (_testMode) Debug.Log($"ItemImporter: Test Mode - {mainCategoryOverride} 상위 {Mathf.Max(0, endRowExclusive - 1)}개만 처리");
+                    int endRowExclusive = rows.Count;
 
                     HashSet<string> sheetImportedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
                     int processedCount = 0;
@@ -363,15 +371,10 @@ public sealed class ItemImporter : EditorWindow
 
                     importedIdsByMainCategory[mainCategoryOverride] = sheetImportedIds;
 
-                    if (!_testMode && sheetImportedIds.Count >= MinimumImportedItemCountForDeletion)
+                    if (sheetImportedIds.Count >= MinimumImportedItemCountForDeletion)
                     {
                         totalDeleted += CleanupDeletedItemsInMainCategory(mainCategoryOverride, sheetImportedIds);
                     }
-                }
-
-                if (_testMode)
-                {
-                    Debug.Log("ItemImporter: Test Mode - 삭제 동기화 건너뜀");
                 }
             }
             finally

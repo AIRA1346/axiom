@@ -7,7 +7,7 @@ using UnityEngine;
 /// </summary>
 public static class SteamPcPlayerSettingsHelper
 {
-    private const string MenuPath = "Tools/ARCHÉ/Apply Steam PC Player Settings";
+    private const string MenuPath = "Tools/ARCHÉ/Player Settings/Apply Steam PC Defaults";
 
     [MenuItem(MenuPath)]
     public static void ApplySteamPcDefaults()

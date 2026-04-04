@@ -12,9 +12,8 @@ public static class SteamworksService
     public static void InitializePlaceholder()
     {
 #if STEAMWORKS_ENABLED
-        // TODO: Steamworks.NET 또는 Facepunch.Steamworks 초기화
-        // 예: if (!SteamAPI.Init()) { Debug.LogError("Steam 초기화 실패"); return; }
-        // IsInitialized = true;
+        // Steamworks.NET 등 도입 후: SteamAPI.Init() 또는 SteamClient.Init 등으로 초기화하고 성공 시 IsInitialized = true.
+        IsInitialized = false;
 #else
         IsInitialized = false;
 #endif
@@ -24,7 +23,7 @@ public static class SteamworksService
     public static void ShutdownPlaceholder()
     {
 #if STEAMWORKS_ENABLED
-        // TODO: SteamAPI.Shutdown();
+        // Steamworks.NET 등 도입 후: SteamAPI.Shutdown() 또는 SteamClient.Shutdown 호출.
 #endif
         IsInitialized = false;
     }

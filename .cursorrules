@@ -17,7 +17,7 @@
 
 ## 3. Data & Resource (10만 개 데이터 대응)
 - **Hierarchy**: `Resources/items/[MainCategory]/[MiddleCategory]/[SubCategory]/[Tier]/` 4단계 위계 경로를 준수한다. (슬래시 구분, ItemMetadata.GetResourcePath() 형식과 일치)
-- **Binary System**: `ItemMetadata.bin`(StreamingAssets) 바이너리 데이터를 우선 사용한다.
+- **Binary System**: `ItemMetadataCatalog.bin` + `ItemMetadata/ItemMetadata_shard_XX.bin`(대분류 샤딩)을 기본으로 사용한다. 런타임은 카탈로그만 먼저 RAM에 올리고, 필요한 샤드만 추가 로드한다. 레거시 단일 `ItemMetadata.bin`도 지원한다.
   - `Resources.LoadAll`은 절대 금지. 대량 로드는 반드시 바이너리 메타데이터 + 개별 `LoadAsync` 조합 사용.
   - `Resources.LoadAsync`는 UI 셀 Bind 시 개별 아이템 로드에 허용.
 - **Addressables**: 아이템 에셋 그룹(Items_*)은 Addressables로 관리. 빌드 시 번들 분리 대상.
@@ -29,5 +29,5 @@
 - **Logging**: `Debug.Log`는 개발 중 디버깅용. 릴리스 빌드에서는 조건부 컴파일(`#if UNITY_EDITOR`) 또는 로깅 레벨로 분리한다.
 
 ## 5. 예외·폴백 정책
-- 기존 에셋 구조(recipes, items 하위 리소스)는 마이그레이션 전까지 `Resources.LoadAll` 폴백 허용. 새 코드에서는 사용 금지.
+- **아이템**: `ItemMetadata.bin`이 없을 때는 `Resources/ItemManifest.asset`(단일 로드, 에디터 `GSI > Build Item Manifest`)로만 개발용 목록을 제공한다. `Resources.LoadAll<ItemData>` 런타임 호출은 사용하지 않는다.
 - 규칙이 현실적으로 지키기 어려운 경우, 위반 이유를 주석으로 명시한다.

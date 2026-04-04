@@ -13,7 +13,7 @@ public static class InventoryCategoryPaginationPrefabCreator
     private const string PrefabPath = "Assets/Prefabs/InventoryCategoryPaginationPrefab.prefab";
     private const int UILayer = 5;
 
-    [MenuItem("Tools/Create Inventory Category Pagination Prefab")]
+    [MenuItem("Tools/ARCHÉ/Inventory/Create Category Pagination Prefab")]
     public static void Create()
     {
         var root = new GameObject("InventoryCategoryPagination");
@@ -74,7 +74,7 @@ public static class InventoryCategoryPaginationPrefabCreator
         EditorUtility.DisplayDialog("완료", "프리팹 생성 완료.\n\nTools > Fix Inventory Panel Layout 을 실행하여 카테고리를 상단에 배치하세요.", "확인");
     }
 
-    [MenuItem("Tools/Fix Inventory Panel Layout")]
+    [MenuItem("Tools/ARCHÉ/Inventory/Fix Panel Layout")]
     public static void FixInventoryPanelLayout()
     {
         var panel = GameObject.Find("InventoryPanel");

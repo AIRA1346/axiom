@@ -5,25 +5,41 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// ItemData 에셋을 스캔하여 ItemMetadata.bin(바이너리)을 생성합니다.
-/// 10만 개도 빠르게 처리. BinaryWriter로 0/1 이진 데이터 저장.
-/// Tools > Build Item Metadata Database
+/// ItemData 에셋을 스캔하여 메타데이터 바이너리를 생성합니다.
+/// <para><b>샤딩(기본)</b>: ItemMetadataCatalog.bin(ItemId→대분류) + ItemMetadata/ItemMetadata_shard_XX.bin(대분류별 본문).</para>
+/// <para>레거시 단일 ItemMetadata.bin은 생성하지 않습니다(런타임은 여전히 읽을 수 있음).</para>
+/// 빌드 후 ItemMetadata 검증 → Addressables ItemId 주소 검증을 같은 순서로 실행합니다.
+/// Tools → ARCHÉ → Items → Build Item Metadata Database
 /// </summary>
 public static class ItemMetadataBuilder
 {
     private const string ResourceFolderPath = "Assets/Resources";
-    private const string OutputPath = "Assets/StreamingAssets/ItemMetadata.bin";
 
-    [MenuItem("Tools/Build Item Metadata Database")]
-    [MenuItem("Assets/Build Item Metadata Database")]
-    [MenuItem("GSI/Build Item Metadata Database")]
-    public static void Build() => Build(false);
+    private const string CatalogOutputRelative = "Assets/StreamingAssets/ItemMetadataCatalog.bin";
+
+    private const string ShardFolderRelative = "Assets/StreamingAssets/ItemMetadata";
+
+    private const uint BinaryMagic = 0x47534942; // "GSIB"
+
+    private const uint CatalogMagic = 0x5441434D; // "MCAT"
+
+    private const int BinaryVersion = 2;
+
+    private const int CatalogFormatVersion = 1;
+
+    [MenuItem("Tools/ARCHÉ/Items/Build Item Metadata Database")]
+    [MenuItem("Assets/ARCHÉ/Build Item Metadata Database")]
+    public static void Build()
+    {
+        _ = Build(false);
+    }
 
     /// <summary>
-    /// ItemMetadata.bin을 생성합니다.
+    /// 샤딩된 메타데이터(카탈로그 + 샤드)를 생성합니다.
     /// </summary>
     /// <param name="silent">true면 진행률 표시 없이 실행 (CI/배치 모드용)</param>
-    public static void Build(bool silent)
+    /// <returns>메타 검증·Addressables 주소 검증까지 통과하면 true.</returns>
+    public static bool Build(bool silent)
     {
         string projectRoot = Path.GetDirectoryName(Application.dataPath) ?? Application.dataPath;
         var metadataList = new List<ItemMetadata>();
@@ -38,7 +54,7 @@ public static class ItemMetadataBuilder
                 {
                     EditorUtility.ClearProgressBar();
                     Debug.LogWarning("[ItemMetadataBuilder] 사용자에 의해 중단됨.");
-                    return;
+                    return false;
                 }
             }
 
@@ -55,36 +71,79 @@ public static class ItemMetadataBuilder
 
         if (!silent)
         {
-            EditorUtility.DisplayProgressBar("Build Item Metadata", "바이너리 쓰는 중...", 0.95f);
+            EditorUtility.DisplayProgressBar("Build Item Metadata", "샤딩 바이너리 쓰는 중...", 0.95f);
         }
 
-        string fullOutputPath = Path.Combine(projectRoot, OutputPath).Replace("\\", "/");
-        string dir = Path.GetDirectoryName(fullOutputPath) ?? "";
-        if (!string.IsNullOrEmpty(dir))
+        var byMain = new Dictionary<int, List<ItemMetadata>>();
+        for (int i = 0; i < metadataList.Count; i++)
         {
-            Directory.CreateDirectory(dir);
+            ItemMetadata m = metadataList[i];
+            int k = (int)m.MainCategory;
+            if (!byMain.TryGetValue(k, out List<ItemMetadata> list))
+            {
+                list = new List<ItemMetadata>();
+                byMain[k] = list;
+            }
+
+            list.Add(m);
         }
 
-        const uint BinaryMagic = 0x47534942; // "GSIB"
-        const int BinaryVersion = 2;
+        string streamingRoot = Path.Combine(projectRoot, "Assets/StreamingAssets").Replace("\\", "/");
+        Directory.CreateDirectory(streamingRoot);
 
-        using (var fs = new FileStream(fullOutputPath, FileMode.Create, FileAccess.Write, FileShare.None))
+        string shardRoot = Path.Combine(projectRoot, ShardFolderRelative).Replace("\\", "/");
+        if (Directory.Exists(shardRoot))
+        {
+            Directory.Delete(shardRoot, true);
+        }
+
+        Directory.CreateDirectory(shardRoot);
+
+        string legacyPath = Path.Combine(projectRoot, "Assets/StreamingAssets/ItemMetadata.bin").Replace("\\", "/");
+        if (File.Exists(legacyPath))
+        {
+            File.Delete(legacyPath);
+        }
+
+        string catalogPath = Path.Combine(projectRoot, CatalogOutputRelative).Replace("\\", "/");
+        using (var fs = new FileStream(catalogPath, FileMode.Create, FileAccess.Write, FileShare.None))
         using (var writer = new BinaryWriter(fs, System.Text.Encoding.UTF8))
         {
-            writer.Write(BinaryMagic);
-            writer.Write(BinaryVersion);
+            writer.Write(CatalogMagic);
+            writer.Write(CatalogFormatVersion);
             writer.Write(metadataList.Count);
-            foreach (var m in metadataList)
+            for (int i = 0; i < metadataList.Count; i++)
             {
+                ItemMetadata m = metadataList[i];
                 writer.Write(m.ItemId ?? "");
-                writer.Write(m.ItemName ?? "");
-                writer.Write((int)m.MainCategory);
-                writer.Write((int)m.MiddleCategory);
-                writer.Write((int)m.SubCategory);
-                writer.Write((int)m.Tier);
-                writer.Write(m.ResourcePath ?? "");
-                writer.Write(m.PurchasePrice);
-                writer.Write(m.SalePrice);
+                writer.Write((byte)Mathf.Clamp((int)m.MainCategory, 0, 255));
+            }
+        }
+
+        foreach (var kv in byMain)
+        {
+            int main = kv.Key;
+            List<ItemMetadata> list = kv.Value;
+            string shardPath = Path.Combine(shardRoot, $"ItemMetadata_shard_{main:D2}.bin").Replace("\\", "/");
+            using (var fs = new FileStream(shardPath, FileMode.Create, FileAccess.Write, FileShare.None))
+            using (var writer = new BinaryWriter(fs, System.Text.Encoding.UTF8))
+            {
+                writer.Write(BinaryMagic);
+                writer.Write(BinaryVersion);
+                writer.Write(list.Count);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    ItemMetadata m = list[i];
+                    writer.Write(m.ItemId ?? "");
+                    writer.Write(m.ItemName ?? "");
+                    writer.Write((int)m.MainCategory);
+                    writer.Write((int)m.MiddleCategory);
+                    writer.Write((int)m.SubCategory);
+                    writer.Write((int)m.Tier);
+                    writer.Write(m.ResourcePath ?? "");
+                    writer.Write(m.PurchasePrice);
+                    writer.Write(m.SalePrice);
+                }
             }
         }
 
@@ -95,7 +154,14 @@ public static class ItemMetadataBuilder
 
         AssetDatabase.Refresh();
 
-        Debug.Log($"[ItemMetadataBuilder] {metadataList.Count}개 아이템 메타데이터 빌드 완료: {OutputPath}");
+        Debug.Log(
+            $"[ItemMetadataBuilder] {metadataList.Count}개 메타데이터 샤딩 빌드 완료: {CatalogOutputRelative}, {ShardFolderRelative}/ItemMetadata_shard_*.bin (레거시 ItemMetadata.bin 은 제거됨)");
+
+        ItemMetadataValidationResult validation = ItemMetadataValidator.ValidateShardedBuild(projectRoot);
+        ItemMetadataValidator.Report(validation, silent);
+
+        bool addressablesOk = AddressablesItemAddressValidator.ValidateWithResult(silent);
+        return validation.Success && addressablesOk;
     }
 
     private static bool TryParseMetadataFromFile(string fullPath, string assetPath, out ItemMetadata meta)
