@@ -1,0 +1,23 @@
+# 텍스트 자산은 LF로 통일(크로스 플랫폼·리뷰 diff 안정)
+* text=auto
+
+*.cs text diff=csharp eol=lf
+*.shader text eol=lf
+*.compute text eol=lf
+*.cginc text eol=lf
+*.hlsl text eol=lf
+*.meta text eol=lf
+*.json text eol=lf
+*.asmdef text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# Unity YAML 자산(바이너리 아님)
+*.unity text eol=lf
+*.prefab text eol=lf
+*.asset text eol=lf
+*.mat text eol=lf
+*.anim text eol=lf
+*.controller text eol=lf
+*.overrideController text eol=lf
+*.preset text eol=lf

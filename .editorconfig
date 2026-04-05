@@ -1,0 +1,19 @@
+# ARCHÉ / G.S.I — 에디터·리뷰 일관성 (대규모 협업 시 충돌·노이즈 감소)
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+[*.{cs,csx}]
+indent_style = space
+indent_size = 4
+
+[*.{json,yml,yaml,asmdef}]
+indent_size = 2
+
+[*.{md,txt}]
+indent_style = space
+indent_size = 2

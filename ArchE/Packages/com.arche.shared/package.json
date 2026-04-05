@@ -1,0 +1,8 @@
+{
+  "name": "com.arche.shared",
+  "version": "0.1.0",
+  "displayName": "ArchE Shared",
+  "unity": "6000.3",
+  "description": "ARCHÉ / G.S.I 공통 코드를 점진적으로 옮길 로컬 UPM 패키지입니다.",
+  "dependencies": {}
+}

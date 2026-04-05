@@ -9,7 +9,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$projectRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent $PSScriptRoot
+$projectRoot = Join-Path $repoRoot "ArchE"
 
 if (-not $UnityEditorPath -or -not (Test-Path -LiteralPath $UnityEditorPath)) {
     Write-Error "Unity.exe 경로를 지정하세요. 예: `$env:UNITY_EDITOR_PATH = '...\\Editor\\Unity.exe' 또는 -UnityEditorPath"

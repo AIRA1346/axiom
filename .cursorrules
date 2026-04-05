@@ -1,33 +1,68 @@
-# G.S.I Project: Official Skill Assessment Game - Master Rules
+# ArchE Project — Cursor Rules
 
-## 1. Naming Conventions (업계 표준 명명 규칙)
+## 0. 프로젝트 정체성 (ArchE · G.S.I · ARCHÉ)
+- **리포 루트 폴더명**: **`RuneAtelier`** 권장 (예: `C:\Users\rkdwl\RuneAtelier`). 예전 이름 `G.S.I`는 경로 혼동을 줄이기 위해 바꾼다. **Cursor·Unity·Hub를 모두 종료한 뒤** `Tools/Rename-RepoFolder-To-RuneAtelier.ps1` 실행.
+- **모노레포**: Unity 프로젝트 루트는 **`ArchE/`** (ARCHÉ 본편)와 **`GSI/`** (G.S.I 시험) 두 개다. **`ArchE/Assets`와 `GSI/Assets`는 서로 독립**(물리 복사본). 리포 루트에서 Unity를 열지 말고 **`OPEN-UNITY.txt`** 를 본다. 공통 코드는 **`packages/com.arche.shared`** 로컬 UPM 패키지로 옮겨 간다(현재는 마커만 있음).
+- **프로젝트명**: **ArchE** — 솔루션·리포지토리 전체를 가리키기도 한다.
+- **G.S.I**: 게임 실력을 측정하는 **시험(스킬 어세스먼트) 모드**가 **별도 씬·시스템**으로 들어 있다(`GSIScene` 등). ArchE 전체와 동일시하지 않는다.
+- **ARCHÉ(게임 본편)**: **1인칭 오픈월드 판타지**. 플레이어가 탐험하는 본작이다.
+- **도서관·코덱스**: 수십만 단위 **아이템**과 **판타지 세계관·지식(텍스트)**이 누적될 **도서관형 콘텐츠**를 전제로 한다. 규모상 **메모리·디스크·로드·스트리밍·검색**이 항상 이슈가 된다.
+
+## 1. 규모 전제 — 최적화·체계화·업계 표준 (최우선)
+- **최우선 가치**: **성능(프레임·로드 시간·RAM 상한)·데이터 일관성·재현 가능한 빌드/검증**. "일단 돌아가게"보다 **측정·검증 가능한 구조**를 선호한다.
+- **적용 방향**: Unity·C# **공식 권장**, 널리 쓰이는 **패턴**(Addressables, 바이너리 메타데이터, 샤딩, UI 가상화, asmdef, 에디터 자동 검증 등)을 **가능하면** 따른다. 새로운 방식을 도입할 때는 **기존 파이프라인**(P0, 메타 빌드, Codex)과 **충돌 여부**를 먼저 본다.
+- **AI로 개발할 때**: 추측으로 대량 데이터 포맷이나 로드 순서를 바꾸지 않는다. 변경 시 **영향 범위**(아이템·Codex·Addressables·로케일)를 짧게라도 명시한다.
+
+## 2. Naming Conventions (업계 표준 명명 규칙)
 - **PascalCase**: Classes, Structs, Enums, Methods, Public Properties, Filenames. (예: `ItemDatabase.cs`, `PurchaseItem()`)
 - **camelCase**: Local Variables, Method Parameters. (예: `itemId`, `currentCredit`)
 - **_camelCase**: Private Fields. (예: `_inventoryManager`, `_isInitialized`)
 - **Consistency**: 유니티 인스펙터에 노출된 이름과 코드 내 변수명을 일치시킨다.
 
-## 2. Technical Philosophy (기술 철학 및 성능)
-- **Performance**: 120 FPS 유지를 최우선으로 한다.
+## 3. Technical Philosophy (기술 철학 및 성능)
+- **Performance**: **120 FPS**를 목표로 한다(플랫폼·빌드에 따라 가변).
   - `Update()` 사용 지양, 이벤트 기반(Action/UnityEvent) 프로그래밍 지향.
   - **예외**: 입력 폴링(InputManager), 스크롤 가상화 갱신, 물리 연산 등 표준 Unity 패턴이 필수인 경우만 허용. 이 경우 매 프레임 무거운 연산 금지.
   - 무거운 연산(데이터 로드 등)은 반드시 `async/await`를 사용한다.
-  - `async void`는 이벤트 핸들러(Unity 콜백)에서만 사용. 메서드는 `async Task`를 기본으로 한다.
-- **UI Virtualization**: 50개 이상의 항목을 표시하는 리스트형 UI는 반드시 Virtualized Scroll View로 셀을 재사용한다. 소규모 리스트(예: 20개 미만)는 일반 스크롤 допусти.
-- **Visual Tone**: 무채색(Achromatic), 공식적(Official), 절제된(Clean) 분위기를 유지한다.
+  - `async void`는 **이벤트 핸들러·Unity 라이프사이클 콜백**(`Start`, `OnEnable` 등)에서만 사용. 그 외 메서드는 `async Task`를 기본으로 한다.
+- **UI Virtualization**: **50개 이상**의 항목을 표시하는 리스트형 UI는 반드시 Virtualized Scroll View로 셀을 재사용한다. 소규모 리스트(예: **20개 미만**)는 일반 스크롤 허용.
+- **Visual Tone (G.S.I 시험 UI)**: 무채색(Achromatic), 공식적(Official), 절제된(Clean) 분위기. **힐링·오픈월드(ARCHÉ)** 등은 해당 씬 콘셉에 맞게 조정 가능.
 
-## 3. Data & Resource (10만 개 데이터 대응)
-- **Hierarchy**: `Resources/items/[MainCategory]/[MiddleCategory]/[SubCategory]/[Tier]/` 4단계 위계 경로를 준수한다. (슬래시 구분, ItemMetadata.GetResourcePath() 형식과 일치)
+## 4. Data & Resource (수십만 건 스케일)
+- **Hierarchy**: `ArchE/Assets/Resources/items/[MainCategory]/[MiddleCategory]/[SubCategory]/[Tier]/` 4단계 위계 경로를 준수한다. (슬래시 구분, `ItemMetadata.GetResourcePath()` 형식과 일치)
 - **Binary System**: `ItemMetadataCatalog.bin` + `ItemMetadata/ItemMetadata_shard_XX.bin`(대분류 샤딩)을 기본으로 사용한다. 런타임은 카탈로그만 먼저 RAM에 올리고, 필요한 샤드만 추가 로드한다. 레거시 단일 `ItemMetadata.bin`도 지원한다.
-  - `Resources.LoadAll`은 절대 금지. 대량 로드는 반드시 바이너리 메타데이터 + 개별 `LoadAsync` 조합 사용.
+  - **샤드 캐시**: `ItemMetadataBinaryLoader.ShardCacheCapacity`(기본 16, **0 이하면 LRU 비활성**)로 동시에 올릴 대분류 샤드 수를 제한한다.
+  - `Resources.LoadAll`은 절대 금지. 대량 로드는 바이너리 메타데이터 + 개별 `LoadAsync` 조합.
   - `Resources.LoadAsync`는 UI 셀 Bind 시 개별 아이템 로드에 허용.
 - **Addressables**: 아이템 에셋 그룹(Items_*)은 Addressables로 관리. 빌드 시 번들 분리 대상.
-- **Safety**: 모든 참조 변수는 사용 전 `null` 체크를 수행하고, 주석은 반드시 **한국어**로 작성한다.
+- **Codex 본문**: Addressables에 주소가 있을 때만 로드 시도, 없으면 Resources (InvalidKeyException·불필요한 실패 로그 방지).
+- **Safety**: 모든 참조 변수는 사용 전 `null` 체크. 주석은 **한국어**로 작성한다.
 
-## 4. AI Interaction (AI 협업 지침)
-- **Standard First**: AI는 임의의 규칙보다 C# 및 유니티 공식 문서의 표준 관습을 우선하여 코드를 생성한다. 규칙 간 충돌 시 본 항목이 우선한다.
+## 5. 부팅·시스템 순서 (Localization / Addressables)
+- **Addressables**는 `AddressablesBootstrap.EnsureInitializedAsync()`로 한 번 정리된 뒤, Localization·아이템·Codex 등이 동일한 초기화를 공유한다.
+- **GameLocalization** 초기화 전에 Addressables 준비가 끝나도록 한다(문자 테이블·로케일 에셋이 Addressables에 있을 때 순서 이슈 방지).
+
+## 6. 씬·모드 (G.S.I 시험 / 힐링 / ARCHÉ 오픈월드)
+- 씬 이름은 **`SceneNames`** 상수와 `EditorBuildSettings`를 함께 맞춘다.
+- **인트로**: `IntroScene`. **메인 허브**: `SampleScene` (`SceneNames.MainHub`). **G.S.I 시험**: `GSIScene` (`SceneNames.GSI`). **힐링·낚시**: `HealingHubScene`, `FishingLakeScene` — 전환은 `HealingSceneNavigation`. **ARCHÉ 오픈월드(프로토타입)**: `OpenWorldScene`, `OpenWorldSceneNavigation`.
+- **G.S.I 단독 빌드(아이템 DB 제외)**: 스크립팅 심볼 **`GSI_PRODUCT`** 를 켠다(메뉴 **Tools → ARCHÉ → Build Profile → GSI 단독 빌드 심볼 켜기**). 켜면 `ItemDatabase`는 메타/매니페스트를 로드하지 않으며, 인트로도 DB 동기 문구를 건너뛴다. 배포 전 **심볼 끄기**로 ARCHÉ 전체 개발으로 되돌린다.
+- 새 모드 추가 시 기존 `GameManager`·`UIManager`와의 상태 전환 충돌을 피한다.
+
+## 7. 에디터·검증·릴리스
+- 데이터 임포트·빌드 후: **Tools → ARCHÉ** (릴리스 허브, P0 검증, Item Metadata 빌드, Codex 검증, Addressables Build Player Content 등). Unity는 **`ArchE`** 폴더를 연 상태에서 실행한다.
+- CI(Unity 라이선스)는 선택. 로컬에서는 **P0 검증만**: `Tools/Run-P0ValidateOnly.ps1`(프로젝트 경로는 자동으로 `ArchE`) 또는 `ArchEP0ValidationGate.RunP0ValidateOnly` / 에디터 메뉴 **Tools → ARCHÉ → Release**.
+
+## 8. 외부 에셋·URP·입력
+- **URP** 프로젝트에서 Built-in 전용 셰이더 머티리얼은 **분홍색**으로 보일 수 있다 → URP Lit 등으로 변환하거나 에셋 문서의 URP 대응을 따른다.
+- **레거시 Input**(`Input.GetAxis` 등)을 쓰는 에셋과 **Input System**을 병행할 때는 Player Settings **Active Input Handling = Both**를 검토한다.
+
+## 9. AI Interaction (AI 협업 지침)
+- **Standard First**: AI는 임의의 규칙보다 C# 및 유니티 공식 문서의 표준 관습을 우선한다. 규칙 간 충돌 시 본 항목이 우선한다.
 - **Encapsulation**: 필드는 `[SerializeField] private`를 기본으로 하고 프로퍼티로 노출한다.
 - **Logging**: `Debug.Log`는 개발 중 디버깅용. 릴리스 빌드에서는 조건부 컴파일(`#if UNITY_EDITOR`) 또는 로깅 레벨로 분리한다.
+- **구조 유지**: 새 코드는 **기존 Assembly·폴더 규칙**(예: `ArchE.Game`, `ArchE.Platform`, `ArchE.Healing`, `OpenWorld` 등)에 맞추고, 루트에 **일회성 스크립트**를 쌓지 않는다. 대규모 데이터·주소 규칙을 바꿀 때는 **에디터 검증·P0** 경로를 함께 갱신할 수 있는지 확인한다.
+- **결정 기록**: 워크어라운드(순서 하드코딩, 매직 넘버)를 넣을 때는 **한국어 주석**으로 이유를 남긴다.
 
-## 5. 예외·폴백 정책
+## 10. 예외·폴백 정책
 - **아이템**: `ItemMetadata.bin`이 없을 때는 `Resources/ItemManifest.asset`(단일 로드, 에디터 `GSI > Build Item Manifest`)로만 개발용 목록을 제공한다. `Resources.LoadAll<ItemData>` 런타임 호출은 사용하지 않는다.
 - 규칙이 현실적으로 지키기 어려운 경우, 위반 이유를 주석으로 명시한다.

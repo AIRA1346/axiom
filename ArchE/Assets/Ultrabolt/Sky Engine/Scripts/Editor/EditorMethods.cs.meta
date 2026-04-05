@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 2b2fd47b54c6ecd4bb849c9d5accf59d
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324253
+  packageName: Sky Engine
+  packageVersion: 1.0
+  assetPath: Assets/Ultrabolt/Sky Engine/Scripts/Editor/EditorMethods.cs
+  uploadId: 769224

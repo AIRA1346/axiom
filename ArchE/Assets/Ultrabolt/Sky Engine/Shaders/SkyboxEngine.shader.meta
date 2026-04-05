@@ -1,0 +1,16 @@
+fileFormatVersion: 2
+guid: eb3c6fb598ded4c71b8968e1c40a3b4d
+ShaderImporter:
+  externalObjects: {}
+  defaultTextures: []
+  nonModifiableTextures: []
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324253
+  packageName: Sky Engine
+  packageVersion: 1.0
+  assetPath: Assets/Ultrabolt/Sky Engine/Shaders/SkyboxEngine.shader
+  uploadId: 769224

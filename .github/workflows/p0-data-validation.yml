@@ -1,21 +1,17 @@
 # P0: ItemMetadata(샤딩)·Addressables 주소·Codex 본문(.txt) 일관성 검사 (EditMode 테스트)
 #
-# 필수 설정:
-#   Repository → Settings → Secrets and variables → Actions
-#   - UNITY_LICENSE: Unity Personal/Plus/Pro 라이선스 (game-ci 활성화 가이드: https://game.ci/docs/github/activation)
+# [보류] GitHub에서 Unity(game-ci)를 돌리려면 UNITY_LICENSE 등 Secrets가 필요합니다.
+# 당분간은 로컬에서만 검증하세요: Tools → ARCHÉ → Release, 또는 Tools\Run-P0ValidateOnly.ps1
 #
-# Unity 버전은 ProjectSettings/ProjectVersion.txt 와 맞출 것.
+# 나중에 CI를 다시 켤 때:
+#   - Personal: https://game.ci/docs/github/activation (UNITY_LICENSE, UNITY_EMAIL, UNITY_PASSWORD)
+#   - 아래 on: 에 pull_request 블록을 다시 추가하면 PR마다 자동 실행 가능
 
 name: P0 Data Validation
 
 on:
+  # 수동 실행만 (Actions 탭 → 이 워크플로 → Run workflow). Secrets 준비 후 사용.
   workflow_dispatch:
-  pull_request:
-    paths:
-      - 'Assets/**'
-      - 'ProjectSettings/**'
-      - 'Packages/**'
-      - '.github/workflows/p0-data-validation.yml'
 
 jobs:
   editmode-tests:
@@ -31,9 +27,11 @@ jobs:
         uses: game-ci/unity-test-runner@v4
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
           unityVersion: 6000.3.10f1
-          projectPath: .
+          projectPath: ArchE
           testMode: editmode
           artifactsPath: test-results
           githubToken: ${{ secrets.GITHUB_TOKEN }}

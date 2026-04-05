@@ -1,0 +1,18 @@
+fileFormatVersion: 2
+guid: 4ea15de6aa1de924990a48a87336366f
+MonoImporter:
+  externalObjects: {}
+  serializedVersion: 2
+  defaultReferences: []
+  executionOrder: 0
+  icon: {instanceID: 0}
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324253
+  packageName: Sky Engine
+  packageVersion: 1.0
+  assetPath: Assets/Ultrabolt/Sky Engine/Scripts/Editor/WorldTimeEventEditor.cs
+  uploadId: 769224

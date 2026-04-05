@@ -1,0 +1,15 @@
+fileFormatVersion: 2
+guid: 4195d31cc7b144914b4ffe90c3adf382
+timeCreated: 1453904058
+licenseType: Store
+NativeFormatImporter:
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
+AssetOrigin:
+  serializedVersion: 1
+  productId: 324253
+  packageName: Sky Engine
+  packageVersion: 1.0
+  assetPath: Assets/Ultrabolt/Sky Engine/Models/Materials/Clouds/LowCloud.mat
+  uploadId: 769224

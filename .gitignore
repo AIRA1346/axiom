@@ -1,4 +1,49 @@
+# --- Unity (모노레포: 프로젝트 루트는 ArchE/ / GSI/) ---
+/ArchE/[Ll]ibrary/
+/ArchE/[Tt]emp/
+/ArchE/[Oo]bj/
+/ArchE/[Bb]uild/
+/ArchE/[Bb]uilds/
+/ArchE/[Ll]ogs/
+/ArchE/[Uu]ser[Ss]ettings/
+/GSI/[Ll]ibrary/
+/GSI/[Tt]emp/
+/GSI/[Oo]bj/
+/GSI/[Bb]uild/
+/GSI/[Bb]uilds/
+/GSI/[Ll]ogs/
+/GSI/[Uu]ser[Ss]ettings/
+
+# --- 레거시: 리포 루트에 Unity 폴더가 있을 때 (과거 구조) ---
 /[Ll]ibrary/
 /[Tt]emp/
 /[Oo]bj/
 /[Bb]uild/
+/[Bb]uilds/
+/[Ll]ogs/
+/[Uu]ser[Ss]ettings/
+/[Mm]emoryCaptures/
+/[Rr]ecordings/
+# 에디터 크래시·캐시
+sysinfo.txt
+*.stackdump
+
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.userosscache
+*.suo
+*.pidb
+*.svd
+*.VC.db
+*.VC.opendb
+
+# OS
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# (선택) 대용량 로컬 전용 — 필요 시 주석 해제
+# *.apk
+# *.aab
