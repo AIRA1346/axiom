@@ -13,6 +13,8 @@
 /GSI/[Bb]uilds/
 /GSI/[Ll]ogs/
 /GSI/[Uu]ser[Ss]ettings/
+# GSI 루트에 생기는 배치/에디터 로그(커밋 불필요)
+/GSI/*.log
 
 # --- 레거시: 리포 루트에 Unity 폴더가 있을 때 (과거 구조) ---
 /[Ll]ibrary/

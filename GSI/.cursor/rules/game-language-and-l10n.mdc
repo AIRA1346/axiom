@@ -1,0 +1,24 @@
+---
+description: 게임 소스·UI 기본 언어(영어) 및 한글 로컬라이제이션 병행
+alwaysApply: true
+---
+
+# Game language and localization
+
+## Source language (default)
+
+- **Develop the game in English**: user-facing strings in code should be **English** (or stable English keys), unless the file is explicitly a locale-only asset.
+- **Code identifiers**: English (`PascalCase` / `camelCase` as usual). **Comments**: English preferred for shared/engine code; Korean is OK for team-only notes if needed.
+- **Do not** sprinkle Korean user-facing copy directly in gameplay/UI scripts when the project uses Localization—use the localization pipeline instead.
+- **Runtime UI**: use `GameLocalization.GetUiString` / `FormatUiString` with keys from `UiStringKeys` and the **`UI_Strings`** table (`Assets/Localization/`). English fallbacks live in code; `en` / `ko-KR` rows in the String Table are the source of truth for shipped text.
+
+## Korean (and other locales)
+
+- **Parallel localization is expected**: when adding or changing UI/gameplay text, **update or add the Korean string table (and other locales)** in the same change when the project uses Unity Localization / Addressables string tables (or equivalent).
+- Prefer **String Table entries** / **CSV / Google Sheet sync** patterns already in the repo; follow `GameLocalization` and existing table locations.
+- If a string is not yet in the loc system, add the **English** line first, then add **ko** (and mirror structure for other languages the product ships).
+
+## AI assistant behavior
+
+- When implementing features with visible text: propose **English** source strings, and **Korean translations** for `ko` where tables exist or where the user asks for Korean copy.
+- Keep terminology consistent with existing tables (search before inventing new product names).

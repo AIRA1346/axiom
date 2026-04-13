@@ -14,6 +14,7 @@ Unity 프로젝트 위치 (리포 루트가 아님 — 위 폴더 안의 하위 
    폴더: GSI
    Unity Hub → Add → (리포)\GSI 선택
    GSI는 ArchE/Assets를 복사한 자체 Assets를 가진다. 이후 GSI에서만 쓰지 않는 씬·에셋은 삭제해 용량을 줄이면 된다.
+   GSI 프로젝트 루트의 csc.rsp 가 GSI_PRODUCT 를 항상 켜서(에디터 포함) 아이템 메타 대량 로드·인트로 대기를 하지 않는다.
 
 공유 패키지 com.arche.shared:
   각 Unity 프로젝트 폴더 안에 포함됨 → ArchE\Packages\com.arche.shared, GSI\Packages\com.arche.shared

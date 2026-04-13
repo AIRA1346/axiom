@@ -1,0 +1,731 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e9620f8c34305754d8cc9a7e49e852d9, type: 3}
+  m_Name: UI_Strings_en
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.StringTable
+  m_LocaleId:
+    m_Code: en
+  m_SharedData: {fileID: 11400000, guid: a3e81d3e48ea35f44a8049640996b031, type: 2}
+  m_Metadata:
+    m_Items: []
+  m_TableData:
+  - m_Id: 953615900672
+    m_Localized: Start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697088
+    m_Localized: Shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697089
+    m_Localized: INITIALIZING
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697090
+    m_Localized: CONNECTING TO SYSTEM...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697091
+    m_Localized: ASSESSMENT SYSTEM STANDBY...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697092
+    m_Localized: ACCESS GRANTED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697093
+    m_Localized: Game Skill Index
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697094
+    m_Localized: 'Skill metrics: assessment and records'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697095
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697096
+    m_Localized: Master volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697097
+    m_Localized: Sound effects
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697098
+    m_Localized: Music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697099
+    m_Localized: Close (ESC)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697100
+    m_Localized: 'Practice: Memory'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697101
+    m_Localized: 'Practice: Rhythm'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697102
+    m_Localized: 'Practice: Multiple object tracking'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697103
+    m_Localized: 'Practice: Bullet Hell'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697104
+    m_Localized: 'Practice rank: Grade 1 is hardest, Grade 9 is easiest (each mode)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697105
+    m_Localized: Unified official exam
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697106
+    m_Localized: Six subjects in random order. Pass rules and your final total score use the grade you select below.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697107
+    m_Localized: Start unified exam (uses 1 exam ticket)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697108
+    m_Localized: 'Gold: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697109
+    m_Localized: 'Exam tickets: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697110
+    m_Localized: 'Gold: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697111
+    m_Localized: 'Exam tickets: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697112
+    m_Localized: Next subject
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697113
+    m_Localized: Continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697114
+    m_Localized: '{0}/6 - Next: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697115
+    m_Localized: "BEST  Reaction {0}   Aim {1}   Memory {2}\nBEST  Rhythm {3}   MOT {4}   Bullet Hell {5}"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697116
+    m_Localized: Reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697117
+    m_Localized: Aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697118
+    m_Localized: Memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697119
+    m_Localized: Rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697120
+    m_Localized: Multiple object tracking (MOT)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697121
+    m_Localized: Bullet Hell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697122
+    m_Localized: Pass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697123
+    m_Localized: Fail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697124
+    m_Localized: Failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697125
+    m_Localized: Reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697126
+    m_Localized: Aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697127
+    m_Localized: Memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697128
+    m_Localized: Rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697129
+    m_Localized: MOT
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697130
+    m_Localized: Bullet Hell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697131
+    m_Localized: Unified exam results
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697132
+    m_Localized: 'Grade {0} exam, total score {1:F1} / 600'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697133
+    m_Localized: 'Combined score {0:F0}+ required - {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697134
+    m_Localized: Passed overall
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697135
+    m_Localized: Did not pass overall
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697136
+    m_Localized: '[ Subjects ]'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697137
+    m_Localized: 'REWARD: +{0} gold (tier {1})'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697138
+    m_Localized: 'REWARD: 0 gold (did not pass overall)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697139
+    m_Localized: 'FAILED\nReaction {0:F0} ms (pass if {1:F0} ms or faster)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697140
+    m_Localized: 'FAILED\nAim {0:F2}s (pass if {1:F1}s or faster)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697141
+    m_Localized: 'REWARD: 0 gold'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697142
+    m_Localized: Top
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697143
+    m_Localized: High
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697144
+    m_Localized: Mid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697145
+    m_Localized: Low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697146
+    m_Localized: Entry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697147
+    m_Localized: Memorize the highlighted targets.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697148
+    m_Localized: Tracking... (every shape looks the same)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697149
+    m_Localized: 'Tap the targets you tracked (up to {0}). Press [Submit] any time.'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697150
+    m_Localized: 'Selected {0} / {1} - [Submit] to finish (partial selection is OK)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697151
+    m_Localized: Submit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697152
+    m_Localized: Ready...
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697153
+    m_Localized: Go!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697154
+    m_Localized: Miss!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697155
+    m_Localized: 'Logging timing error (ms)...  Hits {0}/{1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697156
+    m_Localized: Perfect!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697157
+    m_Localized: Great!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697158
+    m_Localized: Good!
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697159
+    m_Localized: Sequence done - tap the cells in the same order
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697160
+    m_Localized: Click anywhere to start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697161
+    m_Localized: Test
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697162
+    m_Localized: Tap anywhere to begin.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697163
+    m_Localized: 'Unified exam — subject {0}/6'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697164
+    m_Localized: Reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697165
+    m_Localized: Wait for the stimulus. When it appears, respond as quickly as possible. False starts may count against you.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697166
+    m_Localized: Aim precision
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697167
+    m_Localized: Targets will appear in the field. Tap each target as accurately and quickly as the task allows.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697168
+    m_Localized: Memory sequence
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697169
+    m_Localized: Memorize the pattern or sequence shown, then reproduce it within the time limit.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697170
+    m_Localized: Rhythm timing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697171
+    m_Localized: Follow the rhythm cues. Your timing error determines the outcome.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697172
+    m_Localized: Multiple object tracking (MOT)
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697173
+    m_Localized: Track the marked objects as they move. Identify them when prompted.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697174
+    m_Localized: Bullet Hell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697175
+    m_Localized: Avoid projectiles and survive as long as possible. Movement is constrained to the play area.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697176
+    m_Localized: Inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697177
+    m_Localized: Language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697178
+    m_Localized: Settings
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697179
+    m_Localized: Appearance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697180
+    m_Localized: Dark
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697181
+    m_Localized: Light
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697182
+    m_Localized: Rune Atelier · G.S.I
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697183
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697184
+    m_Localized: Shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697185
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697186
+    m_Localized: 'Gold: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697187
+    m_Localized: '{0} gold'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697188
+    m_Localized: 'Exam tickets: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697189
+    m_Localized: Buy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697190
+    m_Localized: Owned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697191
+    m_Localized: Equip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697192
+    m_Localized: Equipped
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697193
+    m_Localized: Not enough gold
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697194
+    m_Localized: Exam ticket x1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697195
+    m_Localized: Exam ticket x5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697196
+    m_Localized: 'UI skin: Default'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697197
+    m_Localized: 'UI skin: Ocean'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697198
+    m_Localized: 'UI skin: Amber'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697199
+    m_Localized: 'UI skin: Violet'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697200
+    m_Localized: Inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697201
+    m_Localized: Back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697202
+    m_Localized: UI skins
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697203
+    m_Localized: Locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697204
+    m_Localized: Shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697205
+    m_Localized: 'BEST REACTION: {0}\nBEST AIM: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697206
+    m_Localized: REACTION PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697207
+    m_Localized: AIM PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697208
+    m_Localized: MEMORY PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697209
+    m_Localized: RHYTHM PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697210
+    m_Localized: MOT PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697211
+    m_Localized: BULLET HELL PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697212
+    m_Localized: OFFICIAL REACTION EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697213
+    m_Localized: OFFICIAL AIM EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697214
+    m_Localized: OFFICIAL MEMORY EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697215
+    m_Localized: OFFICIAL RHYTHM EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697216
+    m_Localized: OFFICIAL MOT EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697217
+    m_Localized: OFFICIAL BULLET HELL EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697218
+    m_Localized: FAILED
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697219
+    m_Localized: 'FAILED\nFALSE START'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697220
+    m_Localized: 'REWARD: +{0} gold'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697221
+    m_Localized: 'TIER: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697222
+    m_Localized: 'Max span: {0:F2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697223
+    m_Localized: 'Best span: {0:F2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697224
+    m_Localized: 'MEAN ERROR: {0:F1} MS\nACCURACY: {1:F1} %\nTIER: {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697225
+    m_Localized: '3-run avg accuracy: {0:F1} %'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697226
+    m_Localized: 'Overall accuracy: {0:F1} %'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697227
+    m_Localized: '3-round survival sum: {0:F1}s (pass {1:F0}s)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697228
+    m_Localized: 'Survival: {0:F1}s (Grade 1, max survival)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697229
+    m_Localized: '3-round survival sum: {0:F1}s'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697230
+    m_Localized: 'Survival: {0:F1}s'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697231
+    m_Localized: 'Total time: {0:F2}s\nGrade {1} pass: {2:F1}s or lower, pass\nTarget ~{3:F0}px\nReward tier: {4}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697232
+    m_Localized: 'Reaction: {0:F0} ms ({1:F3}s)\nGrade {2} pass: {3:F0} ms or lower, pass\nReward tier: {4}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697233
+    m_Localized: 'TIME: {0:F3} SEC\nTIER: {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697234
+    m_Localized: Retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697235
+    m_Localized: Main menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697236
+    m_Localized: '-- SEC'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697237
+    m_Localized: '{0:F3} SEC'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697238
+    m_Localized: NEW RECORD
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697239
+    m_Localized: 'Keys: D, F, J, K'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697240
+    m_Localized: 'Keys: F, G, H'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697241
+    m_Localized: 'Keys: D, F'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697242
+    m_Localized: 'Tier 1 — max survival · lives {0} · invinc. {1}s'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697243
+    m_Localized: 'Survive {0}s · lives {1} · invinc. {2}s'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697244
+    m_Localized: 'Invinc. {0}s'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697245
+    m_Localized: 'Time {0}s · lives {1} · {2}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697246
+    m_Localized: 'Time {0}s / target {1}s · lives {2} · {3}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697247
+    m_Localized: English
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697248
+    m_Localized: Korean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697249
+    m_Localized: '{0} | 0 pts | {1}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697250
+    m_Localized: '{0} | {1:F0} pts | {2:F0} ms (limit {3} ms) | {4}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697251
+    m_Localized: '{0} | {1:F0} pts | {2:F2} s (limit {3:F1} s) | {4}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697252
+    m_Localized: '{0} | {1:F0} pts | span {2:F2} | {3}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697253
+    m_Localized: '{0} | {1:F0} pts | acc {2:F1}% | {3}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697254
+    m_Localized: '{0} | {1:F0} pts | acc {2:F1}% | {3}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697255
+    m_Localized: '{0} | {1:F0} pts | survive {2:F1} s | {3}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697256
+    m_Localized: '{0} | 0 pts'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697257
+    m_Localized: Unified exam log
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697258
+    m_Localized: Unified exam history
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697259
+    m_Localized: Close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697260
+    m_Localized: No completed unified exams yet.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697261
+    m_Localized: '{0} | G{1} | {2:F1}/600 | {3} | Tier {4} | Cut {5:F0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697262
+    m_Localized: 'Completed: {0}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697263
+    m_Localized: Game Skill Index
+    m_Metadata:
+      m_Items: []
+  references:
+    version: 2
+    RefIds: []

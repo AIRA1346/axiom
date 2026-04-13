@@ -1,0 +1,146 @@
+# GSI: Unity 에디터 없이 저장소 구조·핵심 스크립트·EditorBuildSettings 씬 경로 존재 여부를 검증합니다.
+# 로컬(Windows): GSI/Tools/Validate-GsiProject.ps1 — 아래 검사 목록과 동일하게 유지하세요.
+# (실제 컴파일·플레이 모드 테스트는 로컬 Unity 또는 UNITY_LICENSE가 준비되면 game-ci로 확장 가능)
+#
+name: GSI smoke (structure)
+
+on:
+  pull_request:
+    paths:
+      - "GSI/**"
+      - ".github/workflows/gsi-smoke-validation.yml"
+  push:
+    branches: [main]
+    paths:
+      - "GSI/**"
+  workflow_dispatch:
+
+jobs:
+  gsi-structure:
+    name: Layout & core scripts
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Assert GSI Unity project layout
+        shell: bash
+        run: |
+          set -euo pipefail
+          missing=0
+          need_file() {
+            if [[ ! -f "$1" ]]; then
+              echo "::error file=$1::Missing required file"
+              missing=1
+            else
+              echo "OK $1"
+            fi
+          }
+          need_dir() {
+            if [[ ! -d "$1" ]]; then
+              echo "::error file=$1::Missing required directory"
+              missing=1
+            else
+              echo "OK $1/"
+            fi
+          }
+
+          need_dir GSI/Assets
+          need_dir GSI/Assets/Scenes
+          need_dir GSI/Assets/Scripts
+          need_dir GSI/Assets/Scripts/Core
+          need_dir GSI/Assets/Scripts/Economy
+          need_dir GSI/Assets/Scripts/GSI
+          need_dir GSI/Assets/Scripts/Inventory
+          need_dir GSI/Assets/Scripts/Shop
+          need_dir GSI/Packages
+          need_dir GSI/ProjectSettings
+
+          need_file GSI/ProjectSettings/ProjectVersion.txt
+          need_file GSI/Packages/manifest.json
+          need_file GSI/Packages/packages-lock.json
+          need_file GSI/Assets/Scripts/Core/SceneNames.cs
+          need_file GSI/Assets/Scripts/Core/GameLocalization.cs
+          need_file GSI/Assets/Scripts/Core/GameManager.cs
+          need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncContracts.cs
+          need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncBridge.cs
+          need_file GSI/Assets/Scripts/Core/UnifiedExamHistoryEntry.cs
+          need_file GSI/Assets/Scripts/Core/GsiUnifiedExamHistoryOverlayRoot.cs
+          need_file GSI/Assets/Scripts/Core/GsiSceneNavigation.cs
+          need_file GSI/Assets/Scripts/Core/GsiSceneTransition.cs
+          need_file GSI/Assets/Scripts/Core/GsiRuntimeUiBootstrap.cs
+          need_file GSI/Assets/Scripts/Core/GsiShopLikeCanvasHeaderUi.cs
+          need_file GSI/Assets/Scripts/Core/GsiShopLikeEconomyBarTexts.cs
+          need_file GSI/Assets/Scripts/Core/GsiShopLikeListScrollUi.cs
+          need_file GSI/Assets/Scripts/Core/GsiShopLikeOfferDisplayNames.cs
+          need_file GSI/Assets/Scripts/Core/GsiRuntimeUiRowPool.cs
+          need_file GSI/Assets/Scripts/Core/GsiSettingsAudioApplier.cs
+          need_file GSI/Assets/Scripts/Core/GsiUiAppearance.cs
+          need_file GSI/Assets/Scripts/Core/GsiUiScreenLayout.cs
+          need_file GSI/Assets/Scripts/Core/GsiUiRuntimeWidgets.cs
+          need_file GSI/Assets/Scripts/Core/GsiTestBriefingTexts.cs
+          need_file GSI/Assets/Scripts/Core/GsiTestBriefingUi.cs
+          need_file GSI/Assets/Scripts/Core/GsiUserSettings.cs
+          need_file GSI/Assets/Scripts/Core/TmpFontCache.cs
+          need_file GSI/Assets/Scripts/Core/TouchInputFeedback.cs
+          need_file GSI/Assets/Scripts/Core/UIManager.cs
+          need_file GSI/Assets/Scripts/Core/UiStringKeys.cs
+          need_file GSI/Assets/Scripts/Core/GlobalSettingsOverlay.cs
+          need_file GSI/Assets/Scripts/Core/IntroController.cs
+          need_file GSI/Assets/Scripts/Core/LobbyButtonLabelHoverBoost.cs
+          need_file GSI/Assets/Scripts/Core/MainMenuController.cs
+          need_file GSI/Assets/Scripts/Economy/EconomyManager.cs
+          need_file GSI/Assets/Scripts/GSI/GSIHubMenuController.cs
+          need_file GSI/Assets/Scripts/Inventory/InventorySceneController.cs
+          need_file GSI/Assets/Scripts/Shop/CosmeticTheme.cs
+          need_file GSI/Assets/Scripts/Shop/PlayerCosmetics.cs
+          need_file GSI/Assets/Scripts/Shop/ShopCatalog.cs
+          need_file GSI/Assets/Scripts/Shop/ShopSceneController.cs
+
+          if [[ "$missing" -ne 0 ]]; then
+            echo "GSI structure check failed."
+            exit 1
+          fi
+
+      - name: Verify EditorBuildSettings scenes exist on disk
+        shell: bash
+        run: |
+          set -euo pipefail
+          ebs="GSI/ProjectSettings/EditorBuildSettings.asset"
+          test -f "$ebs"
+          count=0
+          while read -r rel; do
+            [[ -z "$rel" ]] && continue
+            count=$((count + 1))
+            f="GSI/$rel"
+            if [[ ! -f "$f" ]]; then
+              echo "::error file=$f::Build settings references missing scene"
+              exit 1
+            fi
+            echo "OK build scene $rel"
+          done < <(grep -E 'path: Assets/.*\.unity' "$ebs" | awk '{print $2}')
+          if [[ "$count" -eq 0 ]]; then
+            echo "::error::No Assets/*.unity paths in EditorBuildSettings"
+            exit 1
+          fi
+
+      - name: Match SceneNames.cs to EditorBuildSettings scene basenames
+        shell: bash
+        run: |
+          set -euo pipefail
+          sn="$(grep -E 'public const string \w+ = "[^"]+";' GSI/Assets/Scripts/Core/SceneNames.cs | sed -n 's/.*= "\([^"]*\)".*/\1/p' | sort -u)"
+          eb="$(grep -E 'path: Assets/.*\.unity' GSI/ProjectSettings/EditorBuildSettings.asset | awk '{print $2}' | while read -r p; do basename "$p" .unity; done | sort -u)"
+          if ! diff -q <(echo "$sn") <(echo "$eb") >/dev/null 2>&1; then
+            echo "::error::SceneNames.cs and EditorBuildSettings scene lists differ"
+            echo "--- SceneNames ---"
+            echo "$sn"
+            echo "--- EditorBuildSettings (basenames) ---"
+            echo "$eb"
+            diff <(echo "$sn") <(echo "$eb") || true
+            exit 1
+          fi
+          echo "OK SceneNames matches EditorBuildSettings ($(echo "$sn" | wc -l) scenes)"
+
+      - name: Done
+        shell: bash
+        run: echo "GSI smoke structure check passed."

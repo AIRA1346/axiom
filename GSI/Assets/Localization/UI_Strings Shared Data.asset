@@ -1,0 +1,736 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5b11a58205ec3474ca216360e9fa74a8, type: 3}
+  m_Name: UI_Strings Shared Data
+  m_EditorClassIdentifier: Unity.Localization::UnityEngine.Localization.Tables.SharedTableData
+  m_TableCollectionName: UI_Strings
+  m_TableCollectionNameGuidString: a3e81d3e48ea35f44a8049640996b031
+  m_Entries:
+  - m_Id: 953615900672
+    m_Key: ui.lobby.start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697088
+    m_Key: ui.lobby.shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697089
+    m_Key: intro.boot.initializing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697090
+    m_Key: intro.status.connecting
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697091
+    m_Key: intro.status.standby
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697092
+    m_Key: intro.status.access_granted
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697093
+    m_Key: intro.logo.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697094
+    m_Key: intro.tagline
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697095
+    m_Key: settings.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697096
+    m_Key: settings.master_volume
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697097
+    m_Key: settings.sfx
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697098
+    m_Key: settings.music
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697099
+    m_Key: settings.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697100
+    m_Key: hub.practice.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697101
+    m_Key: hub.practice.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697102
+    m_Key: hub.practice.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697103
+    m_Key: hub.practice.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697104
+    m_Key: hub.practice.grade_legend
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697105
+    m_Key: hub.unified.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697106
+    m_Key: hub.unified.hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697107
+    m_Key: hub.unified.start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697108
+    m_Key: hub.currency.gold_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697109
+    m_Key: hub.currency.ticket_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697110
+    m_Key: lobby.currency.gold_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697111
+    m_Key: lobby.currency.ticket_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697112
+    m_Key: gsi.interstitial.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697113
+    m_Key: gsi.interstitial.continue
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697114
+    m_Key: gsi.interstitial.body_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697115
+    m_Key: gsi.lobby.best_records_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697116
+    m_Key: mode.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697117
+    m_Key: mode.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697118
+    m_Key: mode.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697119
+    m_Key: mode.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697120
+    m_Key: mode.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697121
+    m_Key: mode.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697122
+    m_Key: common.pass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697123
+    m_Key: common.fail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697124
+    m_Key: common.segment_failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697125
+    m_Key: mode.short.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697126
+    m_Key: mode.short.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697127
+    m_Key: mode.short.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697128
+    m_Key: mode.short.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697129
+    m_Key: mode.short.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697130
+    m_Key: mode.short.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697131
+    m_Key: result.title.unified
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697132
+    m_Key: result.unified.line1_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697133
+    m_Key: result.unified.line2_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697134
+    m_Key: result.unified.final_pass
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697135
+    m_Key: result.unified.final_fail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697136
+    m_Key: result.unified.subjects_header
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697137
+    m_Key: result.unified.reward_ok_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697138
+    m_Key: result.unified.reward_fail
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697139
+    m_Key: result.fail.reaction_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697140
+    m_Key: result.fail.aim_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697141
+    m_Key: result.reward.zero_gold
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697142
+    m_Key: practice.tier.top
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697143
+    m_Key: practice.tier.high
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697144
+    m_Key: practice.tier.mid
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697145
+    m_Key: practice.tier.low
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697146
+    m_Key: practice.tier.entry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697147
+    m_Key: mot.hud.memorize
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697148
+    m_Key: mot.hud.tracking
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697149
+    m_Key: mot.hud.select_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697150
+    m_Key: mot.hud.status_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697151
+    m_Key: mot.submit
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697152
+    m_Key: rhythm.hud.ready
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697153
+    m_Key: rhythm.hud.go
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697154
+    m_Key: rhythm.judge.miss
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697155
+    m_Key: rhythm.hud.recording_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697156
+    m_Key: rhythm.judge.perfect
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697157
+    m_Key: rhythm.judge.great
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697158
+    m_Key: rhythm.judge.good
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697159
+    m_Key: memory.recall_hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697160
+    m_Key: briefing.tap_anywhere
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697161
+    m_Key: briefing.title.default
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697162
+    m_Key: briefing.body.default
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697163
+    m_Key: briefing.unified.segment_line_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697164
+    m_Key: briefing.title.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697165
+    m_Key: briefing.body.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697166
+    m_Key: briefing.title.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697167
+    m_Key: briefing.body.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697168
+    m_Key: briefing.title.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697169
+    m_Key: briefing.body.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697170
+    m_Key: briefing.title.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697171
+    m_Key: briefing.body.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697172
+    m_Key: briefing.title.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697173
+    m_Key: briefing.body.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697174
+    m_Key: briefing.title.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697175
+    m_Key: briefing.body.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697176
+    m_Key: ui.lobby.inventory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697177
+    m_Key: settings.language
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697178
+    m_Key: settings.open
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697179
+    m_Key: settings.appearance
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697180
+    m_Key: settings.dark
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697181
+    m_Key: settings.light
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697182
+    m_Key: lobby.branding_title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697183
+    m_Key: hub.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697184
+    m_Key: shop.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697185
+    m_Key: shop.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697186
+    m_Key: shop.gold_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697187
+    m_Key: shop.price_gold_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697188
+    m_Key: shop.tickets_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697189
+    m_Key: shop.buy
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697190
+    m_Key: shop.owned
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697191
+    m_Key: shop.equip
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697192
+    m_Key: shop.equipped
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697193
+    m_Key: shop.need_gold
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697194
+    m_Key: shop.offer.tickets_1
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697195
+    m_Key: shop.offer.tickets_5
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697196
+    m_Key: shop.offer.skin_default
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697197
+    m_Key: shop.offer.skin_ocean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697198
+    m_Key: shop.offer.skin_amber
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697199
+    m_Key: shop.offer.skin_violet
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697200
+    m_Key: inventory.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697201
+    m_Key: inventory.back
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697202
+    m_Key: inventory.skins_header
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697203
+    m_Key: inventory.locked
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697204
+    m_Key: inventory.go_shop
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697205
+    m_Key: lobby.best_records.reaction_aim_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697206
+    m_Key: result.title.practice.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697207
+    m_Key: result.title.practice.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697208
+    m_Key: result.title.practice.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697209
+    m_Key: result.title.practice.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697210
+    m_Key: result.title.practice.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697211
+    m_Key: result.title.practice.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697212
+    m_Key: result.title.exam.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697213
+    m_Key: result.title.exam.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697214
+    m_Key: result.title.exam.memory
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697215
+    m_Key: result.title.exam.rhythm
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697216
+    m_Key: result.title.exam.mot
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697217
+    m_Key: result.title.exam.bullethell
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697218
+    m_Key: result.body.failed
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697219
+    m_Key: result.fail.false_start
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697220
+    m_Key: result.reward.plus_gold_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697221
+    m_Key: result.tier.label_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697222
+    m_Key: result.memory.exam_avg_span_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697223
+    m_Key: result.memory.practice_best_span_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697224
+    m_Key: result.rhythm.stats_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697225
+    m_Key: result.mot.exam_avg_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697226
+    m_Key: result.mot.practice_overall_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697227
+    m_Key: result.bh.exam_sum_g1_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697228
+    m_Key: result.bh.practice_g1_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697229
+    m_Key: result.bh.exam_sum_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697230
+    m_Key: result.bh.practice_survival_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697231
+    m_Key: result.aim.pass_body_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697232
+    m_Key: result.reaction.pass_body_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697233
+    m_Key: result.generic.time_tier_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697234
+    m_Key: result.action.retry
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697235
+    m_Key: result.action.main_menu
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697236
+    m_Key: lobby.best_record.time_missing
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697237
+    m_Key: lobby.best_record.seconds_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697238
+    m_Key: result.badge.new_record
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697239
+    m_Key: rhythm.keys.four_lanes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697240
+    m_Key: rhythm.keys.three_lanes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697241
+    m_Key: rhythm.keys.two_lanes
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697242
+    m_Key: bh.hud.round_intro_survival_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697243
+    m_Key: bh.hud.round_intro_target_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697244
+    m_Key: bh.hud.invincibility_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697245
+    m_Key: bh.hud.live_survival_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697246
+    m_Key: bh.hud.live_target_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697247
+    m_Key: settings.lang.english
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697248
+    m_Key: settings.lang.korean
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697249
+    m_Key: unified.segment.summary_hard_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697250
+    m_Key: unified.segment.summary_reaction_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697251
+    m_Key: unified.segment.summary_aim_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697252
+    m_Key: unified.segment.summary_memory_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697253
+    m_Key: unified.segment.summary_rhythm_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697254
+    m_Key: unified.segment.summary_mot_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697255
+    m_Key: unified.segment.summary_bullet_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697256
+    m_Key: unified.segment.summary_default_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697257
+    m_Key: hub.unified.history_btn
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697258
+    m_Key: history.unified.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697259
+    m_Key: history.unified.close
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697260
+    m_Key: history.unified.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697261
+    m_Key: history.unified.row_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697262
+    m_Key: result.unified.taken_at_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697263
+    m_Key: hub.screen_title
+    m_Metadata:
+      m_Items: []
+  m_Metadata:
+    m_Items: []
+  m_KeyGenerator:
+    rid: 5119199230457282560
+  references:
+    version: 2
+    RefIds:
+    - rid: 5119199230457282560
+      type: {class: DistributedUIDGenerator, ns: UnityEngine.Localization.Tables, asm: Unity.Localization}
+      data:
+        m_CustomEpoch: 1774658679566

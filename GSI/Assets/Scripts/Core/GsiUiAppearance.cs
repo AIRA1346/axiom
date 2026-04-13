@@ -1,0 +1,199 @@
+using System;
+using UnityEngine;
+
+/// <summary>
+/// UI 다크/라이트 모드. 디자인 방향: **크롬을 최소화**해 배경·헤더·행이 거의 구분되지 않도록 하고,
+/// 글자·버튼만 은은하게 떠 있는 느낌(다이제틱/미니멀)에 가깝게 맞춥니다.
+/// (구 API는 <c>accent</c> 인자를 받지만 색 혼합에는 쓰지 않습니다 — 호환용.)
+/// </summary>
+public enum GsiUiAppearanceMode
+{
+    Dark = 0,
+    Light = 1
+}
+
+public static class GsiUiAppearance
+{
+    private const string PrefsKey = "GSI_UiAppearanceMode";
+
+    public static GsiUiAppearanceMode Mode { get; private set; } = GsiUiAppearanceMode.Dark;
+
+    public static event Action Changed;
+
+    static GsiUiAppearance()
+    {
+        Load();
+    }
+
+    public static void Load()
+    {
+        Mode = (GsiUiAppearanceMode)Mathf.Clamp(PlayerPrefs.GetInt(PrefsKey, 0), 0, 1);
+    }
+
+    public static void SetMode(GsiUiAppearanceMode mode)
+    {
+        if (Mode == mode)
+        {
+            return;
+        }
+
+        Mode = mode;
+        PlayerPrefs.SetInt(PrefsKey, (int)mode);
+        PlayerPrefs.Save();
+        Changed?.Invoke();
+    }
+
+    public static Color OverlayScrim =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0f, 0f, 0f, 0.38f)
+            : new Color(0f, 0f, 0f, 0.32f);
+
+    /// <summary>설정 등 모달 본문 — 살짝만 불투명한 글래스(프레임 최소화).</summary>
+    public static Color Panel =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.04f, 0.042f, 0.05f, 0.78f)
+            : new Color(0.97f, 0.97f, 0.98f, 0.92f);
+
+    public static Color TextPrimary =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.88f, 0.89f, 0.91f, 1f)
+            : new Color(0.12f, 0.12f, 0.13f, 1f);
+
+    public static Color TextSecondary =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.48f, 0.5f, 0.54f, 1f)
+            : new Color(0.44f, 0.45f, 0.47f, 1f);
+
+    public static Color ChipInactive =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.05f)
+            : new Color(0f, 0f, 0f, 0.06f);
+
+    /// <summary>보조 버튼 — 유리 느낌의 매우 낮은 불투명도.</summary>
+    public static Color SecondaryButton =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.07f)
+            : new Color(0f, 0f, 0f, 0.07f);
+
+    /// <summary>Buy/Equip 등 주요 액션 — 살짝만 더 보이게.</summary>
+    public static Color PrimaryActionButton =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.14f)
+            : new Color(0f, 0f, 0f, 0.12f);
+
+    /// <summary>상점·인벤 캔버스 배경(기준면).</summary>
+    public static Color ShopScreenBackground =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.024f, 0.026f, 0.032f, 1f)
+            : new Color(0.93f, 0.932f, 0.94f, 1f);
+
+    /// <summary>리스트 행 — 배경과 거의 동일(구분은 여백·타이포에만).</summary>
+    public static Color ShopRowBackground =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.026f, 0.028f, 0.034f, 1f)
+            : new Color(0.96f, 0.962f, 0.97f, 1f);
+
+    public static Color ShopGoldText =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.72f, 0.74f, 0.78f, 1f)
+            : new Color(0.32f, 0.32f, 0.33f, 1f);
+
+    public static Color ShopTicketText =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.52f, 0.54f, 0.58f, 1f)
+            : new Color(0.38f, 0.38f, 0.4f, 1f);
+
+    /// <summary>서브바 — 헤더와 동일 톤(띠가 거의 안 보임).</summary>
+    public static Color SubBarStripBackground =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.024f, 0.026f, 0.032f, 1f)
+            : new Color(0.93f, 0.932f, 0.94f, 1f);
+
+    /// <summary>구분선(사용 시 거의 투명).</summary>
+    public static Color UiHairline =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.02f)
+            : new Color(0f, 0f, 0f, 0.03f);
+
+    /// <summary>컨트롤 림(미사용·투명 유지).</summary>
+    public static Color UiControlRim =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0f)
+            : new Color(0f, 0f, 0f, 0f);
+
+    /// <summary>패널 외곽선(미사용·투명).</summary>
+    public static Color PanelOuterRim =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0f)
+            : new Color(0f, 0f, 0f, 0f);
+
+    /// <summary>카드 그림자(미니멀 모드에서는 사용 안 함).</summary>
+    public static Color CardDropShadow =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0f, 0f, 0f, 0f)
+            : new Color(0f, 0f, 0f, 0f);
+
+    /// <summary>상단 헤더 스트립 — 화면 배경과 동일.</summary>
+    public static Color ShopHeaderStrip(Color _)
+    {
+        return Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.024f, 0.026f, 0.032f, 1f)
+            : new Color(0.93f, 0.932f, 0.94f, 1f);
+    }
+
+    public static Color LobbyHeroMultiply =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.55f, 0.55f, 0.58f, 0.85f)
+            : new Color(0.92f, 0.92f, 0.93f, 0.9f);
+
+    /// <summary>로비 베스트 기록 등 상단 HUD 글래스 패널.</summary>
+    public static Color LobbyHudGlass =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.05f, 0.055f, 0.08f, 0.72f)
+            : new Color(1f, 1f, 1f, 0.78f);
+
+    /// <summary>로비 하단 골드·응시권 띠 배경.</summary>
+    public static Color LobbyEconomyStripGlass =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.09f)
+            : new Color(0f, 0f, 0f, 0.06f);
+
+    /// <summary>로비 메인 CTA(Start) — 은은한 틸 글래스.</summary>
+    public static Color LobbyMainActionFill =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.14f, 0.42f, 0.52f, 0.62f)
+            : new Color(0.2f, 0.5f, 0.58f, 0.45f);
+
+    /// <summary>로비 보조 버튼(Shop / Inventory).</summary>
+    public static Color LobbySideActionFill =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.13f)
+            : new Color(0f, 0f, 0f, 0.1f);
+
+    /// <summary>로비 주요 CTA(액센트 인자는 무시).</summary>
+    public static Color LobbyPrimaryCta(Color _)
+    {
+        return LobbyMainActionFill;
+    }
+
+    public static Color GradeStepNormal =>
+        Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.1f, 0.1f, 0.1f, 1f)
+            : new Color(0.84f, 0.84f, 0.85f, 1f);
+
+    /// <summary>등급 칩 선택(액센트 인자는 무시, 명도만 올림).</summary>
+    public static Color GradeStepSelectedFromAccent(Color _)
+    {
+        return Mode == GsiUiAppearanceMode.Dark
+            ? new Color(0.26f, 0.26f, 0.27f, 1f)
+            : new Color(0.58f, 0.58f, 0.6f, 1f);
+    }
+
+    /// <summary>토글·칩 선택 배경(액센트 인자는 무시).</summary>
+    public static Color ChipSelectedFromAccent(Color _)
+    {
+        return Mode == GsiUiAppearanceMode.Dark
+            ? new Color(1f, 1f, 1f, 0.12f)
+            : new Color(0f, 0f, 0f, 0.1f);
+    }
+}

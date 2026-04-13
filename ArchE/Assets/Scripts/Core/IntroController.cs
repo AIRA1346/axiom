@@ -27,6 +27,7 @@ public sealed class IntroController : MonoBehaviour
     [Header("Scene")]
     [SerializeField] private string _mainSceneName = "SampleScene";
     [SerializeField] private float _maxWaitSeconds = 15f;
+    [SerializeField] private float _maxLocalizationBootSeconds = 30f;
 
     private void Start()
     {
@@ -160,12 +161,20 @@ public sealed class IntroController : MonoBehaviour
     private IEnumerator WaitForLocalizationBoot()
     {
         Task boot = GameLocalization.InitializeAndApplySavedLocaleAsync();
-        while (!boot.IsCompleted)
+        float bootStart = Time.realtimeSinceStartup;
+        while (!boot.IsCompleted &&
+               (Time.realtimeSinceStartup - bootStart) < _maxLocalizationBootSeconds)
         {
             yield return null;
         }
 
-        if (boot.IsFaulted && boot.Exception != null)
+        if (!boot.IsCompleted)
+        {
+            Debug.LogWarning(
+                "[IntroController] Localization/Addressables 부팅이 시간 초과했습니다. 인트로를 계속합니다. " +
+                "(Addressables 카탈로그·네트워크 등을 확인하세요.)");
+        }
+        else if (boot.IsFaulted && boot.Exception != null)
         {
             Debug.LogException(boot.Exception);
         }
