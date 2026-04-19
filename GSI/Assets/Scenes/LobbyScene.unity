@@ -9990,6 +9990,7 @@ MonoBehaviour:
   _aimExamButton: {fileID: 0}
   _tokenText: {fileID: 1820020436}
   _ticketText: {fileID: 1628977588}
+  _lobbyBackgroundMusic: {fileID: 8300000, guid: b775895d88cd40008e530386187d8873, type: 3}
 --- !u!4 &1891183505
 Transform:
   m_ObjectHideFlags: 0

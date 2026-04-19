@@ -42,6 +42,10 @@ public sealed class MainMenuController : MonoBehaviour
     [SerializeField] private TextMeshProUGUI _tokenText;
     [SerializeField] private TextMeshProUGUI _ticketText;
 
+    [Header("Audio")]
+    [Tooltip("Lobby BGM; uses GsiAudio music channel (GsiUserSettings music volume).")]
+    [SerializeField] private AudioClip _lobbyBackgroundMusic;
+
     private RectTransform _lobbyRoot;
     private Image _panelBackground;
     private Image _heroImage;
@@ -214,6 +218,8 @@ public sealed class MainMenuController : MonoBehaviour
         {
             EconomyManager.Instance.OnEconomyChanged += HandleEconomyChanged;
         }
+
+        TryPlayLobbyBgm();
     }
 
     private void OnDestroy()
@@ -270,6 +276,28 @@ public sealed class MainMenuController : MonoBehaviour
         {
             EconomyManager.Instance.OnEconomyChanged -= HandleEconomyChanged;
         }
+
+        TryStopLobbyBgm();
+    }
+
+    private void TryPlayLobbyBgm()
+    {
+        if (!Application.isPlaying || _lobbyBackgroundMusic == null)
+        {
+            return;
+        }
+
+        GsiAudio.PlayMusic(_lobbyBackgroundMusic, loop: true);
+    }
+
+    private static void TryStopLobbyBgm()
+    {
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        GsiAudio.StopMusic();
     }
 
     private void TrySubscribeAppearance()
