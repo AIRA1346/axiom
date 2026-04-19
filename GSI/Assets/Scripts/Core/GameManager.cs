@@ -119,9 +119,16 @@ public sealed class GameManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        VersusAsyncBridge.ApplyTransportFromSettings();
+        VersusAsyncBridge.RequestFlushOutboxOnBoot();
         SteamworksService.InitializePlaceholder();
         LoadPracticeGrade();
         CosmeticTheme.ApplyFromSave();
+        GsiGameplayWorldCameraHooks.Initialize();
+        if (GetComponent<GsiAudioService>() == null)
+        {
+            gameObject.AddComponent<GsiAudioService>();
+        }
     }
 
     private void LoadPracticeGrade()
@@ -271,9 +278,38 @@ public sealed class GameManager : MonoBehaviour
 
         if (Instance == this)
         {
+            GsiGameplayWorldCameraHooks.Shutdown();
             SteamworksService.ShutdownPlaceholder();
             Instance = null;
         }
+    }
+
+    private void OnApplicationPause(bool pauseStatus)
+    {
+        if (!pauseStatus)
+        {
+            TryFlushVersusAsyncOutboxAfterResume();
+        }
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (hasFocus)
+        {
+            TryFlushVersusAsyncOutboxAfterResume();
+        }
+    }
+
+    /// <summary>백그라운드에서 돌아온 뒤 전송 설정을 다시 읽고, Versus 점수 아웃박스를 비웁니다.</summary>
+    private void TryFlushVersusAsyncOutboxAfterResume()
+    {
+        if (Instance != this)
+        {
+            return;
+        }
+
+        VersusAsyncBridge.ApplyTransportFromSettings();
+        VersusAsyncBridge.RequestFlushOutboxOnBoot();
     }
 
     /// <summary>

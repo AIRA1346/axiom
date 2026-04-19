@@ -31,6 +31,9 @@ public sealed class MainMenuController : MonoBehaviour
     [Tooltip("할당 시 인벤토리 씬(골드·응시권·스킨)으로 이동합니다.")]
     [SerializeField] private Button _openInventoryButton;
 
+    [Tooltip("할당 시 통합 시험 기록 씬(Altar of Verity)으로 이동합니다.")]
+    [SerializeField] private Button _openAltarOfVerityButton;
+
     [SerializeField] private Button _practiceButton;
     [SerializeField] private Button _aimPracticeButton;
     [SerializeField] private Button _reactionExamButton;
@@ -141,6 +144,20 @@ public sealed class MainMenuController : MonoBehaviour
                 _openInventoryButton = t.GetComponent<Button>();
             }
         }
+
+        if (_openAltarOfVerityButton == null)
+        {
+            Transform t = _lobbyRoot.Find($"{LobbyActionRowName}/AltarOfVerityButton");
+            if (t == null)
+            {
+                t = _lobbyRoot.Find("AltarOfVerityButton");
+            }
+
+            if (t != null)
+            {
+                _openAltarOfVerityButton = t.GetComponent<Button>();
+            }
+        }
     }
 
     private void CacheLobbyVisualRefs()
@@ -178,6 +195,11 @@ public sealed class MainMenuController : MonoBehaviour
         if (_openInventoryButton != null)
         {
             _openInventoryButton.onClick.AddListener(OnOpenInventoryClicked);
+        }
+
+        if (_openAltarOfVerityButton != null)
+        {
+            _openAltarOfVerityButton.onClick.AddListener(OnOpenAltarOfVerityClicked);
         }
 
         UpdateEconomyTexts();
@@ -232,6 +254,11 @@ public sealed class MainMenuController : MonoBehaviour
         if (_openInventoryButton != null)
         {
             _openInventoryButton.onClick.RemoveListener(OnOpenInventoryClicked);
+        }
+
+        if (_openAltarOfVerityButton != null)
+        {
+            _openAltarOfVerityButton.onClick.RemoveListener(OnOpenAltarOfVerityClicked);
         }
 
         if (GameManager.Instance != null)
@@ -515,7 +542,20 @@ public sealed class MainMenuController : MonoBehaviour
             _openInventoryButton = inv.GetComponent<Button>();
         }
 
-        rowRt.sizeDelta = new Vector2(1080f, 118f);
+        rowRt.sizeDelta = new Vector2(1320f, 118f);
+
+        Transform altar = _lobbyRoot.Find("AltarOfVerityButton");
+        if (altar == null)
+        {
+            Button altarBtn = CreateLobbyActionButton(rowRt, "AltarOfVerityButton",
+                GameLocalization.GetUiString(UiStringKeys.UiLobbyAltarOfVerity, "Altar of Verity"));
+            _openAltarOfVerityButton = altarBtn;
+        }
+        else
+        {
+            altar.SetParent(rowRt, false);
+            _openAltarOfVerityButton = altar.GetComponent<Button>();
+        }
 
         LayoutElement gsiLe = gsi.gameObject.GetComponent<LayoutElement>();
         if (gsiLe == null)
@@ -548,6 +588,19 @@ public sealed class MainMenuController : MonoBehaviour
             invLe.preferredHeight = 108f;
         }
 
+        Transform altarTf = rowRt.Find("AltarOfVerityButton");
+        if (altarTf != null)
+        {
+            LayoutElement altarLe = altarTf.gameObject.GetComponent<LayoutElement>();
+            if (altarLe == null)
+            {
+                altarLe = altarTf.gameObject.AddComponent<LayoutElement>();
+            }
+
+            altarLe.minHeight = 104f;
+            altarLe.preferredHeight = 108f;
+        }
+
         rowRt.SetAsLastSibling();
     }
 
@@ -559,7 +612,7 @@ public sealed class MainMenuController : MonoBehaviour
 
         if (_panelBackground != null)
         {
-            _panelBackground.color = Color.black;
+            _panelBackground.color = GsiUiAppearance.ShopScreenBackground;
             _panelBackground.raycastTarget = false;
         }
 
@@ -572,13 +625,15 @@ public sealed class MainMenuController : MonoBehaviour
         ApplyLobbyPrimaryButton(_enterGsiFacilityButton);
         ApplyLobbySecondaryButton(_openShopButton);
         ApplyLobbySecondaryButton(_openInventoryButton);
+        ApplyLobbySecondaryButton(_openAltarOfVerityButton);
         LobbyButtonLabelHoverBoost.EnsureOn(_enterGsiFacilityButton);
         LobbyButtonLabelHoverBoost.EnsureOn(_openShopButton);
         LobbyButtonLabelHoverBoost.EnsureOn(_openInventoryButton);
+        LobbyButtonLabelHoverBoost.EnsureOn(_openAltarOfVerityButton);
         UpdateEconomyTexts();
     }
 
-    /// <summary>Removes legacy LobbyBackdrop RawImage child; root panel Image is solid black.</summary>
+    /// <summary>Removes legacy LobbyBackdrop RawImage child; root panel Image follows <see cref="GsiUiAppearance"/>.</summary>
     private void EnsureLobbyBackdrop()
     {
         if (_lobbyRoot == null)
@@ -608,6 +663,7 @@ public sealed class MainMenuController : MonoBehaviour
         ApplyLobbyButtonLabel(_enterGsiFacilityButton, UiStringKeys.UiLobbyStart, "Start");
         ApplyLobbyButtonLabel(_openShopButton, UiStringKeys.UiLobbyShop, "Shop");
         ApplyLobbyButtonLabel(_openInventoryButton, UiStringKeys.UiLobbyInventory, "Inventory");
+        ApplyLobbyButtonLabel(_openAltarOfVerityButton, UiStringKeys.UiLobbyAltarOfVerity, "Altar of Verity");
     }
 
     private static void ApplyLobbyButtonLabel(Button btn, string localizationKey, string englishFallback)
@@ -645,15 +701,46 @@ public sealed class MainMenuController : MonoBehaviour
         TextMeshProUGUI tmp = btn.GetComponentInChildren<TextMeshProUGUI>();
         if (tmp != null)
         {
-            tmp.color = Color.white;
+            tmp.color = LobbyPrimaryActionLabelColor();
             tmp.fontSize = 24f;
             tmp.fontStyle = FontStyles.Bold;
             tmp.characterSpacing = 0.4f;
             tmp.alignment = TextAlignmentOptions.Midline;
         }
 
-        EnsureLobbyActionLabelRuleLines(btn, new Color(1f, 1f, 1f, 0.42f));
+        EnsureLobbyActionLabelRuleLines(btn, LobbyPrimaryActionRuleLineColor());
         ApplyLobbyButtonColorTint(btn);
+    }
+
+    private static Color LobbyPrimaryActionLabelColor()
+    {
+        if (CosmeticSkinPalettes.TryGetActive(out _))
+        {
+            return GsiUiAppearance.TextPrimary;
+        }
+
+        return GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark
+            ? Color.white
+            : GsiUiAppearance.TextPrimary;
+    }
+
+    private static Color LobbyPrimaryActionRuleLineColor()
+    {
+        if (CosmeticSkinPalettes.TryGetActive(out _))
+        {
+            Color c = GsiUiAppearance.TextPrimary;
+            c.a = Mathf.Clamp01(c.a * 0.45f);
+            return c;
+        }
+
+        if (GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark)
+        {
+            return new Color(1f, 1f, 1f, 0.42f);
+        }
+
+        Color c2 = GsiUiAppearance.TextPrimary;
+        c2.a = Mathf.Clamp01(c2.a * 0.45f);
+        return c2;
     }
 
     private static void ApplyLobbySecondaryButton(Button btn)
@@ -813,6 +900,11 @@ public sealed class MainMenuController : MonoBehaviour
     private void OnOpenInventoryClicked()
     {
         GsiSceneNavigation.LoadInventory();
+    }
+
+    private void OnOpenAltarOfVerityClicked()
+    {
+        GsiSceneNavigation.LoadAltarOfVerity();
     }
 
     private void HideLegacyGsiEntryButtons()

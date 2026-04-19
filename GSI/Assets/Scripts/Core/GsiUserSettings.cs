@@ -61,7 +61,7 @@ public static class GsiUserSettings
         SettingsChanged?.Invoke();
     }
 
-    /// <summary>마스터는 <see cref="AudioListener.volume"/>에 반영. SFX/음악은 AudioMixer 연동 시 확장.</summary>
+    /// <summary>마스터는 <see cref="AudioListener.volume"/>에 반영. SFX/음악 승수는 <see cref="GsiAudioService"/>가 별도 소스에 적용.</summary>
     public static void ApplyToAudio()
     {
         AudioListener.volume = MasterVolume;

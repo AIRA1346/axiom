@@ -219,7 +219,7 @@ public static class GSISceneSetupEditor
         var rRt = reaction.AddComponent<RectTransform>();
         rRt.anchorMin = new Vector2(0.5f, 0.5f);
         rRt.anchorMax = new Vector2(0.5f, 0.5f);
-        rRt.sizeDelta = new Vector2(140f, 140f);
+        rRt.sizeDelta = new Vector2(400f, 400f);
         rRt.anchoredPosition = Vector2.zero;
         var rImg = reaction.AddComponent<Image>();
         rImg.color = new Color(0.2f, 0.85f, 0.35f, 1f);

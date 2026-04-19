@@ -9,6 +9,7 @@ public sealed class GSISceneBootstrap : MonoBehaviour
     private void Awake()
     {
         GsiCoreServices.Ensure();
+        GsiGameplayWorldCameraHooks.Initialize();
 
         GlobalSettingsOverlay.EnsureCreated();
 

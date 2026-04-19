@@ -13,6 +13,8 @@
 /GSI/[Bb]uilds/
 /GSI/[Ll]ogs/
 /GSI/[Uu]ser[Ss]ettings/
+# Steam: 로컬 App ID (예시는 steam_appid.txt.example 커밋)
+/GSI/steam_appid.txt
 # GSI 루트에 생기는 배치/에디터 로그(커밋 불필요)
 /GSI/*.log
 

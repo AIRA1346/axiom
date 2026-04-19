@@ -723,6 +723,42 @@ MonoBehaviour:
     m_Key: hub.screen_title
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697264
+    m_Key: hub.practice.reaction
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697265
+    m_Key: hub.practice.aim
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697266
+    m_Key: hub.section.practice
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697267
+    m_Key: ui.lobby.altar_of_verity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697268
+    m_Key: verity.screen.title
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697269
+    m_Key: verity.empty
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697270
+    m_Key: verity.select_hint
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697271
+    m_Key: verity.list_caption
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697272
+    m_Key: verity.detail_caption
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

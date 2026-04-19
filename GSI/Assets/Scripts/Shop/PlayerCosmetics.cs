@@ -9,6 +9,9 @@ public static class PlayerCosmetics
     private const string OwnedPrefix = "GSI_Cosmetic_Owned_";
 
     public const string DefaultSkinId = "skin_default";
+    public const string SkinOceanId = "skin_ocean";
+    public const string SkinAmberId = "skin_amber";
+    public const string SkinVioletId = "skin_violet";
 
     public static string EquippedSkinId
     {
@@ -62,12 +65,12 @@ public static class PlayerCosmetics
     {
         switch (skinId)
         {
-            case "skin_ocean":
-                return new Color(0.62f, 0.62f, 0.63f, 1f);
-            case "skin_amber":
-                return new Color(0.52f, 0.52f, 0.53f, 1f);
-            case "skin_violet":
-                return new Color(0.66f, 0.66f, 0.67f, 1f);
+            case SkinOceanId:
+                return new Color(0.28f, 0.78f, 0.88f, 1f);
+            case SkinAmberId:
+                return new Color(0.95f, 0.55f, 0.2f, 1f);
+            case SkinVioletId:
+                return new Color(0.72f, 0.45f, 0.98f, 1f);
             default:
                 return new Color(0.72f, 0.72f, 0.73f, 1f);
         }

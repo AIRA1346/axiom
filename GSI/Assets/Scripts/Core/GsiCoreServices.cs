@@ -16,6 +16,7 @@ public static class GsiCoreServices
             go.AddComponent<InputManager>();
             go.AddComponent<TouchInputFeedback>();
             go.AddComponent<GsiSettingsAudioApplier>();
+            go.AddComponent<GsiAudioService>();
             return;
         }
 
@@ -39,6 +40,11 @@ public static class GsiCoreServices
         if (host.GetComponent<GsiSettingsAudioApplier>() == null)
         {
             host.AddComponent<GsiSettingsAudioApplier>();
+        }
+
+        if (host.GetComponent<GsiAudioService>() == null)
+        {
+            host.AddComponent<GsiAudioService>();
         }
     }
 }

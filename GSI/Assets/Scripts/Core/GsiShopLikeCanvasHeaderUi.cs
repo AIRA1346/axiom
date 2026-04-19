@@ -246,6 +246,13 @@ public static class GsiShopLikeCanvasHeaderUi
             UiStringKeys.InventoryBack, "Back");
     }
 
+    public static void RefreshVerityAltarHeaderLocalizedTexts(TextMeshProUGUI titleTmp, Button settingsButton, Button backButton)
+    {
+        ApplyLocalizedHeaderTexts(titleTmp, settingsButton, backButton,
+            UiStringKeys.VerityAltarScreenTitle, "Altar of Verity",
+            UiStringKeys.InventoryBack, "Back");
+    }
+
     private static void ApplyLocalizedHeaderTexts(TextMeshProUGUI titleTmp, Button settingsButton, Button backButton,
         string titleKey, string titleFallback, string backKey, string backFallback)
     {

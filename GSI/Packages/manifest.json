@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "com.rlabrecque.steamworks.net": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net",
     "com.arche.shared": "file:./com.arche.shared",
     "com.unity.addressables": "2.9.1",
     "com.unity.ai.navigation": "2.0.10",

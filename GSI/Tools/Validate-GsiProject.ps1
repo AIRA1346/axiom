@@ -59,10 +59,16 @@ $files = @(
     "Packages\manifest.json",
     "Packages\packages-lock.json",
     "Assets\Scripts\Core\SceneNames.cs",
+    "Assets\Scripts\Core\GsiGameplayWorldCameraHooks.cs",
+    "Assets\Scripts\Core\GsiAudioService.cs",
     "Assets\Scripts\Core\GameLocalization.cs",
     "Assets\Scripts\Core\GameManager.cs",
     "Assets\Scripts\AsyncVersus\VersusAsyncContracts.cs",
     "Assets\Scripts\AsyncVersus\VersusAsyncBridge.cs",
+    "Assets\Scripts\AsyncVersus\VersusAsyncBackendSettings.cs",
+    "Assets\Scripts\AsyncVersus\VersusAsyncHttpTransport.cs",
+    "Assets\Scripts\AsyncVersus\VersusAsyncMainThreadRunner.cs",
+    "Assets\Scripts\AsyncVersus\VersusAsyncOutbox.cs",
     "Assets\Scripts\Core\UnifiedExamHistoryEntry.cs",
     "Assets\Scripts\Core\GsiUnifiedExamHistoryOverlayRoot.cs",
     "Assets\Scripts\Core\GsiSceneNavigation.cs",
@@ -91,6 +97,10 @@ $files = @(
     "Assets\Scripts\Economy\EconomyManager.cs",
     "Assets\Scripts\GSI\GSIHubMenuController.cs",
     "Assets\Scripts\Inventory\InventorySceneController.cs",
+    "Assets\Scripts\Core\AltarOfVeritySceneController.cs",
+    "Assets\Editor\AltarOfVeritySceneSetupMenu.cs",
+    "Assets\Editor\VersusAsyncBackendEditorWindow.cs",
+    "Assets\Editor\SteamworksBuildDefinesMenu.cs",
     "Assets\Scripts\Shop\CosmeticTheme.cs",
     "Assets\Scripts\Shop\PlayerCosmetics.cs",
     "Assets\Scripts\Shop\ShopCatalog.cs",
@@ -106,6 +116,24 @@ foreach ($f in $files) {
     else {
         Write-Host "OK            $f" -ForegroundColor DarkGray
     }
+}
+
+$rootExtra = Join-Path $GsiRoot "steam_appid.txt.example"
+if (-not (Test-Path -LiteralPath $rootExtra -PathType Leaf)) {
+    Write-Host "MISSING FILE: steam_appid.txt.example (project root)" -ForegroundColor Red
+    $failed = $true
+}
+else {
+    Write-Host "OK            steam_appid.txt.example" -ForegroundColor DarkGray
+}
+
+$audioReadme = Join-Path $GsiRoot "Assets\Audio\README.txt"
+if (-not (Test-Path -LiteralPath $audioReadme -PathType Leaf)) {
+    Write-Host "MISSING FILE: Assets\Audio\README.txt" -ForegroundColor Red
+    $failed = $true
+}
+else {
+    Write-Host "OK            Assets\Audio\README.txt" -ForegroundColor DarkGray
 }
 
 $ebsPath = Join-Path $GsiRoot "ProjectSettings\EditorBuildSettings.asset"
@@ -140,7 +168,10 @@ if ((Test-Path -LiteralPath $snPath) -and (Test-Path -LiteralPath $ebsPath)) {
     $fromCs = New-Object 'System.Collections.Generic.HashSet[string]'
     $rawSn = Get-Content -LiteralPath $snPath -Raw
     foreach ($m in [regex]::Matches($rawSn, 'public const string \w+ = "([^"]+)"')) {
-        [void]$fromCs.Add($m.Groups[1].Value)
+        $val = $m.Groups[1].Value
+        # Scene file paths (e.g. SceneNames.AltarOfVerityAssetPath) are not runtime scene names.
+        if ($val -match '/' -or $val -match '\.unity$') { continue }
+        [void]$fromCs.Add($val)
     }
     $fromEbs = New-Object 'System.Collections.Generic.HashSet[string]'
     Get-Content -LiteralPath $ebsPath | ForEach-Object {

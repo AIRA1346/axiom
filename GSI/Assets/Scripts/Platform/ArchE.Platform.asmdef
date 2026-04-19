@@ -1,7 +1,9 @@
 {
     "name": "ArchE.Platform",
     "rootNamespace": "",
-    "references": [],
+    "references": [
+        "com.rlabrecque.steamworks.net"
+    ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,

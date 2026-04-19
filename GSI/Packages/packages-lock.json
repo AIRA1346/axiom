@@ -6,6 +6,13 @@
       "source": "embedded",
       "dependencies": {}
     },
+    "com.rlabrecque.steamworks.net": {
+      "version": "https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net",
+      "depth": 0,
+      "source": "git",
+      "dependencies": {},
+      "hash": "e4718c741df6161e3865f949adb7a9f89a1024b4"
+    },
     "com.unity.addressables": {
       "version": "2.9.1",
       "depth": 0,

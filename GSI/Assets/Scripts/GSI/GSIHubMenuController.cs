@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -18,8 +19,6 @@ public sealed class GSIHubMenuController : MonoBehaviour
     private const string HubHeaderSpacerName = "HubHeaderLeftSpacer";
 
     [SerializeField] private Button _backToArchEButton;
-    [SerializeField] private Button _practiceButton;
-    [SerializeField] private Button _aimPracticeButton;
     [SerializeField] private TextMeshProUGUI _tokenText;
     [SerializeField] private TextMeshProUGUI _ticketText;
 
@@ -28,10 +27,8 @@ public sealed class GSIHubMenuController : MonoBehaviour
     private bool _appearanceSubscribed;
     private bool _localeSubscribed;
 
-    private Button _memoryPracticeButton;
-    private Button _rhythmPracticeButton;
-    private Button _motPracticeButton;
-    private Button _bulletHellPracticeButton;
+    private readonly Dictionary<TestMode, Button> _practiceButtonsByMode = new Dictionary<TestMode, Button>();
+    private readonly List<(Button Button, UnityAction Action)> _practiceClickBindings = new List<(Button, UnityAction)>();
 
     private Button[][] _gradeButtonsByMode;
     private UnityAction[][] _gradeClickActionsByMode;
@@ -45,16 +42,6 @@ public sealed class GSIHubMenuController : MonoBehaviour
         if (_backToArchEButton != null)
         {
             _backToArchEButton.onClick.AddListener(OnBackToArchEClicked);
-        }
-
-        if (_practiceButton != null)
-        {
-            _practiceButton.onClick.AddListener(OnPracticeClicked);
-        }
-
-        if (_aimPracticeButton != null)
-        {
-            _aimPracticeButton.onClick.AddListener(OnAimPracticeClicked);
         }
     }
 
@@ -91,12 +78,9 @@ public sealed class GSIHubMenuController : MonoBehaviour
     {
         EnsureHubTopChrome();
 
-        EnsureMemoryLobbyButtons();
-        EnsureRhythmLobbyButtons();
-        EnsureMotLobbyButtons();
-        EnsureBulletHellLobbyButtons();
         EnsurePracticeGradeLayout();
 
+        ApplyHubLocalizedUiTexts();
         UpdateEconomyTexts();
         CacheHubVisualRefs();
         ApplyHubChrome();
@@ -404,35 +388,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
             _backToArchEButton.onClick.RemoveListener(OnBackToArchEClicked);
         }
 
-        if (_practiceButton != null)
-        {
-            _practiceButton.onClick.RemoveListener(OnPracticeClicked);
-        }
-
-        if (_aimPracticeButton != null)
-        {
-            _aimPracticeButton.onClick.RemoveListener(OnAimPracticeClicked);
-        }
-
-        if (_memoryPracticeButton != null)
-        {
-            _memoryPracticeButton.onClick.RemoveListener(OnMemoryPracticeClicked);
-        }
-
-        if (_rhythmPracticeButton != null)
-        {
-            _rhythmPracticeButton.onClick.RemoveListener(OnRhythmPracticeClicked);
-        }
-
-        if (_motPracticeButton != null)
-        {
-            _motPracticeButton.onClick.RemoveListener(OnMotPracticeClicked);
-        }
-
-        if (_bulletHellPracticeButton != null)
-        {
-            _bulletHellPracticeButton.onClick.RemoveListener(OnBulletHellPracticeClicked);
-        }
+        ClearPracticeClickBindings();
 
         if (_gradeButtonsByMode != null && _gradeClickActionsByMode != null)
         {
@@ -541,6 +497,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
     private void ApplyHubLocalizedUiTexts()
     {
         ApplyHubBackButtonLabel();
+        ApplyHubPracticeSectionTitleText();
         ApplyHubPracticeModeButtonLabels();
         ApplyHubPracticeGradeLegendText();
         ApplyHubUnifiedExamBlockTexts();
@@ -548,10 +505,15 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
     private void ApplyHubPracticeModeButtonLabels()
     {
-        ApplyLocalizedLabelOnButton(_memoryPracticeButton, UiStringKeys.HubPracticeMemory, "Practice: Memory");
-        ApplyLocalizedLabelOnButton(_rhythmPracticeButton, UiStringKeys.HubPracticeRhythm, "Practice: Rhythm");
-        ApplyLocalizedLabelOnButton(_motPracticeButton, UiStringKeys.HubPracticeMot, "Practice: Multiple object tracking");
-        ApplyLocalizedLabelOnButton(_bulletHellPracticeButton, UiStringKeys.HubPracticeBulletHell, "Practice: Bullet Hell");
+        IReadOnlyList<GsiHubPracticeCatalog.Entry> entries = GsiHubPracticeCatalog.All;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            GsiHubPracticeCatalog.Entry e = entries[i];
+            if (_practiceButtonsByMode.TryGetValue(e.Mode, out Button btn))
+            {
+                ApplyLocalizedLabelOnButton(btn, e.LocalizationKey, e.EnglishFallback);
+            }
+        }
     }
 
     private static void ApplyLocalizedLabelOnButton(Button btn, string localizationKey, string englishFallback)
@@ -568,6 +530,33 @@ public sealed class GSIHubMenuController : MonoBehaviour
         }
 
         tmp.text = GameLocalization.GetUiString(localizationKey, englishFallback);
+    }
+
+    private void ApplyHubPracticeSectionTitleText()
+    {
+        Transform layout = transform.Find("Layout");
+        if (layout == null)
+        {
+            return;
+        }
+
+        Transform practiceBlock = layout.Find("PracticeBlock");
+        if (practiceBlock == null)
+        {
+            return;
+        }
+
+        Transform sec = practiceBlock.Find("PracticeSectionTitle");
+        if (sec == null)
+        {
+            return;
+        }
+
+        TextMeshProUGUI tmp = sec.GetComponent<TextMeshProUGUI>();
+        if (tmp != null)
+        {
+            tmp.text = GameLocalization.GetUiString(UiStringKeys.HubSectionPractice, "Practice");
+        }
     }
 
     private void ApplyHubPracticeGradeLegendText()
@@ -703,6 +692,16 @@ public sealed class GSIHubMenuController : MonoBehaviour
                 }
             }
 
+            Transform sec = layout.Find("PracticeBlock/PracticeSectionTitle");
+            if (sec != null)
+            {
+                TextMeshProUGUI st = sec.GetComponent<TextMeshProUGUI>();
+                if (st != null)
+                {
+                    st.color = GsiUiAppearance.TextPrimary;
+                }
+            }
+
             Transform uTitle = layout.Find("UnifiedExamBlock/UnifiedExamHeader");
             if (uTitle != null)
             {
@@ -770,7 +769,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         GsiSceneNavigation.LoadArchEHub();
     }
 
-    private void OnPracticeClicked()
+    private static void OnPracticeModeClicked(TestMode mode)
     {
         if (GameManager.Instance == null)
         {
@@ -778,43 +777,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         }
 
         GameManager.Instance.SetTestType(TestType.Practice);
-        GameManager.Instance.SetTestMode(TestMode.Reaction);
-        GameManager.Instance.SetGameState(GameState.TestBriefing);
-    }
-
-    private void OnAimPracticeClicked()
-    {
-        if (GameManager.Instance == null)
-        {
-            return;
-        }
-
-        GameManager.Instance.SetTestType(TestType.Practice);
-        GameManager.Instance.SetTestMode(TestMode.AimPrecision);
-        GameManager.Instance.SetGameState(GameState.TestBriefing);
-    }
-
-    private void OnMemoryPracticeClicked()
-    {
-        if (GameManager.Instance == null)
-        {
-            return;
-        }
-
-        GameManager.Instance.SetTestType(TestType.Practice);
-        GameManager.Instance.SetTestMode(TestMode.MemorySequence);
-        GameManager.Instance.SetGameState(GameState.TestBriefing);
-    }
-
-    private void OnRhythmPracticeClicked()
-    {
-        if (GameManager.Instance == null)
-        {
-            return;
-        }
-
-        GameManager.Instance.SetTestType(TestType.Practice);
-        GameManager.Instance.SetTestMode(TestMode.RhythmTiming);
+        GameManager.Instance.SetTestMode(mode);
         GameManager.Instance.SetGameState(GameState.TestBriefing);
     }
 
@@ -866,147 +829,52 @@ public sealed class GSIHubMenuController : MonoBehaviour
         }
     }
 
-    private void EnsureMemoryLobbyButtons()
+    private void ClearPracticeClickBindings()
     {
-        Transform layout = transform.Find("Layout");
-        if (layout == null)
+        for (int i = 0; i < _practiceClickBindings.Count; i++)
         {
-            return;
+            (Button b, UnityAction a) = _practiceClickBindings[i];
+            if (b != null && a != null)
+            {
+                b.onClick.RemoveListener(a);
+            }
         }
 
-        DestroyChildIfExists(layout, "ExamMemory");
+        _practiceClickBindings.Clear();
+        _practiceButtonsByMode.Clear();
+    }
 
-        Transform existingP = layout.Find("PracticeMemory");
-        if (existingP != null)
-        {
-            _memoryPracticeButton = existingP.GetComponent<Button>();
-        }
-
+    private void EnsurePracticeButtonsFromCatalog(Transform layout)
+    {
         TMP_FontAsset font = TmpFontCache.LiberationSansSdf;
-        if (_memoryPracticeButton == null)
+        IReadOnlyList<GsiHubPracticeCatalog.Entry> entries = GsiHubPracticeCatalog.All;
+        for (int i = 0; i < entries.Count; i++)
         {
-            _memoryPracticeButton = CreateLobbyButton(layout, font, "PracticeMemory",
-                GameLocalization.GetUiString(UiStringKeys.HubPracticeMemory, "Practice: Memory"));
-        }
+            GsiHubPracticeCatalog.Entry e = entries[i];
+            DestroyChildIfExists(layout, e.LegacyExamTransformName);
+            Transform t = FindDescendantNamed(layout, e.PracticeTransformName);
+            Button btn;
+            if (t != null)
+            {
+                btn = t.GetComponent<Button>();
+            }
+            else
+            {
+                btn = CreateLobbyButton(layout, font, e.PracticeTransformName,
+                    GameLocalization.GetUiString(e.LocalizationKey, e.EnglishFallback));
+            }
 
-        if (_memoryPracticeButton != null)
-        {
-            _memoryPracticeButton.onClick.RemoveListener(OnMemoryPracticeClicked);
-            _memoryPracticeButton.onClick.AddListener(OnMemoryPracticeClicked);
-        }
-    }
+            if (btn == null)
+            {
+                continue;
+            }
 
-    private void EnsureRhythmLobbyButtons()
-    {
-        Transform layout = transform.Find("Layout");
-        if (layout == null)
-        {
-            return;
-        }
-
-        DestroyChildIfExists(layout, "ExamRhythm");
-
-        Transform existingP = layout.Find("PracticeRhythm");
-        if (existingP != null)
-        {
-            _rhythmPracticeButton = existingP.GetComponent<Button>();
-        }
-
-        TMP_FontAsset font = TmpFontCache.LiberationSansSdf;
-        if (_rhythmPracticeButton == null)
-        {
-            _rhythmPracticeButton = CreateLobbyButton(layout, font, "PracticeRhythm",
-                GameLocalization.GetUiString(UiStringKeys.HubPracticeRhythm, "Practice: Rhythm"));
-        }
-
-        if (_rhythmPracticeButton != null)
-        {
-            _rhythmPracticeButton.onClick.RemoveListener(OnRhythmPracticeClicked);
-            _rhythmPracticeButton.onClick.AddListener(OnRhythmPracticeClicked);
-        }
-    }
-
-    private void OnMotPracticeClicked()
-    {
-        if (GameManager.Instance == null)
-        {
-            return;
-        }
-
-        GameManager.Instance.SetTestType(TestType.Practice);
-        GameManager.Instance.SetTestMode(TestMode.MultipleObjectTracking);
-        GameManager.Instance.SetGameState(GameState.TestBriefing);
-    }
-
-    private void OnBulletHellPracticeClicked()
-    {
-        if (GameManager.Instance == null)
-        {
-            return;
-        }
-
-        GameManager.Instance.SetTestType(TestType.Practice);
-        GameManager.Instance.SetTestMode(TestMode.BulletHell);
-        GameManager.Instance.SetGameState(GameState.TestBriefing);
-    }
-
-    private void EnsureMotLobbyButtons()
-    {
-        Transform layout = transform.Find("Layout");
-        if (layout == null)
-        {
-            return;
-        }
-
-        DestroyChildIfExists(layout, "ExamMot");
-
-        Transform existingP = layout.Find("PracticeMot");
-        if (existingP != null)
-        {
-            _motPracticeButton = existingP.GetComponent<Button>();
-        }
-
-        TMP_FontAsset font = TmpFontCache.LiberationSansSdf;
-        if (_motPracticeButton == null)
-        {
-            _motPracticeButton = CreateLobbyButton(layout, font, "PracticeMot",
-                GameLocalization.GetUiString(UiStringKeys.HubPracticeMot, "Practice: Multiple object tracking"));
-        }
-
-        if (_motPracticeButton != null)
-        {
-            _motPracticeButton.onClick.RemoveListener(OnMotPracticeClicked);
-            _motPracticeButton.onClick.AddListener(OnMotPracticeClicked);
-        }
-    }
-
-    private void EnsureBulletHellLobbyButtons()
-    {
-        Transform layout = transform.Find("Layout");
-        if (layout == null)
-        {
-            return;
-        }
-
-        DestroyChildIfExists(layout, "ExamBulletHell");
-
-        Transform existingP = layout.Find("PracticeBulletHell");
-        if (existingP != null)
-        {
-            _bulletHellPracticeButton = existingP.GetComponent<Button>();
-        }
-
-        TMP_FontAsset font = TmpFontCache.LiberationSansSdf;
-        if (_bulletHellPracticeButton == null)
-        {
-            _bulletHellPracticeButton = CreateLobbyButton(layout, font, "PracticeBulletHell",
-                GameLocalization.GetUiString(UiStringKeys.HubPracticeBulletHell, "Practice: Bullet Hell"));
-        }
-
-        if (_bulletHellPracticeButton != null)
-        {
-            _bulletHellPracticeButton.onClick.RemoveListener(OnBulletHellPracticeClicked);
-            _bulletHellPracticeButton.onClick.AddListener(OnBulletHellPracticeClicked);
+            _practiceButtonsByMode[e.Mode] = btn;
+            TestMode modeCapture = e.Mode;
+            UnityAction handler = () => OnPracticeModeClicked(modeCapture);
+            btn.onClick.RemoveListener(handler);
+            btn.onClick.AddListener(handler);
+            _practiceClickBindings.Add((btn, handler));
         }
     }
 
@@ -1015,11 +883,11 @@ public sealed class GSIHubMenuController : MonoBehaviour
         var go = new GameObject(name);
         go.transform.SetParent(parent, false);
         var le = go.AddComponent<LayoutElement>();
-        le.preferredHeight = 52f;
-        le.minHeight = 48f;
+        le.preferredHeight = 48f;
+        le.minHeight = 44f;
         le.flexibleWidth = 1f;
         var rt = go.GetComponent<RectTransform>();
-        rt.sizeDelta = new Vector2(0f, 52f);
+        rt.sizeDelta = new Vector2(0f, 48f);
 
         var img = go.AddComponent<Image>();
         img.color = GsiUiAppearance.SecondaryButton;
@@ -1041,7 +909,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         }
 
         tmp.text = label;
-        tmp.fontSize = 22;
+        tmp.fontSize = 20;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = GsiUiAppearance.TextPrimary;
         tmp.raycastTarget = false;
@@ -1077,23 +945,19 @@ public sealed class GSIHubMenuController : MonoBehaviour
             return;
         }
 
-        DestroyChildIfExists(layout, "ExamReaction");
-        DestroyChildIfExists(layout, "ExamAim");
+        ClearPracticeClickBindings();
+        EnsurePracticeButtonsFromCatalog(layout);
 
-        EnsureMemoryLobbyButtons();
-        EnsureRhythmLobbyButtons();
-        EnsureMotLobbyButtons();
-        EnsureBulletHellLobbyButtons();
-
-        Transform pr = FindDescendantNamed(layout, "PracticeReaction");
-        Transform pa = FindDescendantNamed(layout, "PracticeAim");
-        Transform pm = FindDescendantNamed(layout, "PracticeMemory");
-        Transform py = FindDescendantNamed(layout, "PracticeRhythm");
-        Transform pz = FindDescendantNamed(layout, "PracticeMot");
-        Transform pb = FindDescendantNamed(layout, "PracticeBulletHell");
-        if (pr == null || pa == null || pm == null || py == null || pz == null || pb == null)
+        IReadOnlyList<GsiHubPracticeCatalog.Entry> entries = GsiHubPracticeCatalog.All;
+        int n = entries.Count;
+        var practiceTransforms = new Transform[n];
+        for (int i = 0; i < n; i++)
         {
-            return;
+            practiceTransforms[i] = FindDescendantNamed(layout, entries[i].PracticeTransformName);
+            if (practiceTransforms[i] == null)
+            {
+                return;
+            }
         }
 
         DestroyChildIfExists(layout, "OfficialExamSectionSpacer");
@@ -1104,26 +968,23 @@ public sealed class GSIHubMenuController : MonoBehaviour
         Transform oldBlock = layout.Find("PracticeBlock");
         if (oldBlock != null)
         {
-            pr.SetParent(layout, true);
-            pa.SetParent(layout, true);
-            pm.SetParent(layout, true);
-            py.SetParent(layout, true);
-            pz.SetParent(layout, true);
-            pb.SetParent(layout, true);
+            for (int i = 0; i < n; i++)
+            {
+                practiceTransforms[i].SetParent(layout, true);
+            }
+
             GsiRuntimeUiBootstrap.DestroyObjectForRuntimeUi(oldBlock.gameObject);
         }
 
-        int insertIndex = Mathf.Min(
-            pr.GetSiblingIndex(),
-            pa.GetSiblingIndex(),
-            pm.GetSiblingIndex(),
-            py.GetSiblingIndex(),
-            pz.GetSiblingIndex(),
-            pb.GetSiblingIndex());
+        int insertIndex = practiceTransforms[0].GetSiblingIndex();
+        for (int i = 1; i < n; i++)
+        {
+            insertIndex = Mathf.Min(insertIndex, practiceTransforms[i].GetSiblingIndex());
+        }
 
-        _gradeButtonsByMode = new Button[6][];
-        _gradeClickActionsByMode = new UnityAction[6][];
-        for (int m = 0; m < 6; m++)
+        _gradeButtonsByMode = new Button[n][];
+        _gradeClickActionsByMode = new UnityAction[n][];
+        for (int m = 0; m < n; m++)
         {
             _gradeButtonsByMode[m] = new Button[9];
             _gradeClickActionsByMode[m] = new UnityAction[9];
@@ -1134,31 +995,51 @@ public sealed class GSIHubMenuController : MonoBehaviour
         var blockGo = new GameObject("PracticeBlock");
         blockGo.AddComponent<RectTransform>();
         var blockV = blockGo.AddComponent<VerticalLayoutGroup>();
-        blockV.spacing = 8f;
+        blockV.spacing = 6f;
         blockV.childAlignment = TextAnchor.UpperCenter;
         blockV.childControlWidth = true;
         blockV.childControlHeight = true;
         blockV.childForceExpandWidth = true;
         blockV.childForceExpandHeight = false;
-        blockV.padding = new RectOffset(0, 0, 8, 8);
+        blockV.padding = new RectOffset(12, 12, 4, 8);
         var blockLe = blockGo.AddComponent<LayoutElement>();
-        // minHeight 고정 시 실제 6행+범례 높이보다 작으면 연습 행이 블록 밖으로 넘쳐 통합 시험 UI와 겹침 — 자식 레이아웃이 높이를 결정하도록 둠
         blockLe.flexibleWidth = 1f;
         blockLe.flexibleHeight = 0f;
         blockGo.transform.SetParent(layout, false);
         blockGo.transform.SetSiblingIndex(insertIndex);
 
+        AddPracticeSectionTitle(blockGo.transform, font);
         AddPracticeGradeLegend(blockGo.transform, font);
 
-        BuildPracticeRow(blockGo.transform, "PracticeRow_Reaction", pr, TestMode.Reaction, 0, font);
-        BuildPracticeRow(blockGo.transform, "PracticeRow_Aim", pa, TestMode.AimPrecision, 1, font);
-        BuildPracticeRow(blockGo.transform, "PracticeRow_Memory", pm, TestMode.MemorySequence, 2, font);
-        BuildPracticeRow(blockGo.transform, "PracticeRow_Rhythm", py, TestMode.RhythmTiming, 3, font);
-        BuildPracticeRow(blockGo.transform, "PracticeRow_Mot", pz, TestMode.MultipleObjectTracking, 4, font);
-        BuildPracticeRow(blockGo.transform, "PracticeRow_BulletHell", pb, TestMode.BulletHell, 5, font);
+        for (int i = 0; i < n; i++)
+        {
+            GsiHubPracticeCatalog.Entry e = entries[i];
+            BuildPracticeRow(blockGo.transform, e.RowObjectName, practiceTransforms[i], e.Mode, i, font);
+        }
 
         RefreshPracticeGradeButtonColors();
         EnsureUnifiedExamBlock(layout);
+    }
+
+    private static void AddPracticeSectionTitle(Transform practiceBlockParent, TMP_FontAsset font)
+    {
+        var go = new GameObject("PracticeSectionTitle");
+        go.transform.SetParent(practiceBlockParent, false);
+        var le = go.AddComponent<LayoutElement>();
+        le.preferredHeight = 24f;
+        le.minHeight = 22f;
+        le.flexibleWidth = 1f;
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        if (font != null)
+        {
+            tmp.font = font;
+        }
+
+        tmp.text = GameLocalization.GetUiString(UiStringKeys.HubSectionPractice, "Practice");
+        tmp.fontSize = 15;
+        tmp.fontStyle = FontStyles.Bold;
+        tmp.alignment = TextAlignmentOptions.Center;
+        tmp.color = GsiUiAppearance.TextPrimary;
     }
 
     private static void DestroyChildIfExists(Transform layout, string childName)
@@ -1181,15 +1062,15 @@ public sealed class GSIHubMenuController : MonoBehaviour
         var rowGo = new GameObject(rowName);
         rowGo.transform.SetParent(blockParent, false);
         var rowH = rowGo.AddComponent<HorizontalLayoutGroup>();
-        rowH.spacing = 12f;
+        rowH.spacing = 10f;
         rowH.childAlignment = TextAnchor.MiddleCenter;
         rowH.childControlWidth = true;
         rowH.childControlHeight = true;
         rowH.childForceExpandWidth = false;
         rowH.childForceExpandHeight = false;
         var rowLe = rowGo.AddComponent<LayoutElement>();
-        rowLe.minHeight = 50f;
-        rowLe.preferredHeight = 52f;
+        rowLe.minHeight = 46f;
+        rowLe.preferredHeight = 48f;
         rowLe.flexibleWidth = 1f;
 
         practiceButton.SetParent(rowGo.transform, false);
@@ -1221,7 +1102,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
         tmp.text = GameLocalization.GetUiString(UiStringKeys.HubPracticeGradeLegend,
             "Practice rank: Grade 1 = hardest, Grade 9 = entry (per mode)");
-        tmp.fontSize = 13;
+        tmp.fontSize = 11;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = GsiUiAppearance.TextSecondary;
     }
@@ -1267,7 +1148,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         var spacerGo = new GameObject("UnifiedExamTopSpacer");
         spacerGo.transform.SetParent(layout, false);
         var spacerLe = spacerGo.AddComponent<LayoutElement>();
-        const float examTopGapPx = 28f;
+        const float examTopGapPx = 18f;
         spacerLe.minHeight = examTopGapPx;
         spacerLe.preferredHeight = examTopGapPx;
         spacerLe.flexibleWidth = 1f;
@@ -1371,15 +1252,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
             return;
         }
 
-        TestMode[] modes =
-        {
-            TestMode.Reaction,
-            TestMode.AimPrecision,
-            TestMode.MemorySequence,
-            TestMode.RhythmTiming,
-            TestMode.MultipleObjectTracking,
-            TestMode.BulletHell
-        };
+        TestMode[] modes = GsiHubPracticeCatalog.ModesOrdered();
 
         for (int m = 0; m < _gradeButtonsByMode.Length && m < modes.Length; m++)
         {

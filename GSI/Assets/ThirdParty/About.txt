@@ -1,0 +1,2 @@
+Vendor asset packs and store imports live under this folder to keep Assets/ root readable.
+Unity resolves assets by GUID; after a git pull, if anything looks missing, use Assets > Reimport All.

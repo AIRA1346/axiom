@@ -726,6 +726,42 @@ MonoBehaviour:
     m_Localized: Game Skill Index
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697264
+    m_Localized: 'Practice: Reaction speed'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697265
+    m_Localized: 'Practice: Aim'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697266
+    m_Localized: Practice
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697267
+    m_Localized: Altar of Verity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697268
+    m_Localized: Altar of Verity
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697269
+    m_Localized: No unified exam records yet.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697270
+    m_Localized: Select a session to view detailed results.
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697271
+    m_Localized: Completed sessions
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697272
+    m_Localized: Detailed results
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

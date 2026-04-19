@@ -1,7 +1,8 @@
 using UnityEngine;
 
 /// <summary>
-/// 장착 스킨의 UI 스와치(무채색 명도). 헤더/칩 등 구 API 호환용으로 전달되며, 실제 채색은 <see cref="GsiUiAppearance"/> 가 회색으로 고정합니다.
+/// 장착 스킨의 UI 액센트 색(미리보기·구 API 호환). 기본 스킨은 무채 명도, Ocean/Amber/Violet은 브랜드 색.
+/// 전역 화면 채색은 <see cref="GsiUiAppearance"/> 및 <see cref="CosmeticSkinPalettes"/>가 담당합니다.
 /// </summary>
 public static class CosmeticTheme
 {
@@ -9,6 +10,8 @@ public static class CosmeticTheme
 
     public static void ApplyFromSave()
     {
+        CosmeticSkinPalettes.InvalidateCache();
         UiAccent = PlayerCosmetics.GetAccentColor(PlayerCosmetics.EquippedSkinId);
+        GsiUiAppearance.RaiseChanged();
     }
 }

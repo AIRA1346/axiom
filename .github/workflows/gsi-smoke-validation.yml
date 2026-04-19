@@ -60,10 +60,16 @@ jobs:
           need_file GSI/Packages/manifest.json
           need_file GSI/Packages/packages-lock.json
           need_file GSI/Assets/Scripts/Core/SceneNames.cs
+          need_file GSI/Assets/Scripts/Core/GsiGameplayWorldCameraHooks.cs
+          need_file GSI/Assets/Scripts/Core/GsiAudioService.cs
           need_file GSI/Assets/Scripts/Core/GameLocalization.cs
           need_file GSI/Assets/Scripts/Core/GameManager.cs
           need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncContracts.cs
           need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncBridge.cs
+          need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncBackendSettings.cs
+          need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncHttpTransport.cs
+          need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncMainThreadRunner.cs
+          need_file GSI/Assets/Scripts/AsyncVersus/VersusAsyncOutbox.cs
           need_file GSI/Assets/Scripts/Core/UnifiedExamHistoryEntry.cs
           need_file GSI/Assets/Scripts/Core/GsiUnifiedExamHistoryOverlayRoot.cs
           need_file GSI/Assets/Scripts/Core/GsiSceneNavigation.cs
@@ -96,6 +102,10 @@ jobs:
           need_file GSI/Assets/Scripts/Shop/PlayerCosmetics.cs
           need_file GSI/Assets/Scripts/Shop/ShopCatalog.cs
           need_file GSI/Assets/Scripts/Shop/ShopSceneController.cs
+          need_file GSI/Assets/Editor/VersusAsyncBackendEditorWindow.cs
+          need_file GSI/Assets/Editor/SteamworksBuildDefinesMenu.cs
+          need_file GSI/steam_appid.txt.example
+          need_file GSI/Assets/Audio/README.txt
 
           if [[ "$missing" -ne 0 ]]; then
             echo "GSI structure check failed."

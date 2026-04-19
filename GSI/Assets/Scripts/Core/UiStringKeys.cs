@@ -7,6 +7,20 @@ public static class UiStringKeys
     public const string UiLobbyShop = "ui.lobby.shop";
     public const string UiLobbyInventory = "ui.lobby.inventory";
 
+    /// <summary>메인 로비 — 시험 기록(진실의 제단) 진입.</summary>
+    public const string UiLobbyAltarOfVerity = "ui.lobby.altar_of_verity";
+
+    /// <summary>시험 기록 화면 제목(영: Altar of Verity).</summary>
+    public const string VerityAltarScreenTitle = "verity.screen.title";
+
+    public const string VerityAltarEmpty = "verity.empty";
+
+    public const string VerityAltarSelectHint = "verity.select_hint";
+
+    public const string VerityAltarListCaption = "verity.list_caption";
+
+    public const string VerityAltarDetailCaption = "verity.detail_caption";
+
     public const string IntroBootInitializing = "intro.boot.initializing";
     public const string IntroStatusConnecting = "intro.status.connecting";
     public const string IntroStatusStandby = "intro.status.standby";
@@ -31,10 +45,15 @@ public static class UiStringKeys
     public const string SettingsLangKorean = "settings.lang.korean";
 
     public const string HubPracticeMemory = "hub.practice.memory";
+    public const string HubPracticeReaction = "hub.practice.reaction";
+    public const string HubPracticeAim = "hub.practice.aim";
     public const string HubPracticeRhythm = "hub.practice.rhythm";
     public const string HubPracticeMot = "hub.practice.mot";
     public const string HubPracticeBulletHell = "hub.practice.bullethell";
     public const string HubPracticeGradeLegend = "hub.practice.grade_legend";
+
+    /// <summary>G.S.I 허브 — 연습 블록 섹션 제목.</summary>
+    public const string HubSectionPractice = "hub.section.practice";
 
     public const string HubUnifiedTitle = "hub.unified.title";
     public const string HubUnifiedHint = "hub.unified.hint";

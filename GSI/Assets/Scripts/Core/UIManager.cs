@@ -14,6 +14,7 @@ public sealed class UIManager : MonoBehaviour
 
     private GsiTestBriefingUi.Refs _briefingRefs;
     private bool _localeSubscribed;
+    private bool _appearanceSubscribed;
 
     private void Start()
     {
@@ -24,11 +25,13 @@ public sealed class UIManager : MonoBehaviour
         }
 
         TrySubscribeLocaleChanged();
+        TrySubscribeAppearance();
     }
 
     private void OnDestroy()
     {
         TryUnsubscribeLocaleChanged();
+        TryUnsubscribeAppearance();
 
         if (GameManager.Instance != null)
         {
@@ -58,6 +61,52 @@ public sealed class UIManager : MonoBehaviour
         _localeSubscribed = false;
     }
 
+    private void TrySubscribeAppearance()
+    {
+        if (_appearanceSubscribed)
+        {
+            return;
+        }
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+#endif
+        GsiUiAppearance.Changed += OnLobbyUiAppearanceChanged;
+        _appearanceSubscribed = true;
+    }
+
+    private void TryUnsubscribeAppearance()
+    {
+        if (!_appearanceSubscribed)
+        {
+            return;
+        }
+
+        GsiUiAppearance.Changed -= OnLobbyUiAppearanceChanged;
+        _appearanceSubscribed = false;
+    }
+
+    private void OnLobbyUiAppearanceChanged()
+    {
+        if (GameManager.Instance == null)
+        {
+            return;
+        }
+
+        if (GameManager.Instance.CurrentState == GameState.MainMenu)
+        {
+            ApplyLobbyHudTextChrome();
+        }
+
+        if (GameManager.Instance.CurrentState == GameState.TestBriefing && _briefingRefs != null)
+        {
+            GsiTestBriefingUi.RefreshChrome(_briefingRefs);
+        }
+    }
+
     private void OnLobbyUiLocaleChanged()
     {
         if (GameManager.Instance == null)
@@ -74,6 +123,7 @@ public sealed class UIManager : MonoBehaviour
         if (GameManager.Instance.CurrentState == GameState.MainMenu)
         {
             UpdateBestRecordText();
+            ApplyLobbyHudTextChrome();
         }
 
         if (GameManager.Instance.CurrentState == GameState.TestStandby)
@@ -126,6 +176,7 @@ public sealed class UIManager : MonoBehaviour
             case GameState.MainMenu:
                 SetPanelActive(_mainMenuPanel, true);
                 UpdateBestRecordText();
+                ApplyLobbyHudTextChrome();
                 break;
 
             case GameState.TestBriefing:
@@ -210,6 +261,18 @@ public sealed class UIManager : MonoBehaviour
         _bestRecordText.text = GameLocalization.FormatUiString(UiStringKeys.LobbyBestRecordsReactionAimFmt,
             "BEST REACTION: {0}\nBEST AIM: {1}", r, a);
         _bestRecordText.raycastTarget = false;
+        ApplyLobbyHudTextChrome();
+    }
+
+    /// <summary>메인 로비 베스트 기록 등 — 다크/라이트 전환 시 가독색 유지.</summary>
+    private void ApplyLobbyHudTextChrome()
+    {
+        if (_bestRecordText == null)
+        {
+            return;
+        }
+
+        _bestRecordText.color = GsiUiAppearance.TextSecondary;
     }
 
     private void SetAllPanels(bool active)

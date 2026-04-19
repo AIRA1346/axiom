@@ -4,7 +4,6 @@
     "references": [
         "ArchE.Game",
         "ArchE.Platform",
-        "ArchE.Healing",
         "Unity.TextMeshPro",
         "Unity.InputSystem",
         "UnityEngine.UI",

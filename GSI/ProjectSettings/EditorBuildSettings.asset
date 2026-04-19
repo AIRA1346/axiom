@@ -18,6 +18,9 @@ EditorBuildSettings:
     path: Assets/Scenes/InventoryScene.unity
     guid: a1f2e3d4c5b6a79889706f5e4d3c2b1a
   - enabled: 1
+    path: Assets/Scenes/AltarOfVerityScene.unity
+    guid: f3e4d5c6b7a89012fedcba9876543210
+  - enabled: 1
     path: Assets/Scenes/GSIScene.unity
     guid: 997d353bec9491446a2487d533607dc8
   m_configObjects:

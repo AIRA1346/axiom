@@ -28,6 +28,12 @@ public static class GsiSceneNavigation
         GsiSceneTransition.LoadScene(SceneNames.Inventory);
     }
 
+    /// <summary>통합 시험 응시 기록 전용 씬(Altar of Verity)으로 이동합니다. 씬 에셋: <see cref="SceneNames.AltarOfVerityAssetPath"/>.</summary>
+    public static void LoadAltarOfVerity()
+    {
+        GsiSceneTransition.LoadScene(SceneNames.AltarOfVerity);
+    }
+
     /// <summary>상점에서 로비로 돌아갑니다.</summary>
     public static void LoadLobby()
     {
