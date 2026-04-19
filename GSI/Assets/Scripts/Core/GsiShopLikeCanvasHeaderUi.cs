@@ -219,12 +219,14 @@ public static class GsiShopLikeCanvasHeaderUi
         if (settingsButton != null)
         {
             settingsButton.onClick.RemoveAllListeners();
+            settingsButton.onClick.AddListener(GsiUiSound.PlayClick);
             settingsButton.onClick.AddListener(() => GlobalSettingsOverlay.OpenSettings());
         }
 
         if (backButton != null)
         {
             backButton.onClick.RemoveAllListeners();
+            backButton.onClick.AddListener(GsiUiSound.PlayCancel);
             backButton.onClick.AddListener(onBackClicked);
         }
     }

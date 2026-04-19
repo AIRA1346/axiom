@@ -129,6 +129,11 @@ public sealed class GameManager : MonoBehaviour
         {
             gameObject.AddComponent<GsiAudioService>();
         }
+
+        if (GetComponent<GsiUiInteractionSound>() == null)
+        {
+            gameObject.AddComponent<GsiUiInteractionSound>();
+        }
     }
 
     private void LoadPracticeGrade()
