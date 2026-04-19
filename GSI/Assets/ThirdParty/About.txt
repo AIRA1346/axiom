@@ -1,2 +1,3 @@
 Vendor asset packs and store imports live under this folder to keep Assets/ root readable.
+Audio / SFX store packs for GSI live under Assets/Audio/Packs (moved from here for a single audio tree).
 Unity resolves assets by GUID; after a git pull, if anything looks missing, use Assets > Reimport All.
