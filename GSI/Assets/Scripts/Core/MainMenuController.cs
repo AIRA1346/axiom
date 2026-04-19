@@ -13,6 +13,14 @@ using UnityEditor.SceneManagement;
 public sealed class MainMenuController : MonoBehaviour
 {
     private const string LobbyActionRowName = "LobbyActionRow";
+
+    /// <summary>Bottom action row: inset from screen bottom, height, horizontal inset (each side).</summary>
+    private const float LobbyActionRowBottomInset = 20f;
+    private const float LobbyActionRowHeight = 118f;
+    private const float LobbyActionRowSideInset = 28f;
+
+    /// <summary>Economy strip (gold / ticket) inset from the top edge of the lobby panel.</summary>
+    private const float LobbyEconomyStripTopInset = 20f;
     private const string LobbyLabelRulesRootName = "LobbyLabelRules";
     private const string LobbyLabelRuleTopName = "LobbyLabelRuleTop";
     private const string LobbyLabelRuleBottomName = "LobbyLabelRuleBottom";
@@ -375,6 +383,7 @@ public sealed class MainMenuController : MonoBehaviour
 
         RemoveLegacyLobbyHeaderAndSettings();
         BuildLobbyActionRow();
+        EnsureLobbyActionRowLayout();
         EnsureLobbyEconomyStrip();
 
         _lobbyShellBuilt = true;
@@ -442,11 +451,7 @@ public sealed class MainMenuController : MonoBehaviour
             var stripGo = new GameObject(LobbyEconomyStripName);
             stripRt = stripGo.AddComponent<RectTransform>();
             stripRt.SetParent(_lobbyRoot, false);
-            stripRt.anchorMin = new Vector2(0.5f, 0f);
-            stripRt.anchorMax = new Vector2(0.5f, 0f);
-            stripRt.pivot = new Vector2(0.5f, 0f);
-            stripRt.sizeDelta = new Vector2(1000f, 48f);
-            stripRt.anchoredPosition = new Vector2(0f, 36f + 118f + 18f);
+            ApplyLobbyEconomyStripRect(stripRt);
 
             var hor = stripGo.AddComponent<HorizontalLayoutGroup>();
             hor.spacing = 36f;
@@ -460,6 +465,7 @@ public sealed class MainMenuController : MonoBehaviour
         else
         {
             stripRt = stripTf.GetComponent<RectTransform>();
+            ApplyLobbyEconomyStripRect(stripRt);
         }
 
         if (_tokenText != null)
@@ -522,6 +528,87 @@ public sealed class MainMenuController : MonoBehaviour
         }
     }
 
+    private void EnsureLobbyActionRowLayout()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform rowTf = _lobbyRoot.Find(LobbyActionRowName);
+        if (rowTf == null || !rowTf.TryGetComponent(out RectTransform rowRt))
+        {
+            return;
+        }
+
+        rowRt.anchorMin = new Vector2(0f, 0f);
+        rowRt.anchorMax = new Vector2(1f, 0f);
+        rowRt.pivot = new Vector2(0.5f, 0f);
+        rowRt.anchoredPosition = new Vector2(0f, LobbyActionRowBottomInset);
+        rowRt.sizeDelta = new Vector2(-LobbyActionRowSideInset * 2f, LobbyActionRowHeight);
+
+        HorizontalLayoutGroup hlg = rowTf.GetComponent<HorizontalLayoutGroup>();
+        if (hlg == null)
+        {
+            hlg = rowTf.gameObject.AddComponent<HorizontalLayoutGroup>();
+        }
+
+        hlg.spacing = 16f;
+        hlg.padding = new RectOffset(4, 4, 2, 8);
+        hlg.childAlignment = TextAnchor.MiddleCenter;
+        hlg.childControlWidth = true;
+        hlg.childControlHeight = true;
+        hlg.childForceExpandWidth = true;
+        hlg.childForceExpandHeight = true;
+
+        for (int i = 0; i < rowRt.childCount; i++)
+        {
+            Transform child = rowRt.GetChild(i);
+            if (child.GetComponent<Button>() == null)
+            {
+                continue;
+            }
+
+            if (!child.TryGetComponent(out RectTransform crt))
+            {
+                continue;
+            }
+
+            crt.anchorMin = new Vector2(0f, 0f);
+            crt.anchorMax = new Vector2(0f, 1f);
+            crt.pivot = new Vector2(0.5f, 0.5f);
+            crt.anchoredPosition = Vector2.zero;
+
+            LayoutElement le = child.GetComponent<LayoutElement>();
+            if (le == null)
+            {
+                le = child.gameObject.AddComponent<LayoutElement>();
+            }
+
+            le.minWidth = 0f;
+            le.flexibleWidth = 1f;
+            le.minHeight = 96f;
+            le.preferredHeight = LobbyActionRowHeight - 8f;
+        }
+
+        LayoutRebuilder.ForceRebuildLayoutImmediate(rowRt);
+        rowRt.SetAsLastSibling();
+    }
+
+    private void ApplyLobbyEconomyStripRect(RectTransform stripRt)
+    {
+        if (stripRt == null)
+        {
+            return;
+        }
+
+        stripRt.anchorMin = new Vector2(0f, 1f);
+        stripRt.anchorMax = new Vector2(1f, 1f);
+        stripRt.pivot = new Vector2(0.5f, 1f);
+        stripRt.anchoredPosition = new Vector2(0f, -LobbyEconomyStripTopInset);
+        stripRt.sizeDelta = new Vector2(-LobbyActionRowSideInset * 2f, 48f);
+    }
+
     private void BuildLobbyActionRow()
     {
         if (_lobbyRoot == null || _lobbyRoot.Find(LobbyActionRowName) != null)
@@ -539,11 +626,11 @@ public sealed class MainMenuController : MonoBehaviour
         var rowGo = new GameObject(LobbyActionRowName);
         RectTransform rowRt = rowGo.AddComponent<RectTransform>();
         rowRt.SetParent(_lobbyRoot, false);
-        rowRt.anchorMin = new Vector2(0.5f, 0f);
-        rowRt.anchorMax = new Vector2(0.5f, 0f);
+        rowRt.anchorMin = new Vector2(0f, 0f);
+        rowRt.anchorMax = new Vector2(1f, 0f);
         rowRt.pivot = new Vector2(0.5f, 0f);
-        rowRt.sizeDelta = new Vector2(1040f, 118f);
-        rowRt.anchoredPosition = new Vector2(0f, 40f);
+        rowRt.sizeDelta = new Vector2(-LobbyActionRowSideInset * 2f, LobbyActionRowHeight);
+        rowRt.anchoredPosition = new Vector2(0f, LobbyActionRowBottomInset);
 
         var hor = rowGo.AddComponent<HorizontalLayoutGroup>();
         hor.spacing = 22f;
@@ -569,8 +656,6 @@ public sealed class MainMenuController : MonoBehaviour
             inv.SetParent(rowRt, false);
             _openInventoryButton = inv.GetComponent<Button>();
         }
-
-        rowRt.sizeDelta = new Vector2(1320f, 118f);
 
         Transform altar = _lobbyRoot.Find("AltarOfVerityButton");
         if (altar == null)
@@ -634,6 +719,8 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void ApplyLobbyChrome()
     {
+        EnsureLobbyActionRowLayout();
+
         ApplyLobbyLocalizedTexts();
 
         EnsureLobbyBackdrop();

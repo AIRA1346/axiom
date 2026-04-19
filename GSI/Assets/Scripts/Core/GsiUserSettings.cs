@@ -12,9 +12,12 @@ public static class GsiUserSettings
 
     public const float DefaultVolume = 1f;
 
+    /// <summary>음악 슬라이더(0~1) 기본값. 최대 대비 약 20%.</summary>
+    public const float DefaultMusicVolume = 0.2f;
+
     public static float MasterVolume { get; private set; } = DefaultVolume;
     public static float SfxVolume { get; private set; } = DefaultVolume;
-    public static float MusicVolume { get; private set; } = DefaultVolume;
+    public static float MusicVolume { get; private set; } = DefaultMusicVolume;
 
     /// <summary>저장 후 다른 시스템이 반응할 때(예: UI 동기화).</summary>
     public static event Action SettingsChanged;
@@ -28,7 +31,7 @@ public static class GsiUserSettings
     {
         MasterVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MasterKey, DefaultVolume));
         SfxVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(SfxKey, DefaultVolume));
-        MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MusicKey, DefaultVolume));
+        MusicVolume = Mathf.Clamp01(PlayerPrefs.GetFloat(MusicKey, DefaultMusicVolume));
     }
 
     public static void Save()
