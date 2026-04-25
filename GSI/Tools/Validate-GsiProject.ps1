@@ -96,6 +96,7 @@ $files = @(
     "Assets\Scripts\Core\MainMenuController.cs",
     "Assets\Scripts\Economy\EconomyManager.cs",
     "Assets\Scripts\GSI\GSIHubMenuController.cs",
+    "Assets\Scripts\GSI\GSISceneBootstrap.cs",
     "Assets\Scripts\Inventory\InventorySceneController.cs",
     "Assets\Scripts\Core\AltarOfVeritySceneController.cs",
     "Assets\Editor\AltarOfVeritySceneSetupMenu.cs",

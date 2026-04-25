@@ -43,11 +43,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697093
-    m_Localized: Game Skill Index
+    m_Localized: The Axiom
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697094
     m_Localized: 'Skill metrics: assessment and records'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204698200
+    m_Localized: '- TAP TO START -'
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697095
@@ -399,7 +403,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697182
-    m_Localized: Rune Atelier · G.S.I
+    m_Localized: The Axiom
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697183
@@ -723,7 +727,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697263
-    m_Localized: Game Skill Index
+    m_Localized: The Axiom
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697264
@@ -760,6 +764,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 1522245204697272
     m_Localized: Detailed results
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697273
+    m_Localized: The Axiom
     m_Metadata:
       m_Items: []
   references:

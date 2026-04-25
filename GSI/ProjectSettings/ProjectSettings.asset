@@ -13,7 +13,7 @@ PlayerSettings:
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: RunicAtelier
-  productName: G.S.I
+  productName: The Axiom
   defaultCursor: {fileID: 0}
   cursorHotspot: {x: 0, y: 0}
   m_SplashScreenBackgroundColor: {r: 0.13725491, g: 0.12156863, b: 0.1254902, a: 1}
@@ -847,14 +847,14 @@ PlayerSettings:
   editorAssembliesCompatibilityLevel: 1
   m_RenderingPath: 1
   m_MobileRenderingPath: 1
-  metroPackageName: G.S.I
+  metroPackageName: TheAxiom
   metroPackageVersion: 
   metroCertificatePath: 
   metroCertificatePassword: 
   metroCertificateSubject: 
   metroCertificateIssuer: 
   metroCertificateNotAfter: 0000000000000000
-  metroApplicationDescription: G.S.I
+  metroApplicationDescription: The Axiom
   wsaImages: {}
   metroTileShortName: 
   metroTileShowName: 0
@@ -928,7 +928,7 @@ PlayerSettings:
   cloudProjectId: 8363741b-2bca-4002-a687-b279950dfa0a
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: G.S.I
+  projectName: The Axiom
   organizationId: rkdwltjr1222
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

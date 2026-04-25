@@ -9,6 +9,8 @@ public sealed class GSISceneBootstrap : MonoBehaviour
     private void Awake()
     {
         GsiCoreServices.Ensure();
+        // Lobby hub (Lobby/Shop/Inventory/Altar) does not stop BGM on scene unload; cut music when entering the exam facility.
+        GsiAudio.StopMusic();
         GsiGameplayWorldCameraHooks.Initialize();
 
         GlobalSettingsOverlay.EnsureCreated();

@@ -26,6 +26,18 @@ public static class GsiUiRuntimeWidgets
     }
 
     /// <summary>
+    /// Like <see cref="StretchFull"/> but expands the rect beyond the parent on each edge (e.g. lobby parallax nudge).
+    /// </summary>
+    public static void StretchFullWithEdgeOverflow(RectTransform rt, float overflowEachSide)
+    {
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.one;
+        float o = Mathf.Max(0f, overflowEachSide);
+        rt.offsetMin = new Vector2(-o, -o);
+        rt.offsetMax = new Vector2(o, o);
+    }
+
+    /// <summary>
     /// Unity 6에서는 <c>Resources.GetBuiltinResource("UI/Skin/UISprite.psd")</c>가 실패할 수 있어,
     /// 흰색 9-slice 스프라이트를 한 번 만들어 재사용합니다.
     /// </summary>

@@ -405,7 +405,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Game Skill Index
+  m_text: The Axiom
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 7f96cd84f2372d24f8156783ecdc8ab0, type: 2}
   m_sharedMaterial: {fileID: -3020812873895617311, guid: 7f96cd84f2372d24f8156783ecdc8ab0, type: 2}

@@ -28,6 +28,8 @@ public static class UiStringKeys
     public const string IntroLogoTitle = "intro.logo.title";
     public const string IntroTagline = "intro.tagline";
 
+    public const string IntroTapToStart = "intro.tap_to_start";
+
     public const string SettingsTitle = "settings.title";
     public const string SettingsMasterVolume = "settings.master_volume";
     public const string SettingsSfx = "settings.sfx";
@@ -62,7 +64,7 @@ public static class UiStringKeys
     /// <summary>G.S.I 허브에서 통합 시험 응시 기록 오버레이를 엽니다.</summary>
     public const string HubUnifiedHistoryBtn = "hub.unified.history_btn";
 
-    /// <summary>G.S.I 허브 상단 화면 제목(G.S.I = Game Skill Index).</summary>
+    /// <summary>G.S.I 시설 허브 상단 화면 제목(제품명: The Axiom).</summary>
     public const string HubScreenTitle = "hub.screen_title";
 
     public const string HubCurrencyGoldFmt = "hub.currency.gold_fmt";
@@ -82,6 +84,9 @@ public static class UiStringKeys
 
     /// <summary>메인 로비 상단 브랜딩 한 줄.</summary>
     public const string LobbyBrandingTitle = "lobby.branding_title";
+
+    /// <summary>메인 로비 좌상단(제목 옆 시계) 짧은 제품명. 너비 절약을 위해 브랜딩 전체 문구와 다를 수 있음.</summary>
+    public const string LobbyTopLeftTitle = "lobby.top_left_title";
 
     public const string GsiInterstitialTitle = "gsi.interstitial.title";
     public const string GsiInterstitialContinue = "gsi.interstitial.continue";

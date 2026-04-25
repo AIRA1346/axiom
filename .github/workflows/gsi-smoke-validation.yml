@@ -97,7 +97,10 @@ jobs:
           need_file GSI/Assets/Scripts/Core/MainMenuController.cs
           need_file GSI/Assets/Scripts/Economy/EconomyManager.cs
           need_file GSI/Assets/Scripts/GSI/GSIHubMenuController.cs
+          need_file GSI/Assets/Scripts/GSI/GSISceneBootstrap.cs
           need_file GSI/Assets/Scripts/Inventory/InventorySceneController.cs
+          need_file GSI/Assets/Scripts/Core/AltarOfVeritySceneController.cs
+          need_file GSI/Assets/Editor/AltarOfVeritySceneSetupMenu.cs
           need_file GSI/Assets/Scripts/Shop/CosmeticTheme.cs
           need_file GSI/Assets/Scripts/Shop/PlayerCosmetics.cs
           need_file GSI/Assets/Scripts/Shop/ShopCatalog.cs

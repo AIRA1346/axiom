@@ -1,3 +1,6 @@
+using System;
+using System.Collections;
+using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -15,8 +18,8 @@ public sealed class MainMenuController : MonoBehaviour
     private const string LobbyActionRowName = "LobbyActionRow";
 
     /// <summary>Bottom action row: inset from screen bottom, height, horizontal inset (each side).</summary>
-    private const float LobbyActionRowBottomInset = 20f;
-    private const float LobbyActionRowHeight = 118f;
+    private const float LobbyActionRowBottomInset = 12f;
+    private const float LobbyActionRowHeight = 108f;
     private const float LobbyActionRowSideInset = 28f;
 
     /// <summary>Economy strip (gold / ticket) inset from the top edge of the lobby panel.</summary>
@@ -27,6 +30,40 @@ public sealed class MainMenuController : MonoBehaviour
     private const string LobbyBackdropObjectName = "LobbyBackdrop";
     private const string LobbyHeaderBarLegacyName = "LobbyHeaderBar";
     private const string LobbyEconomyStripName = "LobbyEconomyStrip";
+    private const string LobbyEconomyStripSpacerName = "LobbyEconomyStripSpacer";
+    /// <summary>Strip 안에서 골드/티켓을 한 덩어리로 묶어 우상단에 고정 폭으로 배치합니다 (CSF+HLG 꼬임 방지).</summary>
+    private const string LobbyEconomyRightClusterName = "LobbyEconomyRightCluster";
+    private const float LobbyEconomyClusterMinWidth = 520f;
+    private const float LobbyEconomyClusterPreferredWidth = 600f;
+    private const float LobbyEconomyLabelMinWidth = 200f;
+    private const float LobbyEconomyLabelPreferredWidth = 280f;
+    private const string LobbyTopLeftBarName = "LobbyTopLeftBar";
+    /// <summary>골드/응시권 줄과 동일( <see cref="UpdateEconomyTexts"/> 의 24f ).</summary>
+    private const float LobbyTopLeftFontSize = 24f;
+    private const float LobbyTopLeftTitleClockGap = 12f;
+    /// <summary>로비 가로의 일부만 사용 — 상단 골드 영역과 겹치지 않게 둡니다.</summary>
+    private const float LobbyTopLeftWidthFraction = 0.5f;
+    /// <summary>시계(연·월·일·시간) 열이 너무 얇아지는 것을 막는 최솟값(실제는 텍스트에 맞춤).</summary>
+    private const float LobbyTopLeftTimeMinWidth = 200f;
+    private const float LobbyTopLeftBarMaxHeight = 300f;
+    private const string LobbyCenterStageName = "LobbyCenterStage";
+    private const string LobbyLayerBaseName = "Layer_Base";
+    private const string LobbyLayerFarName = "Layer_Far";
+    private const string LobbyLayerMidName = "Layer_Mid";
+    private const string LobbyLayerNearName = "Layer_Near";
+    private const string LobbyLayerGlowName = "Layer_Glow";
+    private const string LobbyLayerVignetteName = "Layer_Vignette";
+    /// <summary>Parallax art 위, 글로우·제목보다 아래 — 메인 아트를 살짝 누르는 UI용 반투명 면.</summary>
+    private const string LobbyLayerUiScrimName = "Layer_UiScrim";
+    private const string LobbyDecorRootName = "Decor_Root";
+    private const string LobbyDecorBrandingName = "LobbyBrandingTitle";
+    /// <summary>Resources.Load path (no extension) for <c>Layer_Far</c> when override is not set.</summary>
+    private const string LobbyFarDistantResourcePath = "Art/Lobby/lobby_far_distant";
+    private const string LobbyMidgroundResourcePath = "Art/Lobby/lobby_midground";
+    private const string LobbyNeargroundResourcePath = "Art/Lobby/lobby_nearground";
+    private const float LobbyEconomyStripHeight = 48f;
+    /// <summary>Extra gap between economy strip and center background artboard.</summary>
+    private const float LobbyCenterStageExtraTopGap = 14f;
     private static readonly Color LobbyActionButtonBackgroundClear = new Color(1f, 1f, 1f, 0f);
 
     [Header("G.S.I")]
@@ -54,12 +91,38 @@ public sealed class MainMenuController : MonoBehaviour
     [Tooltip("Lobby BGM; uses GsiAudio music channel (GsiUserSettings music volume).")]
     [SerializeField] private AudioClip _lobbyBackgroundMusic;
 
+    [Header("Lobby center art")]
+    [Tooltip("If set, used as Layer_Far; otherwise Resources path Art/Lobby/lobby_far_distant is loaded.")]
+    [SerializeField] private Sprite _lobbyFarDistantSpriteOverride;
+
+    [Tooltip("If set, used as Layer_Mid; otherwise Resources path Art/Lobby/lobby_midground is loaded.")]
+    [SerializeField] private Sprite _lobbyMidgroundSpriteOverride;
+
+    [Tooltip("If set, used as Layer_Near; otherwise Resources path Art/Lobby/lobby_nearground is loaded.")]
+    [SerializeField] private Sprite _lobbyNeargroundSpriteOverride;
+
+    [Header("Lobby center entrance")]
+    [SerializeField] private bool _lobbyCenterEntranceFade = true;
+    [SerializeField] private float _lobbyCenterEntranceDuration = 0.45f;
+
+    [Header("Lobby action row entrance")]
+    [Tooltip("Bottom button row (Start, Shop, …) fades in after the center, so gold/ticket stay readable.")]
+    [SerializeField] private bool _lobbyActionRowEntranceFade = true;
+    [SerializeField] private float _lobbyActionRowEntranceDelay = 0.1f;
+    [SerializeField] private float _lobbyActionRowEntranceDuration = 0.3f;
+
     private RectTransform _lobbyRoot;
     private Image _panelBackground;
     private Image _heroImage;
     private bool _lobbyShellBuilt;
+    private TextMeshProUGUI _lobbyTopLeftTitleTmp;
+    private TextMeshProUGUI _lobbyTopLeftTimeTmp;
+    private long _lobbyClockSecondStamp = -1L;
+    private float _lobbyTopLeftBarLastLayoutWidth = -1f;
     private bool _appearanceSubscribed;
     private bool _localeSubscribed;
+    private LobbyCenterStageScaffold _lobbyCenterStage;
+    private Coroutine _lobbyEntranceSequenceRoutine;
 
     private void Awake()
     {
@@ -195,6 +258,21 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         EnsureLobbyShell();
+        if (Application.isPlaying && _lobbyRoot != null)
+        {
+            Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
+            if (stageTf != null)
+            {
+                PrepareLobbyCenterStageEntrance(stageTf);
+            }
+
+            Transform actionRow = _lobbyRoot.Find(LobbyActionRowName);
+            if (actionRow != null)
+            {
+                PrepareLobbyActionRowEntrance(actionRow);
+            }
+        }
+
         WireOptionalHierarchyButtons();
         ApplyLobbyChrome();
         TrySubscribeAppearance();
@@ -217,6 +295,11 @@ public sealed class MainMenuController : MonoBehaviour
         UpdateEconomyTexts();
         TrySubscribeLocaleChanged();
 
+        if (Application.isPlaying && (_lobbyCenterEntranceFade || _lobbyActionRowEntranceFade))
+        {
+            _lobbyEntranceSequenceRoutine = StartCoroutine(CoLobbyEntranceSequence());
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
@@ -232,6 +315,12 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (_lobbyEntranceSequenceRoutine != null)
+        {
+            StopCoroutine(_lobbyEntranceSequenceRoutine);
+            _lobbyEntranceSequenceRoutine = null;
+        }
+
         TryUnsubscribeLocaleChanged();
         TryUnsubscribeAppearance();
 
@@ -284,8 +373,6 @@ public sealed class MainMenuController : MonoBehaviour
         {
             EconomyManager.Instance.OnEconomyChanged -= HandleEconomyChanged;
         }
-
-        TryStopLobbyBgm();
     }
 
     private void TryPlayLobbyBgm()
@@ -296,16 +383,6 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         GsiAudio.PlayMusic(_lobbyBackgroundMusic, loop: true);
-    }
-
-    private static void TryStopLobbyBgm()
-    {
-        if (!Application.isPlaying)
-        {
-            return;
-        }
-
-        GsiAudio.StopMusic();
     }
 
     private void TrySubscribeAppearance()
@@ -385,6 +462,9 @@ public sealed class MainMenuController : MonoBehaviour
         BuildLobbyActionRow();
         EnsureLobbyActionRowLayout();
         EnsureLobbyEconomyStrip();
+        EnsureLobbyTopLeftTitleAndClock();
+        EnsureLobbyCenterStage();
+        BringLobbyInteractiveUiInFront();
 
         _lobbyShellBuilt = true;
     }
@@ -455,8 +535,8 @@ public sealed class MainMenuController : MonoBehaviour
 
             var hor = stripGo.AddComponent<HorizontalLayoutGroup>();
             hor.spacing = 36f;
-            hor.padding = new RectOffset(20, 20, 6, 6);
-            hor.childAlignment = TextAnchor.MiddleCenter;
+            hor.padding = new RectOffset(20, (int)LobbyActionRowSideInset, 6, 6);
+            hor.childAlignment = TextAnchor.MiddleLeft;
             hor.childControlWidth = true;
             hor.childControlHeight = true;
             hor.childForceExpandWidth = false;
@@ -466,38 +546,223 @@ public sealed class MainMenuController : MonoBehaviour
         {
             stripRt = stripTf.GetComponent<RectTransform>();
             ApplyLobbyEconomyStripRect(stripRt);
+            if (!stripTf.TryGetComponent(out HorizontalLayoutGroup existingHor))
+            {
+                existingHor = stripTf.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            existingHor.spacing = 36f;
+            existingHor.padding = new RectOffset(20, (int)LobbyActionRowSideInset, 6, 6);
+            existingHor.childAlignment = TextAnchor.MiddleLeft;
+            existingHor.childControlWidth = true;
+            existingHor.childControlHeight = true;
+            existingHor.childForceExpandWidth = false;
+            existingHor.childForceExpandHeight = true;
+        }
+
+        // Background: no layout slot; only spacer (flex) + right cluster (fixed) participate in the strip HLG.
+        EnsureEconomyStripBackground(stripRt);
+        EnsureLobbyEconomyRightCluster(stripRt);
+        EnsureLobbyEconomyStripSpacer(stripRt);
+        EnforceLobbyEconomyStripChildOrder(stripRt);
+        stripRt.SetAsLastSibling();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(stripRt);
+    }
+
+    /// <summary>Pushes gold/ticket to the right edge of the full-width economy strip (flexible spacer on the left).</summary>
+    private static void EnsureLobbyEconomyStripSpacer(RectTransform stripRt)
+    {
+        if (stripRt == null)
+        {
+            return;
+        }
+
+        Transform spacerTf = stripRt.Find(LobbyEconomyStripSpacerName);
+        RectTransform spacerRt;
+        if (spacerTf == null)
+        {
+            var go = new GameObject(LobbyEconomyStripSpacerName);
+            spacerRt = go.AddComponent<RectTransform>();
+            spacerRt.SetParent(stripRt, false);
+        }
+        else
+        {
+            spacerRt = spacerTf.GetComponent<RectTransform>();
+        }
+
+        LayoutElement le = spacerRt.GetComponent<LayoutElement>();
+        if (le == null)
+        {
+            le = spacerRt.gameObject.AddComponent<LayoutElement>();
+        }
+
+        le.minWidth = 0f;
+        le.preferredWidth = 0f;
+        le.flexibleWidth = 1f;
+        le.minHeight = 0f;
+        le.flexibleHeight = 0f;
+
+        // Keep spacer as the <b>first layout child</b> after the background, which is ignored for layout.
+        Transform stripBg = stripRt.Find("StripBg");
+        if (stripBg != null)
+        {
+            spacerRt.SetSiblingIndex(stripBg.GetSiblingIndex() + 1);
+        }
+        else
+        {
+            spacerRt.SetAsFirstSibling();
+        }
+    }
+
+    private void EnsureLobbyEconomyRightCluster(RectTransform stripRt)
+    {
+        if (stripRt == null)
+        {
+            return;
+        }
+
+        Transform clusterTf = stripRt.Find(LobbyEconomyRightClusterName);
+        RectTransform clusterRt;
+        if (clusterTf == null)
+        {
+            var go = new GameObject(LobbyEconomyRightClusterName);
+            clusterRt = go.AddComponent<RectTransform>();
+            clusterRt.SetParent(stripRt, false);
+            clusterRt.localScale = Vector3.one;
+            var hor = go.AddComponent<HorizontalLayoutGroup>();
+            hor.spacing = 28f;
+            hor.childAlignment = TextAnchor.MiddleLeft;
+            hor.childControlWidth = true;
+            hor.childControlHeight = true;
+            hor.childForceExpandWidth = false;
+            hor.childForceExpandHeight = true;
+            var clusterLe = go.AddComponent<LayoutElement>();
+            clusterLe.minWidth = LobbyEconomyClusterMinWidth;
+            clusterLe.preferredWidth = LobbyEconomyClusterPreferredWidth;
+            clusterLe.flexibleWidth = 0f;
+            clusterLe.minHeight = 0f;
+        }
+        else
+        {
+            clusterRt = (RectTransform)clusterTf;
+            if (!clusterRt.TryGetComponent(out HorizontalLayoutGroup h))
+            {
+                h = clusterRt.gameObject.AddComponent<HorizontalLayoutGroup>();
+            }
+
+            h.spacing = 28f;
+            h.childAlignment = TextAnchor.MiddleLeft;
+            h.childControlWidth = true;
+            h.childControlHeight = true;
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = true;
+            if (!clusterRt.TryGetComponent(out LayoutElement clusterLe))
+            {
+                clusterLe = clusterRt.gameObject.AddComponent<LayoutElement>();
+            }
+
+            clusterLe.minWidth = LobbyEconomyClusterMinWidth;
+            clusterLe.preferredWidth = LobbyEconomyClusterPreferredWidth;
+            clusterLe.flexibleWidth = 0f;
         }
 
         if (_tokenText != null)
         {
-            _tokenText.transform.SetParent(stripRt, false);
-            _tokenText.alignment = TextAlignmentOptions.Midline;
-            LayoutElement tLe = _tokenText.gameObject.GetComponent<LayoutElement>();
-            if (tLe == null)
+            _tokenText.transform.SetParent(clusterRt, false);
+            RemoveContentSizeFitterIfAny(_tokenText.gameObject);
+            _tokenText.alignment = TextAlignmentOptions.MidlineLeft;
+            _tokenText.enableWordWrapping = false;
+            _tokenText.overflowMode = TextOverflowModes.Overflow;
+            if (!_tokenText.gameObject.TryGetComponent(out LayoutElement tLe))
             {
                 tLe = _tokenText.gameObject.AddComponent<LayoutElement>();
             }
 
-            tLe.preferredWidth = 420f;
-            tLe.flexibleWidth = 1f;
+            tLe.minWidth = LobbyEconomyLabelMinWidth;
+            tLe.preferredWidth = LobbyEconomyLabelPreferredWidth;
+            tLe.flexibleWidth = 0f;
         }
 
         if (_ticketText != null)
         {
-            _ticketText.transform.SetParent(stripRt, false);
-            _ticketText.alignment = TextAlignmentOptions.Midline;
-            LayoutElement tLe = _ticketText.gameObject.GetComponent<LayoutElement>();
-            if (tLe == null)
+            _ticketText.transform.SetParent(clusterRt, false);
+            RemoveContentSizeFitterIfAny(_ticketText.gameObject);
+            _ticketText.alignment = TextAlignmentOptions.MidlineLeft;
+            _ticketText.enableWordWrapping = false;
+            _ticketText.overflowMode = TextOverflowModes.Overflow;
+            if (!_ticketText.gameObject.TryGetComponent(out LayoutElement kLe))
             {
-                tLe = _ticketText.gameObject.AddComponent<LayoutElement>();
+                kLe = _ticketText.gameObject.AddComponent<LayoutElement>();
             }
 
-            tLe.preferredWidth = 420f;
-            tLe.flexibleWidth = 1f;
+            kLe.minWidth = LobbyEconomyLabelMinWidth;
+            kLe.preferredWidth = LobbyEconomyLabelPreferredWidth;
+            kLe.flexibleWidth = 0f;
+        }
+    }
+
+    private static void EnforceLobbyEconomyStripChildOrder(Transform stripRt)
+    {
+        if (stripRt == null)
+        {
+            return;
         }
 
-        EnsureEconomyStripBackground(stripRt);
-        stripRt.SetAsLastSibling();
+        Transform bgTf = stripRt.Find("StripBg");
+        Transform spacerTf = stripRt.Find(LobbyEconomyStripSpacerName);
+        Transform clusterTf = stripRt.Find(LobbyEconomyRightClusterName);
+        if (bgTf != null)
+        {
+            bgTf.SetSiblingIndex(0);
+        }
+
+        if (spacerTf != null)
+        {
+            if (bgTf != null)
+            {
+                spacerTf.SetSiblingIndex(bgTf.GetSiblingIndex() + 1);
+            }
+            else
+            {
+                spacerTf.SetAsFirstSibling();
+            }
+        }
+
+        if (clusterTf != null)
+        {
+            if (spacerTf != null)
+            {
+                clusterTf.SetSiblingIndex(spacerTf.GetSiblingIndex() + 1);
+            }
+            else if (bgTf != null)
+            {
+                clusterTf.SetSiblingIndex(bgTf.GetSiblingIndex() + 1);
+            }
+        }
+    }
+
+    private static void RemoveContentSizeFitterIfAny(GameObject go)
+    {
+        if (go == null)
+        {
+            return;
+        }
+
+        if (!go.TryGetComponent(out ContentSizeFitter csf))
+        {
+            return;
+        }
+
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            UnityEngine.Object.DestroyImmediate(csf, true);
+        }
+        else
+#endif
+        {
+            UnityEngine.Object.Destroy(csf);
+        }
     }
 
     private static void EnsureEconomyStripBackground(RectTransform stripRt)
@@ -519,13 +784,418 @@ public sealed class MainMenuController : MonoBehaviour
             img.color = GsiUiAppearance.LobbyEconomyStripGlass;
             img.raycastTarget = false;
             GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(img);
+            LayoutElement bgLe = bgGo.GetComponent<LayoutElement>();
+            if (bgLe == null)
+            {
+                bgLe = bgGo.AddComponent<LayoutElement>();
+            }
+
+            bgLe.ignoreLayout = true;
             bgRt.SetAsFirstSibling();
         }
-        else if (bgTf.TryGetComponent(out Image existing))
+        else
         {
-            existing.color = GsiUiAppearance.LobbyEconomyStripGlass;
-            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(existing);
+            if (bgTf.TryGetComponent(out Image existing))
+            {
+                existing.color = GsiUiAppearance.LobbyEconomyStripGlass;
+                GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(existing);
+            }
+
+            if (bgTf.TryGetComponent(out LayoutElement bgLe))
+            {
+                bgLe.ignoreLayout = true;
+            }
+            else
+            {
+                bgLe = bgTf.gameObject.AddComponent<LayoutElement>();
+                bgLe.ignoreLayout = true;
+            }
         }
+    }
+
+    private void EnsureLobbyTopLeftTitleAndClock()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform barTf = _lobbyRoot.Find(LobbyTopLeftBarName);
+        if (barTf == null)
+        {
+            var barGo = new GameObject(LobbyTopLeftBarName);
+            RectTransform barRt = barGo.AddComponent<RectTransform>();
+            barRt.SetParent(_lobbyRoot, false);
+            ApplyLobbyTopLeftBarRect(barRt);
+
+            var h = barGo.AddComponent<HorizontalLayoutGroup>();
+            h.childAlignment = TextAnchor.UpperLeft;
+            h.spacing = LobbyTopLeftTitleClockGap;
+            h.padding = new RectOffset(0, 0, 0, 0);
+            h.childControlWidth = true;
+            h.childControlHeight = true;
+            h.childForceExpandWidth = false;
+            h.childForceExpandHeight = false;
+
+            const string titleChildName = "LobbyTopLeftTitle";
+            const string clockChildName = "LobbyTopLeftClock";
+            _lobbyTopLeftTitleTmp = CreateLobbyTopLeftTitleText(titleChildName, barRt.transform);
+            LayoutElement titleLe = _lobbyTopLeftTitleTmp.gameObject.GetComponent<LayoutElement>();
+            if (titleLe == null)
+            {
+                titleLe = _lobbyTopLeftTitleTmp.gameObject.AddComponent<LayoutElement>();
+            }
+
+            titleLe.minWidth = 48f;
+            titleLe.preferredWidth = 48f;
+            titleLe.flexibleWidth = 0f;
+            titleLe.minHeight = LobbyTopLeftFontSize;
+
+            _lobbyTopLeftTimeTmp = CreateLobbyTopLeftClockText(clockChildName, barRt.transform);
+            LayoutElement timeLe = _lobbyTopLeftTimeTmp.gameObject.GetComponent<LayoutElement>();
+            if (timeLe == null)
+            {
+                timeLe = _lobbyTopLeftTimeTmp.gameObject.AddComponent<LayoutElement>();
+            }
+
+            timeLe.minWidth = LobbyTopLeftTimeMinWidth;
+            timeLe.preferredWidth = LobbyTopLeftTimeMinWidth;
+            timeLe.flexibleWidth = 0f;
+            timeLe.minHeight = LobbyTopLeftFontSize;
+
+            EnforceLobbyTopLeftTitleBeforeClock(barRt.transform);
+            LayoutRebuilder.ForceRebuildLayoutImmediate(barRt);
+        }
+        else
+        {
+            if (_lobbyTopLeftTitleTmp == null)
+            {
+                Transform t = barTf.Find("LobbyTopLeftTitle");
+                if (t != null)
+                {
+                    _lobbyTopLeftTitleTmp = t.GetComponent<TextMeshProUGUI>();
+                }
+            }
+
+            if (_lobbyTopLeftTimeTmp == null)
+            {
+                Transform t = barTf.Find("LobbyTopLeftClock");
+                if (t != null)
+                {
+                    _lobbyTopLeftTimeTmp = t.GetComponent<TextMeshProUGUI>();
+                }
+            }
+
+            UpgradeLegacyLobbyTopLeftLayout(barTf);
+            EnforceLobbyTopLeftTitleBeforeClock(barTf);
+            if (barTf.TryGetComponent(out RectTransform existingBarRt))
+            {
+                ApplyLobbyTopLeftBarRect(existingBarRt);
+            }
+        }
+
+        _lobbyTopLeftBarLastLayoutWidth = -1f;
+        RefreshLobbyTopLeftTitleAndTime();
+    }
+
+    private void ApplyLobbyTopLeftBarRect(RectTransform barRt)
+    {
+        if (_lobbyRoot == null || barRt == null)
+        {
+            return;
+        }
+
+        float panelW = _lobbyRoot.rect.width;
+        float inner = LobbyActionRowSideInset;
+        float barW = Mathf.Max(120f, panelW * LobbyTopLeftWidthFraction - 2f * inner);
+        barRt.anchorMin = new Vector2(0f, 1f);
+        barRt.anchorMax = new Vector2(0f, 1f);
+        barRt.pivot = new Vector2(0f, 1f);
+        barRt.anchoredPosition = new Vector2(inner, -LobbyEconomyStripTopInset);
+        barRt.sizeDelta = new Vector2(barW, 80f);
+    }
+
+    private static void UpgradeLegacyLobbyTopLeftLayout(Transform barTf)
+    {
+        if (barTf == null)
+        {
+            return;
+        }
+
+        if (!barTf.TryGetComponent(out HorizontalLayoutGroup h))
+        {
+            h = barTf.gameObject.AddComponent<HorizontalLayoutGroup>();
+        }
+
+        h.childAlignment = TextAnchor.UpperLeft;
+        h.spacing = LobbyTopLeftTitleClockGap;
+        h.childControlWidth = true;
+        h.childControlHeight = true;
+        h.childForceExpandWidth = false;
+        h.childForceExpandHeight = false;
+
+        Transform titleTf = barTf.Find("LobbyTopLeftTitle");
+        if (titleTf != null && titleTf.TryGetComponent(out TextMeshProUGUI titleTmp))
+        {
+            titleTmp.fontSize = LobbyTopLeftFontSize;
+            titleTmp.enableWordWrapping = true;
+            titleTmp.overflowMode = TextOverflowModes.Overflow;
+            titleTmp.alignment = TextAlignmentOptions.TopLeft;
+            LayoutElement le = titleTmp.GetComponent<LayoutElement>();
+            if (le == null)
+            {
+                le = titleTmp.gameObject.AddComponent<LayoutElement>();
+            }
+
+            le.minWidth = 48f;
+            le.preferredWidth = 48f;
+            le.flexibleWidth = 0f;
+            le.minHeight = LobbyTopLeftFontSize;
+        }
+
+        Transform clockTf = barTf.Find("LobbyTopLeftClock");
+        if (clockTf != null && clockTf.TryGetComponent(out TextMeshProUGUI clockTmp))
+        {
+            clockTmp.fontSize = LobbyTopLeftFontSize;
+            clockTmp.enableWordWrapping = false;
+            clockTmp.overflowMode = TextOverflowModes.Overflow;
+            clockTmp.alignment = TextAlignmentOptions.TopLeft;
+            LayoutElement le = clockTmp.GetComponent<LayoutElement>();
+            if (le == null)
+            {
+                le = clockTmp.gameObject.AddComponent<LayoutElement>();
+            }
+
+            le.minWidth = LobbyTopLeftTimeMinWidth;
+            le.preferredWidth = Mathf.Max(
+                LobbyTopLeftTimeMinWidth,
+                le.preferredWidth);
+            le.flexibleWidth = 0f;
+            le.minHeight = LobbyTopLeftFontSize;
+        }
+    }
+
+    private static void EnforceLobbyTopLeftTitleBeforeClock(Transform barTf)
+    {
+        if (barTf == null)
+        {
+            return;
+        }
+
+        Transform titleTf = barTf.Find("LobbyTopLeftTitle");
+        Transform clockTf = barTf.Find("LobbyTopLeftClock");
+        if (titleTf != null)
+        {
+            titleTf.SetAsFirstSibling();
+        }
+
+        if (clockTf != null)
+        {
+            if (titleTf != null)
+            {
+                clockTf.SetSiblingIndex(titleTf.GetSiblingIndex() + 1);
+            }
+            else
+            {
+                clockTf.SetAsLastSibling();
+            }
+        }
+    }
+
+    private static string FormatLobbyDateTime(DateTime now)
+    {
+        return now.ToString("yyyy-MM-dd HH:mm:ss", CultureInfo.CurrentCulture);
+    }
+
+    private static float MeasureLobbyTimeColumnWidth(TextMeshProUGUI timeTmp)
+    {
+        if (timeTmp == null)
+        {
+            return LobbyTopLeftTimeMinWidth;
+        }
+
+        if (string.IsNullOrEmpty(timeTmp.text))
+        {
+            return LobbyTopLeftTimeMinWidth;
+        }
+
+        timeTmp.ForceMeshUpdate(true);
+        float w = timeTmp.GetPreferredValues(timeTmp.text, 0f, 0f).x;
+        return Mathf.Max(LobbyTopLeftTimeMinWidth, w + 4f);
+    }
+
+    private void ApplyLobbyTopLeftColumnWidths(RectTransform bar)
+    {
+        if (bar == null || _lobbyTopLeftTitleTmp == null || _lobbyTopLeftTimeTmp == null)
+        {
+            return;
+        }
+
+        LayoutElement titleLe = _lobbyTopLeftTitleTmp.GetComponent<LayoutElement>();
+        if (titleLe == null)
+        {
+            titleLe = _lobbyTopLeftTitleTmp.gameObject.AddComponent<LayoutElement>();
+        }
+
+        LayoutElement timeLe = _lobbyTopLeftTimeTmp.GetComponent<LayoutElement>();
+        if (timeLe == null)
+        {
+            timeLe = _lobbyTopLeftTimeTmp.gameObject.AddComponent<LayoutElement>();
+        }
+
+        if (string.IsNullOrEmpty(_lobbyTopLeftTimeTmp.text))
+        {
+            _lobbyTopLeftTimeTmp.text = FormatLobbyDateTime(DateTime.Now);
+        }
+
+        timeLe.flexibleWidth = 0f;
+        timeLe.minWidth = LobbyTopLeftTimeMinWidth;
+        timeLe.preferredWidth = MeasureLobbyTimeColumnWidth(_lobbyTopLeftTimeTmp);
+
+        float barW = bar.sizeDelta.x;
+        float timeW = timeLe.preferredWidth;
+        float maxTitleW = Mathf.Max(48f, barW - timeW - LobbyTopLeftTitleClockGap);
+
+        _lobbyTopLeftTitleTmp.ForceMeshUpdate(true);
+        float naturalW = _lobbyTopLeftTitleTmp.GetPreferredValues(
+            _lobbyTopLeftTitleTmp.text, 1e4f, 0f).x;
+        titleLe.minWidth = 48f;
+        titleLe.flexibleWidth = 0f;
+        titleLe.preferredWidth = naturalW <= maxTitleW
+            ? Mathf.Max(48f, naturalW)
+            : maxTitleW;
+    }
+
+    private static TextMeshProUGUI CreateLobbyTopLeftTitleText(string name, Transform parent)
+    {
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        ApplyLobbyTopLeftSharedTypography(tmp);
+        tmp.alignment = TextAlignmentOptions.TopLeft;
+        tmp.enableWordWrapping = true;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+        return tmp;
+    }
+
+    private static TextMeshProUGUI CreateLobbyTopLeftClockText(string name, Transform parent)
+    {
+        var go = new GameObject(name, typeof(RectTransform));
+        go.transform.SetParent(parent, false);
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        ApplyLobbyTopLeftSharedTypography(tmp);
+        tmp.alignment = TextAlignmentOptions.TopLeft;
+        tmp.enableWordWrapping = false;
+        tmp.overflowMode = TextOverflowModes.Overflow;
+        return tmp;
+    }
+
+    private static void ApplyLobbyTopLeftSharedTypography(TextMeshProUGUI tmp)
+    {
+        if (TmpFontCache.LiberationSansSdf != null)
+        {
+            tmp.font = TmpFontCache.LiberationSansSdf;
+        }
+
+        tmp.fontSize = LobbyTopLeftFontSize;
+        tmp.raycastTarget = false;
+        GsiUiRuntimeWidgets.ApplyEconomyLineTypography(tmp);
+    }
+
+    private void RebuildLobbyTopLeftBarHeights()
+    {
+        if (_lobbyRoot == null || _lobbyTopLeftTitleTmp == null || _lobbyTopLeftTimeTmp == null)
+        {
+            return;
+        }
+
+        RectTransform bar = _lobbyTopLeftTitleTmp.transform.parent as RectTransform;
+        if (bar == null)
+        {
+            return;
+        }
+
+        ApplyLobbyTopLeftColumnWidths(bar);
+        LayoutRebuilder.ForceRebuildLayoutImmediate(bar);
+        _lobbyTopLeftTitleTmp.ForceMeshUpdate(true);
+        _lobbyTopLeftTimeTmp.ForceMeshUpdate(true);
+
+        float titleW = _lobbyTopLeftTitleTmp.rectTransform.rect.width;
+        if (titleW < 2f)
+        {
+            return;
+        }
+
+        float titleH = _lobbyTopLeftTitleTmp.GetPreferredValues(
+            _lobbyTopLeftTitleTmp.text, titleW, 0f).y;
+        float timeH = _lobbyTopLeftTimeTmp.GetPreferredValues(
+            _lobbyTopLeftTimeTmp.text, _lobbyTopLeftTimeTmp.rectTransform.rect.width, 0f).y;
+        float rowH = Mathf.Max(LobbyTopLeftFontSize, Mathf.Max(titleH, timeH) + 4f);
+        float barH = Mathf.Min(LobbyTopLeftBarMaxHeight, rowH);
+        if (!Mathf.Approximately(bar.sizeDelta.y, barH))
+        {
+            var sd = bar.sizeDelta;
+            bar.sizeDelta = new Vector2(sd.x, barH);
+        }
+    }
+
+    private void RefreshLobbyTopLeftTitleAndTime()
+    {
+        if (_lobbyTopLeftTitleTmp != null)
+        {
+            _lobbyTopLeftTitleTmp.text = GameLocalization.GetUiString(UiStringKeys.LobbyTopLeftTitle, "The Axiom");
+            _lobbyTopLeftTitleTmp.color = GsiUiAppearance.TextPrimary;
+        }
+
+        if (_lobbyTopLeftTimeTmp != null)
+        {
+            _lobbyTopLeftTimeTmp.text = FormatLobbyDateTime(DateTime.Now);
+            _lobbyTopLeftTimeTmp.color = GsiUiAppearance.TextSecondary;
+        }
+
+        _lobbyClockSecondStamp = -1L;
+        RebuildLobbyTopLeftBarHeights();
+    }
+
+    private void Update()
+    {
+        if (!Application.isPlaying || _lobbyRoot == null)
+        {
+            return;
+        }
+
+        if (_lobbyTopLeftTitleTmp == null)
+        {
+            return;
+        }
+
+        Transform topLeftTf = _lobbyRoot.Find(LobbyTopLeftBarName);
+        if (topLeftTf is RectTransform barRt)
+        {
+            float w = _lobbyRoot.rect.width;
+            if (!Mathf.Approximately(w, _lobbyTopLeftBarLastLayoutWidth))
+            {
+                _lobbyTopLeftBarLastLayoutWidth = w;
+                ApplyLobbyTopLeftBarRect(barRt);
+                RebuildLobbyTopLeftBarHeights();
+            }
+        }
+
+        if (_lobbyTopLeftTimeTmp == null)
+        {
+            return;
+        }
+
+        DateTime now = DateTime.Now;
+        long tickSecond = now.Ticks / TimeSpan.TicksPerSecond;
+        if (tickSecond == _lobbyClockSecondStamp)
+        {
+            return;
+        }
+
+        _lobbyClockSecondStamp = tickSecond;
+        _lobbyTopLeftTimeTmp.text = FormatLobbyDateTime(now);
+        RebuildLobbyTopLeftBarHeights();
     }
 
     private void EnsureLobbyActionRowLayout()
@@ -554,7 +1224,7 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         hlg.spacing = 16f;
-        hlg.padding = new RectOffset(4, 4, 2, 8);
+        hlg.padding = new RectOffset(4, 4, 0, 10);
         hlg.childAlignment = TextAnchor.MiddleCenter;
         hlg.childControlWidth = true;
         hlg.childControlHeight = true;
@@ -587,8 +1257,8 @@ public sealed class MainMenuController : MonoBehaviour
 
             le.minWidth = 0f;
             le.flexibleWidth = 1f;
-            le.minHeight = 96f;
-            le.preferredHeight = LobbyActionRowHeight - 8f;
+            le.minHeight = 88f;
+            le.preferredHeight = LobbyActionRowHeight - 6f;
         }
 
         LayoutRebuilder.ForceRebuildLayoutImmediate(rowRt);
@@ -676,8 +1346,8 @@ public sealed class MainMenuController : MonoBehaviour
             gsiLe = gsi.gameObject.AddComponent<LayoutElement>();
         }
 
-        gsiLe.minHeight = 104f;
-        gsiLe.preferredHeight = 108f;
+        gsiLe.minHeight = 96f;
+        gsiLe.preferredHeight = 102f;
 
         LayoutElement shopLe = shop.gameObject.GetComponent<LayoutElement>();
         if (shopLe == null)
@@ -685,8 +1355,8 @@ public sealed class MainMenuController : MonoBehaviour
             shopLe = shop.gameObject.AddComponent<LayoutElement>();
         }
 
-        shopLe.minHeight = 104f;
-        shopLe.preferredHeight = 108f;
+        shopLe.minHeight = 96f;
+        shopLe.preferredHeight = 102f;
 
         Transform invTf = rowRt.Find("InventoryButton");
         if (invTf != null)
@@ -697,8 +1367,8 @@ public sealed class MainMenuController : MonoBehaviour
                 invLe = invTf.gameObject.AddComponent<LayoutElement>();
             }
 
-            invLe.minHeight = 104f;
-            invLe.preferredHeight = 108f;
+            invLe.minHeight = 96f;
+            invLe.preferredHeight = 102f;
         }
 
         Transform altarTf = rowRt.Find("AltarOfVerityButton");
@@ -710,8 +1380,8 @@ public sealed class MainMenuController : MonoBehaviour
                 altarLe = altarTf.gameObject.AddComponent<LayoutElement>();
             }
 
-            altarLe.minHeight = 104f;
-            altarLe.preferredHeight = 108f;
+            altarLe.minHeight = 96f;
+            altarLe.preferredHeight = 102f;
         }
 
         rowRt.SetAsLastSibling();
@@ -724,6 +1394,9 @@ public sealed class MainMenuController : MonoBehaviour
         ApplyLobbyLocalizedTexts();
 
         EnsureLobbyBackdrop();
+        ApplyLobbyCenterStageChrome();
+        EnsureLobbyCenterParallaxWired();
+        ApplyLobbyDecorBranding();
 
         if (_panelBackground != null)
         {
@@ -746,6 +1419,8 @@ public sealed class MainMenuController : MonoBehaviour
         LobbyButtonLabelHoverBoost.EnsureOn(_openInventoryButton);
         LobbyButtonLabelHoverBoost.EnsureOn(_openAltarOfVerityButton);
         UpdateEconomyTexts();
+        RefreshLobbyTopLeftTitleAndTime();
+        BringLobbyInteractiveUiInFront();
     }
 
     /// <summary>Removes legacy LobbyBackdrop RawImage child; root panel Image follows <see cref="GsiUiAppearance"/>.</summary>
@@ -770,6 +1445,670 @@ public sealed class MainMenuController : MonoBehaviour
         }
 #endif
         Destroy(backdropTf.gameObject);
+    }
+
+    private void EnsureLobbyCenterStage()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
+        if (stageTf != null)
+        {
+            if (!stageTf.TryGetComponent(out RectTransform stageRt))
+            {
+                return;
+            }
+
+            ApplyLobbyCenterStageLayout(stageRt);
+            TryBindLobbyCenterStageScaffold(stageTf);
+            EnsureLobbyCenterArtLayers(stageTf, stageRt);
+            TryBindLobbyCenterStageScaffold(stageTf);
+            stageRt.SetAsFirstSibling();
+            PrepareLobbyCenterStageEntrance(stageTf);
+            return;
+        }
+
+        var rootGo = new GameObject(LobbyCenterStageName, typeof(RectTransform), typeof(LobbyCenterStageScaffold));
+        RectTransform rt = rootGo.GetComponent<RectTransform>();
+        rt.SetParent(_lobbyRoot, false);
+        ApplyLobbyCenterStageLayout(rt);
+        _lobbyCenterStage = rootGo.GetComponent<LobbyCenterStageScaffold>();
+
+        RectTransform baseRt = CreateLobbyCenterLayerImage(rt, LobbyLayerBaseName, out Image baseImg);
+        RectTransform farRt = CreateLobbyCenterLayerImage(
+            rt, LobbyLayerFarName, out Image farImg, LobbyCenterStageParallax.ParallaxLayerEdgeOverflow);
+        RectTransform midRt = CreateLobbyCenterLayerImage(
+            rt, LobbyLayerMidName, out Image midImg, LobbyCenterStageParallax.ParallaxLayerEdgeOverflow);
+        RectTransform nearRt = CreateLobbyCenterLayerImage(
+            rt, LobbyLayerNearName, out Image nearImg, LobbyCenterStageParallax.ParallaxLayerEdgeOverflow);
+        RectTransform uiScrimRt = CreateLobbyCenterLayerImage(rt, LobbyLayerUiScrimName, out Image uiScrimImg, 0f);
+        RectTransform glowRt = CreateLobbyCenterGlow(rt, out Image glowImg);
+        RectTransform vignetteRt = CreateLobbyCenterLayerImage(rt, LobbyLayerVignetteName, out Image vignetteImg);
+        var decorGo = new GameObject(LobbyDecorRootName, typeof(RectTransform));
+        RectTransform decorRt = decorGo.GetComponent<RectTransform>();
+        decorRt.SetParent(rt, false);
+        GsiUiRuntimeWidgets.StretchFull(decorRt);
+
+        _lobbyCenterStage.BaseLayer = baseRt;
+        _lobbyCenterStage.FarLayer = farRt;
+        _lobbyCenterStage.MidLayer = midRt;
+        _lobbyCenterStage.NearLayer = nearRt;
+        _lobbyCenterStage.UiScrimLayer = uiScrimRt;
+        _lobbyCenterStage.GlowLayer = glowRt;
+        _lobbyCenterStage.VignetteLayer = vignetteRt;
+        _lobbyCenterStage.DecorRoot = decorRt;
+        _lobbyCenterStage.BaseImage = baseImg;
+        _lobbyCenterStage.FarImage = farImg;
+        _lobbyCenterStage.MidImage = midImg;
+        _lobbyCenterStage.NearImage = nearImg;
+        _lobbyCenterStage.UiScrimImage = uiScrimImg;
+        _lobbyCenterStage.GlowImage = glowImg;
+        _lobbyCenterStage.VignetteImage = vignetteImg;
+
+        ReorderLobbyCenterStageLayers(stageTf: rt);
+        rt.SetAsFirstSibling();
+        PrepareLobbyCenterStageEntrance(rt);
+    }
+
+    private void PrepareLobbyCenterStageEntrance(Transform stageRoot)
+    {
+        if (!Application.isPlaying || stageRoot == null)
+        {
+            return;
+        }
+
+        CanvasGroup cg = stageRoot.gameObject.GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = stageRoot.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        cg.interactable = true;
+        cg.blocksRaycasts = false;
+        cg.alpha = _lobbyCenterEntranceFade ? 0f : 1f;
+    }
+
+    private void PrepareLobbyActionRowEntrance(Transform actionRowRoot)
+    {
+        if (!Application.isPlaying || actionRowRoot == null)
+        {
+            return;
+        }
+
+        CanvasGroup cg = actionRowRoot.gameObject.GetComponent<CanvasGroup>();
+        if (cg == null)
+        {
+            cg = actionRowRoot.gameObject.AddComponent<CanvasGroup>();
+        }
+
+        if (_lobbyActionRowEntranceFade)
+        {
+            cg.alpha = 0f;
+            cg.interactable = false;
+        }
+        else
+        {
+            cg.alpha = 1f;
+            cg.interactable = true;
+        }
+
+        cg.blocksRaycasts = true;
+    }
+
+    private IEnumerator CoLobbyEntranceSequence()
+    {
+        if (_lobbyRoot == null)
+        {
+            _lobbyEntranceSequenceRoutine = null;
+            yield break;
+        }
+
+        Transform stage = _lobbyRoot.Find(LobbyCenterStageName);
+        if (stage != null && stage.TryGetComponent(out CanvasGroup centerCg))
+        {
+            if (_lobbyCenterEntranceFade)
+            {
+                float centerDur = Mathf.Max(0.04f, _lobbyCenterEntranceDuration);
+                float t = 0f;
+                while (t < centerDur)
+                {
+                    t += Time.unscaledDeltaTime;
+                    centerCg.alpha = Mathf.Clamp01(t / centerDur);
+                    yield return null;
+                }
+            }
+
+            centerCg.alpha = 1f;
+        }
+
+        Transform actionRowT = _lobbyRoot.Find(LobbyActionRowName);
+        if (actionRowT == null)
+        {
+            _lobbyEntranceSequenceRoutine = null;
+            yield break;
+        }
+
+        if (!actionRowT.TryGetComponent(out CanvasGroup rowCg))
+        {
+            _lobbyEntranceSequenceRoutine = null;
+            yield break;
+        }
+
+        if (!_lobbyActionRowEntranceFade)
+        {
+            rowCg.alpha = 1f;
+            rowCg.interactable = true;
+            _lobbyEntranceSequenceRoutine = null;
+            yield break;
+        }
+
+        float wait = Mathf.Max(0f, _lobbyActionRowEntranceDelay);
+        if (wait > 0f)
+        {
+            float w = 0f;
+            while (w < wait)
+            {
+                w += Time.unscaledDeltaTime;
+                yield return null;
+            }
+        }
+
+        float rowDur = Mathf.Max(0.04f, _lobbyActionRowEntranceDuration);
+        float rt = 0f;
+        rowCg.interactable = false;
+        while (rt < rowDur)
+        {
+            rt += Time.unscaledDeltaTime;
+            rowCg.alpha = Mathf.Clamp01(rt / rowDur);
+            yield return null;
+        }
+
+        rowCg.alpha = 1f;
+        rowCg.interactable = true;
+        _lobbyEntranceSequenceRoutine = null;
+    }
+
+    /// <summary>Adds Far/Mid/Near if missing (older scenes) and fixes draw order.</summary>
+    private static void EnsureLobbyCenterArtLayers(Transform stageTf, RectTransform stageRt)
+    {
+        if (stageTf.Find(LobbyLayerFarName) == null)
+        {
+            CreateLobbyCenterLayerImage(
+                stageRt, LobbyLayerFarName, out _, LobbyCenterStageParallax.ParallaxLayerEdgeOverflow);
+        }
+
+        if (stageTf.Find(LobbyLayerMidName) == null)
+        {
+            CreateLobbyCenterLayerImage(
+                stageRt, LobbyLayerMidName, out _, LobbyCenterStageParallax.ParallaxLayerEdgeOverflow);
+        }
+
+        if (stageTf.Find(LobbyLayerNearName) == null)
+        {
+            CreateLobbyCenterLayerImage(
+                stageRt, LobbyLayerNearName, out _, LobbyCenterStageParallax.ParallaxLayerEdgeOverflow);
+        }
+
+        if (stageTf.Find(LobbyLayerUiScrimName) == null)
+        {
+            CreateLobbyCenterLayerImage(stageRt, LobbyLayerUiScrimName, out _, 0f);
+        }
+
+        ReorderLobbyCenterStageLayers(stageTf);
+    }
+
+    /// <summary>Back-to-front: Base, Far, Mid, Near, UiScrim, Glow, Vignette, Decor.</summary>
+    private static void ReorderLobbyCenterStageLayers(Transform stageTf)
+    {
+        if (stageTf == null)
+        {
+            return;
+        }
+
+        string[] order =
+        {
+            LobbyLayerBaseName,
+            LobbyLayerFarName,
+            LobbyLayerMidName,
+            LobbyLayerNearName,
+            LobbyLayerUiScrimName,
+            LobbyLayerGlowName,
+            LobbyLayerVignetteName,
+            LobbyDecorRootName,
+        };
+
+        int idx = 0;
+        for (int i = 0; i < order.Length; i++)
+        {
+            Transform t = stageTf.Find(order[i]);
+            if (t != null)
+            {
+                t.SetSiblingIndex(idx++);
+            }
+        }
+    }
+
+    private void ApplyLobbyCenterStageLayout(RectTransform stageRt)
+    {
+        if (stageRt == null)
+        {
+            return;
+        }
+
+        float topInset = LobbyEconomyStripTopInset + LobbyEconomyStripHeight + LobbyCenterStageExtraTopGap;
+        float bottomInset = LobbyActionRowBottomInset + LobbyActionRowHeight;
+        stageRt.anchorMin = Vector2.zero;
+        stageRt.anchorMax = Vector2.one;
+        // Edge-to-edge horizontally; top/bottom still clear economy strip and action row.
+        stageRt.offsetMin = new Vector2(0f, bottomInset);
+        stageRt.offsetMax = new Vector2(0f, -topInset);
+        EnsureLobbyCenterStageClipsChildren(stageRt);
+    }
+
+    /// <summary>
+    /// Parallax layer rects extend past the artboard; clip them to the stage rect so the corridor
+    /// never draws into the top economy bar or the bottom action row.
+    /// </summary>
+    private static void EnsureLobbyCenterStageClipsChildren(RectTransform stageRt)
+    {
+        if (stageRt == null)
+        {
+            return;
+        }
+
+        if (stageRt.GetComponent<RectMask2D>() == null)
+        {
+            stageRt.gameObject.AddComponent<RectMask2D>();
+        }
+    }
+
+    private void TryBindLobbyCenterStageScaffold(Transform stageTf)
+    {
+        if (!stageTf.TryGetComponent(out LobbyCenterStageScaffold scaffold))
+        {
+            scaffold = stageTf.gameObject.AddComponent<LobbyCenterStageScaffold>();
+        }
+
+        _lobbyCenterStage = scaffold;
+        if (scaffold.BaseLayer == null && stageTf.Find(LobbyLayerBaseName) is RectTransform br)
+        {
+            scaffold.BaseLayer = br;
+            scaffold.BaseImage = br.GetComponent<Image>();
+        }
+
+        if (scaffold.FarLayer == null && stageTf.Find(LobbyLayerFarName) is RectTransform fr)
+        {
+            scaffold.FarLayer = fr;
+            scaffold.FarImage = fr.GetComponent<Image>();
+        }
+
+        if (scaffold.MidLayer == null && stageTf.Find(LobbyLayerMidName) is RectTransform mr)
+        {
+            scaffold.MidLayer = mr;
+            scaffold.MidImage = mr.GetComponent<Image>();
+        }
+
+        if (scaffold.NearLayer == null && stageTf.Find(LobbyLayerNearName) is RectTransform nr)
+        {
+            scaffold.NearLayer = nr;
+            scaffold.NearImage = nr.GetComponent<Image>();
+        }
+
+        if (scaffold.UiScrimLayer == null && stageTf.Find(LobbyLayerUiScrimName) is RectTransform ur)
+        {
+            scaffold.UiScrimLayer = ur;
+            scaffold.UiScrimImage = ur.GetComponent<Image>();
+        }
+
+        if (scaffold.GlowLayer == null && stageTf.Find(LobbyLayerGlowName) is RectTransform gr)
+        {
+            scaffold.GlowLayer = gr;
+            scaffold.GlowImage = gr.GetComponent<Image>();
+        }
+
+        if (scaffold.VignetteLayer == null && stageTf.Find(LobbyLayerVignetteName) is RectTransform vr)
+        {
+            scaffold.VignetteLayer = vr;
+            scaffold.VignetteImage = vr.GetComponent<Image>();
+        }
+
+        if (scaffold.DecorRoot == null && stageTf.Find(LobbyDecorRootName) is RectTransform dr)
+        {
+            scaffold.DecorRoot = dr;
+        }
+    }
+
+    private static RectTransform CreateLobbyCenterLayerImage(
+        RectTransform parent, string objectName, out Image img, float edgeOverflow = 0f)
+    {
+        var go = new GameObject(objectName, typeof(RectTransform));
+        RectTransform layerRt = go.GetComponent<RectTransform>();
+        layerRt.SetParent(parent, false);
+        if (edgeOverflow > 0f)
+        {
+            GsiUiRuntimeWidgets.StretchFullWithEdgeOverflow(layerRt, edgeOverflow);
+        }
+        else
+        {
+            GsiUiRuntimeWidgets.StretchFull(layerRt);
+        }
+
+        img = go.AddComponent<Image>();
+        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(img);
+        img.raycastTarget = false;
+        return layerRt;
+    }
+
+    private static RectTransform CreateLobbyCenterGlow(RectTransform parent, out Image img)
+    {
+        var go = new GameObject(LobbyLayerGlowName, typeof(RectTransform));
+        RectTransform glowRt = go.GetComponent<RectTransform>();
+        glowRt.SetParent(parent, false);
+        glowRt.anchorMin = glowRt.anchorMax = new Vector2(0.5f, 0.5f);
+        glowRt.pivot = new Vector2(0.5f, 0.5f);
+        glowRt.sizeDelta = new Vector2(980f, 540f);
+        glowRt.anchoredPosition = Vector2.zero;
+        img = go.AddComponent<Image>();
+        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(img);
+        img.raycastTarget = false;
+        return glowRt;
+    }
+
+    private void ApplyLobbyCenterStageChrome()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
+        if (stageTf != null && _lobbyCenterStage == null)
+        {
+            TryBindLobbyCenterStageScaffold(stageTf);
+        }
+
+        if (_lobbyCenterStage == null)
+        {
+            return;
+        }
+
+        if (_lobbyCenterStage.BaseImage != null)
+        {
+            Color c = GsiUiAppearance.PrimaryActionButton;
+            c.a = Mathf.Clamp01(c.a * 1.85f);
+            _lobbyCenterStage.BaseImage.color = c;
+            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.BaseImage);
+        }
+
+        TryApplyFarDistantLayerArt();
+        TryApplyMidgroundLayerArt();
+        TryApplyNeargroundLayerArt();
+
+        if (_lobbyCenterStage.GlowImage != null)
+        {
+            // Lighter than before so the mid art reads clearly (less "grey card").
+            Color g = GsiUiAppearance.TextPrimary;
+            g.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.032f : 0.026f;
+            _lobbyCenterStage.GlowImage.color = g;
+            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.GlowImage);
+        }
+
+        if (_lobbyCenterStage.VignetteImage != null)
+        {
+            Color v = GsiUiAppearance.OverlayScrim;
+            v.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.15f : 0.08f;
+            _lobbyCenterStage.VignetteImage.color = v;
+            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.VignetteImage);
+        }
+
+        if (_lobbyCenterStage.UiScrimImage != null)
+        {
+            Color u = GsiUiAppearance.OverlayScrim;
+            u.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.26f : 0.18f;
+            _lobbyCenterStage.UiScrimImage.color = u;
+            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.UiScrimImage);
+        }
+
+        SetLobbyStageArtNonBlockingRaycasts(_lobbyCenterStage);
+    }
+
+    /// <summary>
+    /// Center-stage art must not sit in front of buttons/tickets in the raycast or draw stack. Scene-saved
+    /// layers may still have m_RaycastTarget on; this forces them off each refresh.
+    /// </summary>
+    private static void SetLobbyStageArtNonBlockingRaycasts(LobbyCenterStageScaffold scaffold)
+    {
+        if (scaffold == null)
+        {
+            return;
+        }
+
+        void One(Image img)
+        {
+            if (img == null)
+            {
+                return;
+            }
+
+            img.raycastTarget = false;
+        }
+
+        One(scaffold.BaseImage);
+        One(scaffold.FarImage);
+        One(scaffold.MidImage);
+        One(scaffold.NearImage);
+        One(scaffold.UiScrimImage);
+        One(scaffold.GlowImage);
+        One(scaffold.VignetteImage);
+    }
+
+    /// <summary>
+    /// Keeps <see cref="LobbyCenterStageName"/> as the rearmost child of the lobby panel, and
+    /// economy + action row after it so all interactive UI / chrome draws and receives input on top.
+    /// </summary>
+    private void BringLobbyInteractiveUiInFront()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform stage = _lobbyRoot.Find(LobbyCenterStageName);
+        if (stage != null)
+        {
+            stage.SetAsFirstSibling();
+        }
+
+        Transform topLeftBar = _lobbyRoot.Find(LobbyTopLeftBarName);
+        if (topLeftBar != null)
+        {
+            topLeftBar.SetAsLastSibling();
+        }
+
+        Transform strip = _lobbyRoot.Find(LobbyEconomyStripName);
+        Transform row = _lobbyRoot.Find(LobbyActionRowName);
+        if (strip != null)
+        {
+            strip.SetAsLastSibling();
+        }
+
+        if (row != null)
+        {
+            row.SetAsLastSibling();
+        }
+    }
+
+    private void TryApplyFarDistantLayerArt()
+    {
+        if (_lobbyCenterStage?.FarImage == null)
+        {
+            return;
+        }
+
+        Image far = _lobbyCenterStage.FarImage;
+        Sprite s = _lobbyFarDistantSpriteOverride;
+        if (s == null)
+        {
+            s = Resources.Load<Sprite>(LobbyFarDistantResourcePath);
+        }
+
+        if (s != null)
+        {
+            far.sprite = s;
+            far.type = Image.Type.Simple;
+            far.preserveAspect = false;
+            far.color = Color.white;
+            return;
+        }
+
+        Color f = GsiUiAppearance.ShopScreenBackground;
+        f.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.22f : 0.14f;
+        far.color = f;
+        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(far);
+    }
+
+    private void TryApplyMidgroundLayerArt()
+    {
+        if (_lobbyCenterStage?.MidImage == null)
+        {
+            return;
+        }
+
+        Image mid = _lobbyCenterStage.MidImage;
+        Sprite s = _lobbyMidgroundSpriteOverride;
+        if (s == null)
+        {
+            s = Resources.Load<Sprite>(LobbyMidgroundResourcePath);
+        }
+
+        if (s != null)
+        {
+            mid.sprite = s;
+            mid.type = Image.Type.Simple;
+            mid.preserveAspect = false;
+            mid.color = Color.white;
+            return;
+        }
+
+        Color m = GsiUiAppearance.TextPrimary;
+        m.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.07f : 0.05f;
+        mid.color = m;
+        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(mid);
+    }
+
+    private void TryApplyNeargroundLayerArt()
+    {
+        if (_lobbyCenterStage?.NearImage == null)
+        {
+            return;
+        }
+
+        Image near = _lobbyCenterStage.NearImage;
+        Sprite s = _lobbyNeargroundSpriteOverride;
+        if (s == null)
+        {
+            s = Resources.Load<Sprite>(LobbyNeargroundResourcePath);
+        }
+
+        if (s != null)
+        {
+            near.sprite = s;
+            near.type = Image.Type.Simple;
+            near.preserveAspect = false;
+            near.color = Color.white;
+            return;
+        }
+
+        Color n = GsiUiAppearance.OverlayScrim;
+        n.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.14f : 0.08f;
+        near.color = n;
+        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(near);
+    }
+
+    private void EnsureLobbyCenterParallaxWired()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
+        if (stageTf == null)
+        {
+            return;
+        }
+
+        LobbyCenterStageParallax parallax = stageTf.GetComponent<LobbyCenterStageParallax>();
+        if (parallax == null)
+        {
+            parallax = stageTf.gameObject.AddComponent<LobbyCenterStageParallax>();
+        }
+
+        if (!stageTf.TryGetComponent(out LobbyCenterStageScaffold scaffold))
+        {
+            return;
+        }
+
+        LobbyCenterStageParallax.EnsureLayersSizedForParallax(scaffold.FarLayer, scaffold.MidLayer, scaffold.NearLayer);
+        parallax.Configure(scaffold.FarLayer, scaffold.MidLayer, scaffold.NearLayer);
+    }
+
+    private void ApplyLobbyDecorBranding()
+    {
+        if (_lobbyRoot == null)
+        {
+            return;
+        }
+
+        Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
+        if (stageTf == null || !stageTf.TryGetComponent(out LobbyCenterStageScaffold scaffold) || scaffold.DecorRoot == null)
+        {
+            return;
+        }
+
+        RectTransform decor = scaffold.DecorRoot;
+        Transform t = decor.Find(LobbyDecorBrandingName);
+        TextMeshProUGUI tmp;
+        if (t == null)
+        {
+            var go = new GameObject(LobbyDecorBrandingName, typeof(RectTransform));
+            t = go.transform;
+            t.SetParent(decor, false);
+            var rt = (RectTransform)t;
+            rt.anchorMin = new Vector2(0.5f, 0.55f);
+            rt.anchorMax = new Vector2(0.5f, 0.55f);
+            rt.pivot = new Vector2(0.5f, 0.5f);
+            rt.sizeDelta = new Vector2(1400f, 56f);
+            rt.anchoredPosition = Vector2.zero;
+            tmp = go.AddComponent<TextMeshProUGUI>();
+            if (TmpFontCache.LiberationSansSdf != null)
+            {
+                tmp.font = TmpFontCache.LiberationSansSdf;
+            }
+
+            tmp.alignment = TextAlignmentOptions.Center;
+            tmp.fontSize = 30f;
+            tmp.enableWordWrapping = true;
+            tmp.raycastTarget = false;
+        }
+        else
+        {
+            tmp = t.GetComponent<TextMeshProUGUI>();
+            if (tmp == null)
+            {
+                return;
+            }
+        }
+
+        tmp.text = GameLocalization.GetUiString(UiStringKeys.LobbyBrandingTitle, "The Axiom");
+        Color c = GsiUiAppearance.TextPrimary;
+        c.a = Mathf.Min(0.92f, c.a);
+        tmp.color = c;
+        tmp.fontStyle = FontStyles.Normal;
+        tmp.characterSpacing = 0.6f;
     }
 
 
@@ -921,7 +2260,7 @@ public sealed class MainMenuController : MonoBehaviour
 
             var vlg = rulesGo.AddComponent<VerticalLayoutGroup>();
             vlg.spacing = 6f;
-            vlg.padding = new RectOffset(28, 28, 12, 12);
+            vlg.padding = new RectOffset(28, 28, 16, 6);
             vlg.childAlignment = TextAnchor.MiddleCenter;
             vlg.childControlWidth = true;
             vlg.childControlHeight = true;
@@ -945,6 +2284,10 @@ public sealed class MainMenuController : MonoBehaviour
         else
         {
             rulesRt = (RectTransform)rulesTf;
+            if (rulesRt.TryGetComponent(out VerticalLayoutGroup existingVlg))
+            {
+                existingVlg.padding = new RectOffset(28, 28, 16, 6);
+            }
         }
 
         Transform topTf = rulesRt.Find(LobbyLabelRuleTopName);
@@ -1093,6 +2436,7 @@ public sealed class MainMenuController : MonoBehaviour
             _tokenText.text = GameLocalization.FormatUiString(UiStringKeys.LobbyCurrencyGoldFmt, "Gold: {0}", gold);
             _tokenText.color = GsiUiAppearance.ShopGoldText;
             _tokenText.fontSize = 24f;
+            _tokenText.enableWordWrapping = false;
             GsiUiRuntimeWidgets.ApplyEconomyLineTypography(_tokenText);
         }
 
@@ -1103,6 +2447,7 @@ public sealed class MainMenuController : MonoBehaviour
                 GameLocalization.FormatUiString(UiStringKeys.LobbyCurrencyTicketFmt, "Exam tickets: {0}", tickets);
             _ticketText.color = GsiUiAppearance.ShopTicketText;
             _ticketText.fontSize = 24f;
+            _ticketText.enableWordWrapping = false;
             GsiUiRuntimeWidgets.ApplyEconomyLineTypography(_ticketText);
         }
     }
@@ -1112,8 +2457,8 @@ public sealed class MainMenuController : MonoBehaviour
         var go = new GameObject(objectName, typeof(RectTransform));
         go.transform.SetParent(rowParent, false);
         var le = go.AddComponent<LayoutElement>();
-        le.minHeight = 104f;
-        le.preferredHeight = 108f;
+        le.minHeight = 96f;
+        le.preferredHeight = 102f;
         le.flexibleWidth = 1f;
 
         var img = go.AddComponent<Image>();

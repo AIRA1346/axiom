@@ -662,7 +662,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
         if (_facilityTitleTmp != null)
         {
-            _facilityTitleTmp.text = GameLocalization.GetUiString(UiStringKeys.HubScreenTitle, "Game Skill Index");
+            _facilityTitleTmp.text = GameLocalization.GetUiString(UiStringKeys.HubScreenTitle, "The Axiom");
             GsiUiScreenLayout.ApplyScreenTitleTypography(_facilityTitleTmp);
             _facilityTitleTmp.color = GsiUiAppearance.TextPrimary;
         }

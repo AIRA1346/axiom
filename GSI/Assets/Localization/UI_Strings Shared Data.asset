@@ -47,6 +47,10 @@ MonoBehaviour:
     m_Key: intro.tagline
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204698200
+    m_Key: intro.tap_to_start
+    m_Metadata:
+      m_Items: []
   - m_Id: 1522245204697095
     m_Key: settings.title
     m_Metadata:
@@ -757,6 +761,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 1522245204697272
     m_Key: verity.detail_caption
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697273
+    m_Key: lobby.top_left_title
     m_Metadata:
       m_Items: []
   m_Metadata:

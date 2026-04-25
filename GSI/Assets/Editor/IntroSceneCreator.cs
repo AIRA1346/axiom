@@ -81,11 +81,11 @@ public static class IntroSceneCreator
         var logoRect = logoObj.GetComponent<RectTransform>() ?? logoObj.AddComponent<RectTransform>();
         logoRect.anchorMin = new Vector2(0.5f, 0.65f);
         logoRect.anchorMax = new Vector2(0.5f, 0.65f);
-        logoRect.sizeDelta = new Vector2(1400, 120);
+        logoRect.sizeDelta = new Vector2(1420, 260);
         logoRect.anchoredPosition = Vector2.zero;
         var logoTmp = logoObj.AddComponent<TextMeshProUGUI>();
-        logoTmp.text = "Game Skill Index";
-        logoTmp.fontSize = 56;
+        logoTmp.text = "The Axiom";
+        logoTmp.fontSize = 112;
         logoTmp.color = Color.white;
         logoTmp.alignment = TextAlignmentOptions.Center;
 

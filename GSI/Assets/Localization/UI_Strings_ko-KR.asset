@@ -43,11 +43,15 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697093
-    m_Localized: Game Skill Index
+    m_Localized: "The Axiom (\uB514 \uC561\uC2DC\uC5C4: \uACF5\uB9AC)"
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697094
     m_Localized: "\uC2E4\uB825 \uC9C0\uD45C, \uD3C9\uAC00 \uBC0F \uAE30\uB85D"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204698200
+    m_Localized: "- \uC2DC\uC791\uD558\uB824\uBA74 \uC785\uB825 -"
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697095
@@ -399,7 +403,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697182
-    m_Localized: "Rune Atelier \u00B7 G.S.I"
+    m_Localized: "The Axiom (\uB514 \uC561\uC2DC\uC5C4: \uACF5\uB9AC)"
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697183
@@ -723,7 +727,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697263
-    m_Localized: "\uAC8C\uC784 \uC2A4\uD0AC \uC778\uB371\uC2A4"
+    m_Localized: "The Axiom (\uB514 \uC561\uC2DC\uC5C4: \uACF5\uB9AC)"
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697264
@@ -760,6 +764,10 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 1522245204697272
     m_Localized: "\uC0C1\uC138 \uACB0\uACFC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697273
+    m_Localized: "The Axiom (\uB514 \uC561\uC2DC\uC5C4: \uACF5\uB9AC)"
     m_Metadata:
       m_Items: []
   references:

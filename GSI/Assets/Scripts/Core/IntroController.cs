@@ -2,16 +2,17 @@ using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Intro sequence for Game Skill Index: boots localization, then connects to the lobby.
+/// Intro sequence: localization boot, logo/status beats, then <c>TAP TO START</c> before loading the lobby.
 /// </summary>
 public sealed class IntroController : MonoBehaviour
 {
-    public const string DefaultLogoTitle = "Game Skill Index";
+    public const string DefaultLogoTitle = "The Axiom";
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI _statusText;
@@ -25,6 +26,10 @@ public sealed class IntroController : MonoBehaviour
     [Header("Tagline (runtime)")]
     [SerializeField] private bool _createTaglineUnderLogo = true;
     [SerializeField] private float _taglineFadeDuration = 0.45f;
+
+    [Header("Logo title")]
+    [Tooltip("씬에 찍힌 TMP보다 우선해 첫 프레임부터 적용됩니다. 인스펙터에서 조절 가능합니다.")]
+    [SerializeField] private float _logoTitleFontSize = 112f;
 
     [Header("Logo animation")]
     [SerializeField] private float _logoIntroDuration = 1.05f;
@@ -40,6 +45,15 @@ public sealed class IntroController : MonoBehaviour
     [SerializeField] private float _accessGrantedHold = 1.5f;
     [SerializeField] private float _fadeOutDuration = 1f;
 
+    [Header("Tap to start")]
+    [SerializeField] private float _tapToStartPulseAmplitude = 0.065f;
+    [SerializeField] private float _tapToStartPulseSpeed = 2.6f;
+
+    [Header("Version label (runtime)")]
+    [SerializeField] private bool _createVersionLabelBottomLeft = true;
+    [SerializeField] private float _versionLabelFontSize = 20f;
+    [SerializeField] private Vector2 _versionLabelMargin = new Vector2(24f, 20f);
+
     [Header("Skip")]
     [SerializeField] private bool _allowSkipWithKeyboard = true;
 
@@ -51,9 +65,12 @@ public sealed class IntroController : MonoBehaviour
     private Color _defaultStatusColor = Color.white;
     private Coroutine _logoBreathingCoroutine;
     private TextMeshProUGUI _runtimeTagline;
+    private TextMeshProUGUI _runtimeVersionLabel;
     private bool _skipRequested;
     private bool _sequenceActive;
     private bool _localeSubscribed;
+    private bool _showingTapToStart;
+    private Coroutine _tapToStartPulseCoroutine;
 
     private void Awake()
     {
@@ -95,6 +112,11 @@ public sealed class IntroController : MonoBehaviour
                 _logoText.text = GameLocalization.GetUiString(UiStringKeys.IntroLogoTitle, DefaultLogoTitle);
             }
 
+            if (_logoTitleFontSize > 0f)
+            {
+                _logoText.fontSize = _logoTitleFontSize;
+            }
+
             _logoColorOpaque = _logoText.color;
             _logoColorOpaque.a = 1f;
             _logoText.color = new Color(_logoColorOpaque.r, _logoColorOpaque.g, _logoColorOpaque.b, 0f);
@@ -110,6 +132,11 @@ public sealed class IntroController : MonoBehaviour
         if (_createTaglineUnderLogo)
         {
             TryCreateRuntimeTagline();
+        }
+
+        if (_createVersionLabelBottomLeft)
+        {
+            TryCreateRuntimeVersionLabel();
         }
 
         if (_fadeOverlay != null)
@@ -154,6 +181,7 @@ public sealed class IntroController : MonoBehaviour
             _logoBreathingCoroutine = null;
         }
 
+        StopTapToStartPulse();
         Cursor.visible = true;
     }
 
@@ -184,12 +212,21 @@ public sealed class IntroController : MonoBehaviour
         if (_logoText != null)
         {
             _logoText.text = GameLocalization.GetUiString(UiStringKeys.IntroLogoTitle, DefaultLogoTitle);
+            if (_logoTitleFontSize > 0f)
+            {
+                _logoText.fontSize = _logoTitleFontSize;
+            }
         }
 
         if (_runtimeTagline != null)
         {
             _runtimeTagline.text = GameLocalization.GetUiString(UiStringKeys.IntroTagline,
                 "Skill metrics: assessment and records");
+        }
+
+        if (_showingTapToStart && _statusText != null)
+        {
+            _statusText.text = GameLocalization.GetUiString(UiStringKeys.IntroTapToStart, "- TAP TO START -");
         }
     }
 
@@ -204,12 +241,12 @@ public sealed class IntroController : MonoBehaviour
         go.transform.SetParent(_logoText.canvas.transform, false);
         var rt = go.AddComponent<RectTransform>();
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
-        rt.sizeDelta = new Vector2(1400f, 52f);
-        rt.anchoredPosition = new Vector2(0f, -92f);
+        rt.sizeDelta = new Vector2(1520f, 76f);
+        rt.anchoredPosition = new Vector2(0f, -108f);
         var tmp = go.AddComponent<TextMeshProUGUI>();
         tmp.text = GameLocalization.GetUiString(UiStringKeys.IntroTagline,
             "Skill metrics: assessment and records");
-        tmp.fontSize = 26f;
+        tmp.fontSize = 36f;
         tmp.alignment = TextAlignmentOptions.Center;
         tmp.color = new Color(0.65f, 0.72f, 0.8f, 0f);
         if (TmpFontCache.LiberationSansSdf != null)
@@ -218,6 +255,38 @@ public sealed class IntroController : MonoBehaviour
         }
 
         _runtimeTagline = tmp;
+    }
+
+    private void TryCreateRuntimeVersionLabel()
+    {
+        Canvas canvas = _logoText != null ? _logoText.canvas : (_statusText != null ? _statusText.canvas : null);
+        if (canvas == null)
+        {
+            return;
+        }
+
+        var go = new GameObject("VersionLabel");
+        go.transform.SetParent(canvas.transform, false);
+        var rt = go.AddComponent<RectTransform>();
+        rt.anchorMin = Vector2.zero;
+        rt.anchorMax = Vector2.zero;
+        rt.pivot = Vector2.zero;
+        rt.sizeDelta = new Vector2(560f, 40f);
+        rt.anchoredPosition = _versionLabelMargin;
+
+        var tmp = go.AddComponent<TextMeshProUGUI>();
+        string ver = string.IsNullOrEmpty(Application.version) ? "0.0.0" : Application.version;
+        tmp.text = $"v{ver}";
+        tmp.fontSize = _versionLabelFontSize;
+        tmp.alignment = TextAlignmentOptions.BottomLeft;
+        tmp.color = new Color(0.52f, 0.58f, 0.66f, 0.82f);
+        tmp.raycastTarget = false;
+        if (TmpFontCache.LiberationSansSdf != null)
+        {
+            tmp.font = TmpFontCache.LiberationSansSdf;
+        }
+
+        _runtimeVersionLabel = tmp;
     }
 
     private IEnumerator IntroSequence()
@@ -285,9 +354,15 @@ public sealed class IntroController : MonoBehaviour
             }
         }
 
+        Cursor.visible = true;
+        _skipRequested = false;
+        ApplyTapToStartOnStatusLine();
+        yield return WaitForProceedInput();
+
+        _showingTapToStart = false;
+        StopTapToStartPulse();
         yield return FadeOut();
 
-        Cursor.visible = true;
         _sequenceActive = false;
 
         if (preload != null)
@@ -303,6 +378,117 @@ public sealed class IntroController : MonoBehaviour
         {
             SceneManager.LoadScene(_mainSceneName);
         }
+    }
+
+    /// <summary>Replaces the status line with TAP TO START while the intro layout (logo, etc.) stays visible.</summary>
+    private void ApplyTapToStartOnStatusLine()
+    {
+        if (_statusText == null)
+        {
+            return;
+        }
+
+        StopTapToStartPulse();
+        _showingTapToStart = true;
+        _statusText.alignment = TextAlignmentOptions.Center;
+        _statusText.text = GameLocalization.GetUiString(UiStringKeys.IntroTapToStart, "- TAP TO START -");
+        _statusText.fontSize = Mathf.Max(_statusText.fontSize, 40f);
+        // Bright green CTA (distinct from status line gray and ACCESS GRANTED).
+        _statusText.color = new Color(0.38f, 0.96f, 0.52f, 1f);
+        _statusText.rectTransform.localScale = Vector3.one;
+        _tapToStartPulseCoroutine = StartCoroutine(TapToStartPulseRoutine());
+    }
+
+    private void StopTapToStartPulse()
+    {
+        if (_tapToStartPulseCoroutine != null)
+        {
+            StopCoroutine(_tapToStartPulseCoroutine);
+            _tapToStartPulseCoroutine = null;
+        }
+
+        if (_statusText != null)
+        {
+            _statusText.rectTransform.localScale = Vector3.one;
+        }
+    }
+
+    private IEnumerator TapToStartPulseRoutine()
+    {
+        if (_statusText == null)
+        {
+            yield break;
+        }
+
+        RectTransform rt = _statusText.rectTransform;
+        float amp = Mathf.Max(0.001f, _tapToStartPulseAmplitude);
+        float speed = Mathf.Max(0.1f, _tapToStartPulseSpeed);
+
+        while (_showingTapToStart && _statusText != null)
+        {
+            float s = 1f + amp * Mathf.Sin(Time.unscaledTime * speed);
+            rt.localScale = new Vector3(s, s, 1f);
+            yield return null;
+        }
+
+        if (rt != null)
+        {
+            rt.localScale = Vector3.one;
+        }
+    }
+
+    private IEnumerator WaitForProceedInput()
+    {
+        while (!WasProceedInputPressedThisFrame())
+        {
+            yield return null;
+        }
+    }
+
+    private static bool WasProceedInputPressedThisFrame()
+    {
+        Keyboard kb = Keyboard.current;
+        if (kb != null)
+        {
+            foreach (KeyControl key in kb.allKeys)
+            {
+                if (key != null && key.wasPressedThisFrame)
+                {
+                    return true;
+                }
+            }
+        }
+
+        Mouse mouse = Mouse.current;
+        if (mouse != null &&
+            (mouse.leftButton.wasPressedThisFrame ||
+             mouse.rightButton.wasPressedThisFrame ||
+             mouse.middleButton.wasPressedThisFrame))
+        {
+            return true;
+        }
+
+        Gamepad pad = Gamepad.current;
+        if (pad != null)
+        {
+            if (pad.buttonSouth.wasPressedThisFrame ||
+                pad.buttonNorth.wasPressedThisFrame ||
+                pad.buttonEast.wasPressedThisFrame ||
+                pad.buttonWest.wasPressedThisFrame ||
+                pad.startButton.wasPressedThisFrame ||
+                pad.selectButton.wasPressedThisFrame)
+            {
+                return true;
+            }
+        }
+
+        Touchscreen touch = Touchscreen.current;
+        if (touch != null && touch.primaryTouch.press.wasPressedThisFrame)
+        {
+            return true;
+        }
+
+        return false;
     }
 
     private int ResolveLobbyBuildIndex()
@@ -501,6 +687,7 @@ public sealed class IntroController : MonoBehaviour
         Color logo0 = _logoText != null ? _logoText.color : Color.white;
         Color status0 = _statusText != null ? _statusText.color : Color.white;
         Color tag0 = _runtimeTagline != null ? _runtimeTagline.color : Color.white;
+        Color ver0 = _runtimeVersionLabel != null ? _runtimeVersionLabel.color : Color.white;
 
         float elapsed = 0f;
         float dur = _fadeOutDuration;
@@ -527,6 +714,11 @@ public sealed class IntroController : MonoBehaviour
                 _runtimeTagline.color = new Color(tag0.r, tag0.g, tag0.b, tag0.a * inv);
             }
 
+            if (_runtimeVersionLabel != null)
+            {
+                _runtimeVersionLabel.color = new Color(ver0.r, ver0.g, ver0.b, ver0.a * inv);
+            }
+
             yield return null;
         }
 
@@ -550,6 +742,13 @@ public sealed class IntroController : MonoBehaviour
             Color c = _runtimeTagline.color;
             c.a = 0f;
             _runtimeTagline.color = c;
+        }
+
+        if (_runtimeVersionLabel != null)
+        {
+            Color c = _runtimeVersionLabel.color;
+            c.a = 0f;
+            _runtimeVersionLabel.color = c;
         }
     }
 

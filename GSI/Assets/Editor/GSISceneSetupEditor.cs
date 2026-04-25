@@ -169,7 +169,7 @@ public static class GSISceneSetupEditor
         vl.childForceExpandHeight = false;
 
         AddTmp("Title", v.transform, font,
-            EditorUi(UiStringKeys.HubScreenTitle, "Game Skill Index"),
+            EditorUi(UiStringKeys.HubScreenTitle, "The Axiom"),
             36, TextAlignmentOptions.Center, 80f);
 
         best = AddTmp("BestRecord", v.transform, font,
