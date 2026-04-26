@@ -99,7 +99,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697106
-    m_Localized: Six subjects in random order. Pass rules and your final total score use the grade you select below.
+    m_Localized: Seven subjects in random order. Pass rules and your final total score use the grade you select below.
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697107
@@ -131,11 +131,11 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697114
-    m_Localized: '{0}/6 - Next: {1}'
+    m_Localized: '{0}/7 - Next: {1}'
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697115
-    m_Localized: "BEST  Reaction {0}   Aim {1}   Memory {2}\nBEST  Rhythm {3}   MOT {4}   Bullet Hell {5}"
+    m_Localized: "BEST  Reaction {0}   Aim {1}   Memory {2}\nBEST  Rhythm {3}   MOT {4}   Bullet Hell {5}   CPS {6}"
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697116
@@ -203,7 +203,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697132
-    m_Localized: 'Grade {0} exam, total score {1:F1} / 600'
+    m_Localized: 'Grade {0} exam, total score {1:F1} / 700'
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697133
@@ -327,7 +327,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697163
-    m_Localized: 'Unified exam — subject {0}/6'
+    m_Localized: 'Unified exam — subject {0}/7'
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697164
@@ -719,7 +719,7 @@ MonoBehaviour:
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697261
-    m_Localized: '{0} | G{1} | {2:F1}/600 | {3} | Tier {4} | Cut {5:F0}'
+    m_Localized: '{0} | G{1} | {2:F1}/700 | {3} | Tier {4} | Cut {5:F0}'
     m_Metadata:
       m_Items: []
   - m_Id: 1522245204697262
@@ -768,6 +768,58 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 1522245204697273
     m_Localized: The Axiom
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697274
+    m_Localized: 'Practice: Clicks per second'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697275
+    m_Localized: Clicks per second
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697276
+    m_Localized: CPS
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697277
+    m_Localized: Clicks per second
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697278
+    m_Localized: 'For 10 seconds, click the large target as fast as you can. Only clicks on the target count. Your result is average clicks per second (total clicks / 10).'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697279
+    m_Localized: CPS PRACTICE
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697280
+    m_Localized: OFFICIAL CPS EXAM
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697281
+    m_Localized: 'Average: {0:F2} clicks/s (10s run)\nGrade {1} pass: {2:F2} /s or higher\nTIER: {3}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697282
+    m_Localized: 'FAILED\nAverage {0:F2} /s (pass {1:F2} /s or higher)'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697283
+    m_Localized: '{0} | {1:F0} pts | {2:F2} /s (need {3:F2}) | {4}'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697284
+    m_Localized: 'Time {0:0.0}s · Clicks {1} · Avg {2:0.00} /s'
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697285
+    m_Localized: Click here
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697286
+    m_Localized: Quit to desktop
     m_Metadata:
       m_Items: []
   references:

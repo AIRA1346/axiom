@@ -36,6 +36,8 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     private Image _dimImage;
     private Image _panelImage;
     private Image _closeButtonImage;
+    private Image _quitButtonImage;
+    private TextMeshProUGUI _quitTmp;
     private readonly System.Collections.Generic.List<TextMeshProUGUI> _sliderLabelTmps = new();
 
     private bool _built;
@@ -291,6 +293,21 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         }
     }
 
+    private void QuitToDesktop()
+    {
+        Close();
+#if UNITY_EDITOR
+        if (!Application.isPlaying)
+        {
+            return;
+        }
+
+        EditorApplication.isPlaying = false;
+#else
+        Application.Quit();
+#endif
+    }
+
     private void BuildUi()
     {
         DestroyStaleSettingsCanvasIfRefsLost();
@@ -408,6 +425,29 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             GsiUserSettings.SetMusicVolume(v);
         });
 
+        var quitGo = new GameObject("QuitButton", typeof(RectTransform));
+        quitGo.transform.SetParent(box.transform, false);
+        var quitBtn = quitGo.AddComponent<Button>();
+        var quitImg = quitGo.AddComponent<Image>();
+        _quitButtonImage = quitImg;
+        quitImg.color = GsiUiAppearance.SecondaryButton;
+        quitBtn.targetGraphic = quitImg;
+        quitBtn.onClick.AddListener(QuitToDesktop);
+        var quitBtnLe = quitGo.AddComponent<LayoutElement>();
+        quitBtnLe.minHeight = 44f;
+        quitBtnLe.preferredHeight = 44f;
+
+        var quitLabel = new GameObject("Text", typeof(RectTransform));
+        quitLabel.transform.SetParent(quitGo.transform, false);
+        StretchFull(quitLabel.GetComponent<RectTransform>());
+        _quitTmp = quitLabel.AddComponent<TextMeshProUGUI>();
+        _quitTmp.fontSize = 22f;
+        _quitTmp.alignment = TextAlignmentOptions.Center;
+        if (TmpFontCache.LiberationSansSdf != null)
+        {
+            _quitTmp.font = TmpFontCache.LiberationSansSdf;
+        }
+
         var closeGo = new GameObject("CloseButton", typeof(RectTransform));
         closeGo.transform.SetParent(box.transform, false);
         var closeBtn = closeGo.AddComponent<Button>();
@@ -503,6 +543,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             _closeButtonImage.color = GsiUiAppearance.SecondaryButton;
         }
 
+        if (_quitButtonImage != null)
+        {
+            _quitButtonImage.color = GsiUiAppearance.SecondaryButton;
+        }
+
         if (_titleTmp != null)
         {
             _titleTmp.color = GsiUiAppearance.TextPrimary;
@@ -521,6 +566,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_closeTmp != null)
         {
             _closeTmp.color = GsiUiAppearance.TextPrimary;
+        }
+
+        if (_quitTmp != null)
+        {
+            _quitTmp.color = GsiUiAppearance.TextPrimary;
         }
 
         foreach (TextMeshProUGUI lab in _sliderLabelTmps)
@@ -604,6 +654,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_closeTmp != null)
         {
             _closeTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsClose, "Close (ESC)");
+        }
+
+        if (_quitTmp != null)
+        {
+            _quitTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsQuitToDesktop, "Quit to desktop");
         }
 
         string[] keys =

@@ -69,9 +69,10 @@ public static class VersusAsyncBridge
         float total0To600,
         bool overallPass,
         string rewardTier,
-        string completedAt)
+        string completedAt,
+        string asyncMatchId = null)
     {
-        return new VersusAsyncScorePayload
+        var p = new VersusAsyncScorePayload
         {
             PayloadVersion = 1,
             SurfaceId = "gsi.unified_exam",
@@ -80,8 +81,16 @@ public static class VersusAsyncBridge
             UnifiedExamGrade = grade,
             UnifiedTotal0To600 = total0To600,
             UnifiedOverallPass = overallPass,
-            UnifiedRewardTier = string.IsNullOrEmpty(rewardTier) ? "F" : rewardTier
+            UnifiedRewardTier = string.IsNullOrEmpty(rewardTier) ? "F" : rewardTier,
+            AsyncMatchId = asyncMatchId ?? string.Empty
         };
+
+        if (SteamworksService.TryGetSteamId(out ulong sid))
+        {
+            p.SubmitterSteamId = sid.ToString();
+        }
+
+        return p;
     }
 
     /// <summary>

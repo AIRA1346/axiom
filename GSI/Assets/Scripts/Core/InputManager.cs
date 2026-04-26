@@ -21,7 +21,7 @@ public sealed class InputManager : MonoBehaviour
         if (Instance != null && Instance != this)
         {
 #if UNITY_EDITOR
-            Debug.LogWarning($"{gameObject.name}의 중복된 매니저 파괴됨.");
+            Debug.LogWarning($"InputManager: duplicate on '{gameObject.name}' was destroyed; singleton already exists.");
 #endif
             Destroy(gameObject);
             return;

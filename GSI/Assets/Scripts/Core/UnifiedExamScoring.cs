@@ -5,11 +5,14 @@ using UnityEngine;
 /// </summary>
 public static class UnifiedExamScoring
 {
-    /// <summary>Sum of six subject scores (max 600) must reach this for a final pass (depends on exam grade).</summary>
+    /// <summary>Sum of seven subject scores (max 700) must reach this for a final pass (depends on exam grade).</summary>
     public static float OverallPassMinTotalScore(int examGrade1to9)
     {
         float t = PracticeDifficulty.Ease01(examGrade1to9);
-        return Mathf.Lerp(478f, 298f, t);
+        const float legacy6Max = 600f;
+        const float current7Max = 700f;
+        float minFor6 = Mathf.Lerp(478f, 298f, t);
+        return minFor6 * (current7Max / legacy6Max);
     }
 
     /// <summary>Reward tier letter from average subject score (0–100).</summary>
@@ -117,6 +120,15 @@ public static class UnifiedExamScoring
                     ShortMode(p.Mode), score0To100, p.Primary, passed ? pass : fail);
                 return;
 
+            case TestMode.ClicksPerSecond:
+                score0To100 = ScoreCps(p.Primary, examGrade1to9);
+                passed = CpsDifficulty.IsPass(p.Primary, examGrade1to9);
+                summaryLine = GameLocalization.FormatUiString(UiStringKeys.UnifiedSegmentSummaryCpsFmt,
+                    "{0} | {1:F0} pts | {2:F2} /s (need {3:F2}) | {4}",
+                    ShortMode(p.Mode), score0To100, p.Primary, CpsDifficulty.GetMinPassCps(examGrade1to9),
+                    passed ? pass : fail);
+                return;
+
             default:
                 score0To100 = 0f;
                 passed = false;
@@ -186,6 +198,23 @@ public static class UnifiedExamScoring
         return Mathf.Clamp(acc * 0.85f + (100f - errPenalty) * 0.15f, 0f, 100f);
     }
 
+    private static float ScoreCps(float averageCps, int examGrade1to9)
+    {
+        float need = CpsDifficulty.GetMinPassCps(examGrade1to9);
+        float best = need + 5.5f;
+        if (averageCps >= best)
+        {
+            return 100f;
+        }
+
+        if (averageCps < need)
+        {
+            return 0f;
+        }
+
+        return Mathf.Clamp01((averageCps - need) / Mathf.Max(0.001f, best - need)) * 100f;
+    }
+
     private static float ScoreBulletHell(float survivalSumSec, bool grade1SurvivalMode, int examGrade)
     {
         BulletHellDifficulty.GetParams(examGrade, out bool isG1, out float targetSec, out _, out _, out _, out _);
@@ -216,6 +245,8 @@ public static class UnifiedExamScoring
                 return GameLocalization.GetUiString(UiStringKeys.ModeShortMot, "MOT");
             case TestMode.BulletHell:
                 return GameLocalization.GetUiString(UiStringKeys.ModeShortBulletHell, "Bullet Hell");
+            case TestMode.ClicksPerSecond:
+                return GameLocalization.GetUiString(UiStringKeys.ModeShortCps, "CPS");
             default:
                 return m.ToString();
         }

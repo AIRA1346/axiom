@@ -35,6 +35,8 @@ public static class UiStringKeys
     public const string SettingsSfx = "settings.sfx";
     public const string SettingsMusic = "settings.music";
     public const string SettingsClose = "settings.close";
+    /// <summary>Desktop / standalone: leave the game (window close alternative).</summary>
+    public const string SettingsQuitToDesktop = "settings.quit_to_desktop";
     public const string SettingsLanguage = "settings.language";
     public const string SettingsOpen = "settings.open";
     public const string SettingsAppearance = "settings.appearance";
@@ -52,6 +54,7 @@ public static class UiStringKeys
     public const string HubPracticeRhythm = "hub.practice.rhythm";
     public const string HubPracticeMot = "hub.practice.mot";
     public const string HubPracticeBulletHell = "hub.practice.bullethell";
+    public const string HubPracticeCps = "hub.practice.cps";
     public const string HubPracticeGradeLegend = "hub.practice.grade_legend";
 
     /// <summary>G.S.I 허브 — 연습 블록 섹션 제목.</summary>
@@ -115,6 +118,8 @@ public static class UiStringKeys
     public const string BriefingBodyMot = "briefing.body.mot";
     public const string BriefingTitleBulletHell = "briefing.title.bullethell";
     public const string BriefingBodyBulletHell = "briefing.body.bullethell";
+    public const string BriefingTitleCps = "briefing.title.cps";
+    public const string BriefingBodyCps = "briefing.body.cps";
 
     public const string GsiLobbyBestRecordsFmt = "gsi.lobby.best_records_fmt";
 
@@ -124,6 +129,7 @@ public static class UiStringKeys
     public const string ModeRhythm = "mode.rhythm";
     public const string ModeMot = "mode.mot";
     public const string ModeBulletHell = "mode.bullethell";
+    public const string ModeCps = "mode.cps";
 
     public const string CommonPass = "common.pass";
     public const string CommonFail = "common.fail";
@@ -135,6 +141,7 @@ public static class UiStringKeys
     public const string ModeShortRhythm = "mode.short.rhythm";
     public const string ModeShortMot = "mode.short.mot";
     public const string ModeShortBulletHell = "mode.short.bullethell";
+    public const string ModeShortCps = "mode.short.cps";
 
     public const string ResultTitleUnified = "result.title.unified";
 
@@ -144,6 +151,7 @@ public static class UiStringKeys
     public const string ResultTitlePracticeRhythm = "result.title.practice.rhythm";
     public const string ResultTitlePracticeMot = "result.title.practice.mot";
     public const string ResultTitlePracticeBulletHell = "result.title.practice.bullethell";
+    public const string ResultTitlePracticeCps = "result.title.practice.cps";
 
     public const string ResultTitleExamReaction = "result.title.exam.reaction";
     public const string ResultTitleExamAim = "result.title.exam.aim";
@@ -151,6 +159,7 @@ public static class UiStringKeys
     public const string ResultTitleExamRhythm = "result.title.exam.rhythm";
     public const string ResultTitleExamMot = "result.title.exam.mot";
     public const string ResultTitleExamBulletHell = "result.title.exam.bullethell";
+    public const string ResultTitleExamCps = "result.title.exam.cps";
 
     public const string ResultUnifiedLine1Fmt = "result.unified.line1_fmt";
     public const string ResultUnifiedLine2Fmt = "result.unified.line2_fmt";
@@ -171,10 +180,13 @@ public static class UiStringKeys
     public const string UnifiedSegmentSummaryRhythmFmt = "unified.segment.summary_rhythm_fmt";
     public const string UnifiedSegmentSummaryMotFmt = "unified.segment.summary_mot_fmt";
     public const string UnifiedSegmentSummaryBulletFmt = "unified.segment.summary_bullet_fmt";
+    public const string UnifiedSegmentSummaryCpsFmt = "unified.segment.summary_cps_fmt";
     public const string UnifiedSegmentSummaryDefaultFmt = "unified.segment.summary_default_fmt";
 
     public const string ResultFailReactionFmt = "result.fail.reaction_fmt";
     public const string ResultFailAimFmt = "result.fail.aim_fmt";
+    public const string ResultFailCpsFmt = "result.fail.cps_fmt";
+    public const string ResultCpsBodyFmt = "result.cps.body_fmt";
     public const string ResultRewardZeroGold = "result.reward.zero_gold";
 
     public const string ResultBodyFailed = "result.body.failed";
@@ -237,6 +249,9 @@ public static class UiStringKeys
     public const string BhHudInvincibilityFmt = "bh.hud.invincibility_fmt";
     public const string BhHudLiveSurvivalFmt = "bh.hud.live_survival_fmt";
     public const string BhHudLiveTargetFmt = "bh.hud.live_target_fmt";
+
+    public const string CpsHudLineFmt = "cps.hud.line_fmt";
+    public const string CpsTapButton = "cps.tap_button";
 
     public const string ShopTitle = "shop.title";
     public const string ShopBack = "shop.back";

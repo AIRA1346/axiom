@@ -17,8 +17,15 @@ public sealed class VersusAsyncScorePayload
 
     public string AppVersion = string.Empty;
 
+    /// <summary>Decimal string of SteamID64 when launched through Steam. Server should validate via Steam Web API session.</summary>
+    public string SubmitterSteamId = string.Empty;
+
+    /// <summary>Async PvP match or challenge id from your backend (empty if solo-only).</summary>
+    public string AsyncMatchId = string.Empty;
+
     // --- 통합 시험 요약(다른 서피스는 필드 추가 또는 확장 JSON) ---
     public int UnifiedExamGrade;
+    /// <summary>7-subject max 700; field name is legacy (same when total was 600).</summary>
     public float UnifiedTotal0To600;
     public bool UnifiedOverallPass;
     public string UnifiedRewardTier = string.Empty;

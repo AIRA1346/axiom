@@ -771,7 +771,7 @@ public sealed class AltarOfVeritySceneController : MonoBehaviour
             : GameLocalization.GetUiString(UiStringKeys.ResultUnifiedFinalFail, "Final fail");
         return GameLocalization.FormatUiString(
             UiStringKeys.HistoryUnifiedRowFmt,
-            "{0} | G{1} | {2:F1}/600 | {3} | Tier {4} | Cut {5:F0}",
+            "{0} | G{1} | {2:F1}/700 | {3} | Tier {4} | Cut {5:F0}",
             entry.Timestamp,
             entry.Grade,
             entry.Total,
@@ -787,7 +787,7 @@ public sealed class AltarOfVeritySceneController : MonoBehaviour
             : GameLocalization.GetUiString(UiStringKeys.ResultUnifiedFinalFail, "Final fail");
         string header = GameLocalization.FormatUiString(
             UiStringKeys.HistoryUnifiedRowFmt,
-            "{0} | G{1} | {2:F1}/600 | {3} | Tier {4} | Cut {5:F0}",
+            "{0} | G{1} | {2:F1}/700 | {3} | Tier {4} | Cut {5:F0}",
             entry.Timestamp,
             entry.Grade,
             entry.Total,

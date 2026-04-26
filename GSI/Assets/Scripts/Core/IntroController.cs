@@ -2,13 +2,12 @@ using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.InputSystem.Controls;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using TMPro;
 
 /// <summary>
-/// Intro sequence: localization boot, logo/status beats, then <c>TAP TO START</c> before loading the lobby.
+/// Intro sequence: localization boot, logo/status beats, then automatic transition to the lobby when scene load is ready.
 /// </summary>
 public sealed class IntroController : MonoBehaviour
 {
@@ -45,10 +44,6 @@ public sealed class IntroController : MonoBehaviour
     [SerializeField] private float _accessGrantedHold = 1.5f;
     [SerializeField] private float _fadeOutDuration = 1f;
 
-    [Header("Tap to start")]
-    [SerializeField] private float _tapToStartPulseAmplitude = 0.065f;
-    [SerializeField] private float _tapToStartPulseSpeed = 2.6f;
-
     [Header("Version label (runtime)")]
     [SerializeField] private bool _createVersionLabelBottomLeft = true;
     [SerializeField] private float _versionLabelFontSize = 20f;
@@ -69,8 +64,6 @@ public sealed class IntroController : MonoBehaviour
     private bool _skipRequested;
     private bool _sequenceActive;
     private bool _localeSubscribed;
-    private bool _showingTapToStart;
-    private Coroutine _tapToStartPulseCoroutine;
 
     private void Awake()
     {
@@ -181,7 +174,6 @@ public sealed class IntroController : MonoBehaviour
             _logoBreathingCoroutine = null;
         }
 
-        StopTapToStartPulse();
         Cursor.visible = true;
     }
 
@@ -222,11 +214,6 @@ public sealed class IntroController : MonoBehaviour
         {
             _runtimeTagline.text = GameLocalization.GetUiString(UiStringKeys.IntroTagline,
                 "Skill metrics: assessment and records");
-        }
-
-        if (_showingTapToStart && _statusText != null)
-        {
-            _statusText.text = GameLocalization.GetUiString(UiStringKeys.IntroTapToStart, "- TAP TO START -");
         }
     }
 
@@ -297,6 +284,17 @@ public sealed class IntroController : MonoBehaviour
 
         yield return WaitForLocalizationBoot();
 
+        int lobbyBuildIndex = ResolveLobbyBuildIndex();
+        AsyncOperation lobbyPreload = null;
+        if (lobbyBuildIndex >= 0)
+        {
+            lobbyPreload = SceneManager.LoadSceneAsync(lobbyBuildIndex, LoadSceneMode.Single);
+            if (lobbyPreload != null)
+            {
+                lobbyPreload.allowSceneActivation = false;
+            }
+        }
+
         if (_statusText != null)
         {
             _statusText.text = "";
@@ -343,152 +341,33 @@ public sealed class IntroController : MonoBehaviour
             _logoText.rectTransform.localScale = Vector3.one;
         }
 
-        int lobbyIdx = ResolveLobbyBuildIndex();
-        AsyncOperation preload = null;
-        if (lobbyIdx >= 0)
+        if (lobbyPreload != null)
         {
-            preload = SceneManager.LoadSceneAsync(lobbyIdx, LoadSceneMode.Single);
-            if (preload != null)
+            while (lobbyPreload.progress < 0.9f)
             {
-                preload.allowSceneActivation = false;
+                yield return null;
             }
         }
 
         Cursor.visible = true;
         _skipRequested = false;
-        ApplyTapToStartOnStatusLine();
-        yield return WaitForProceedInput();
-
-        _showingTapToStart = false;
-        StopTapToStartPulse();
         yield return FadeOut();
 
         _sequenceActive = false;
 
-        if (preload != null)
+        if (lobbyPreload != null)
         {
-            preload.allowSceneActivation = true;
-            yield return preload;
+            lobbyPreload.allowSceneActivation = true;
+            yield return lobbyPreload;
         }
-        else if (lobbyIdx >= 0)
+        else if (lobbyBuildIndex >= 0)
         {
-            SceneManager.LoadScene(lobbyIdx);
+            SceneManager.LoadScene(lobbyBuildIndex);
         }
         else
         {
             SceneManager.LoadScene(_mainSceneName);
         }
-    }
-
-    /// <summary>Replaces the status line with TAP TO START while the intro layout (logo, etc.) stays visible.</summary>
-    private void ApplyTapToStartOnStatusLine()
-    {
-        if (_statusText == null)
-        {
-            return;
-        }
-
-        StopTapToStartPulse();
-        _showingTapToStart = true;
-        _statusText.alignment = TextAlignmentOptions.Center;
-        _statusText.text = GameLocalization.GetUiString(UiStringKeys.IntroTapToStart, "- TAP TO START -");
-        _statusText.fontSize = Mathf.Max(_statusText.fontSize, 40f);
-        // Bright green CTA (distinct from status line gray and ACCESS GRANTED).
-        _statusText.color = new Color(0.38f, 0.96f, 0.52f, 1f);
-        _statusText.rectTransform.localScale = Vector3.one;
-        _tapToStartPulseCoroutine = StartCoroutine(TapToStartPulseRoutine());
-    }
-
-    private void StopTapToStartPulse()
-    {
-        if (_tapToStartPulseCoroutine != null)
-        {
-            StopCoroutine(_tapToStartPulseCoroutine);
-            _tapToStartPulseCoroutine = null;
-        }
-
-        if (_statusText != null)
-        {
-            _statusText.rectTransform.localScale = Vector3.one;
-        }
-    }
-
-    private IEnumerator TapToStartPulseRoutine()
-    {
-        if (_statusText == null)
-        {
-            yield break;
-        }
-
-        RectTransform rt = _statusText.rectTransform;
-        float amp = Mathf.Max(0.001f, _tapToStartPulseAmplitude);
-        float speed = Mathf.Max(0.1f, _tapToStartPulseSpeed);
-
-        while (_showingTapToStart && _statusText != null)
-        {
-            float s = 1f + amp * Mathf.Sin(Time.unscaledTime * speed);
-            rt.localScale = new Vector3(s, s, 1f);
-            yield return null;
-        }
-
-        if (rt != null)
-        {
-            rt.localScale = Vector3.one;
-        }
-    }
-
-    private IEnumerator WaitForProceedInput()
-    {
-        while (!WasProceedInputPressedThisFrame())
-        {
-            yield return null;
-        }
-    }
-
-    private static bool WasProceedInputPressedThisFrame()
-    {
-        Keyboard kb = Keyboard.current;
-        if (kb != null)
-        {
-            foreach (KeyControl key in kb.allKeys)
-            {
-                if (key != null && key.wasPressedThisFrame)
-                {
-                    return true;
-                }
-            }
-        }
-
-        Mouse mouse = Mouse.current;
-        if (mouse != null &&
-            (mouse.leftButton.wasPressedThisFrame ||
-             mouse.rightButton.wasPressedThisFrame ||
-             mouse.middleButton.wasPressedThisFrame))
-        {
-            return true;
-        }
-
-        Gamepad pad = Gamepad.current;
-        if (pad != null)
-        {
-            if (pad.buttonSouth.wasPressedThisFrame ||
-                pad.buttonNorth.wasPressedThisFrame ||
-                pad.buttonEast.wasPressedThisFrame ||
-                pad.buttonWest.wasPressedThisFrame ||
-                pad.startButton.wasPressedThisFrame ||
-                pad.selectButton.wasPressedThisFrame)
-            {
-                return true;
-            }
-        }
-
-        Touchscreen touch = Touchscreen.current;
-        if (touch != null && touch.primaryTouch.press.wasPressedThisFrame)
-        {
-            return true;
-        }
-
-        return false;
     }
 
     private int ResolveLobbyBuildIndex()

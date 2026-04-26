@@ -16,6 +16,8 @@ using UnityEditor.SceneManagement;
 public sealed class MainMenuController : MonoBehaviour
 {
     private const string LobbyActionRowName = "LobbyActionRow";
+    private const string LobbyActionPrimaryRowLegacyName = "LobbyActionPrimaryRow";
+    private const string LobbyActionSecondaryRowLegacyName = "LobbyActionSecondaryRow";
 
     /// <summary>Bottom action row: inset from screen bottom, height, horizontal inset (each side).</summary>
     private const float LobbyActionRowBottomInset = 12f;
@@ -1198,6 +1200,85 @@ public sealed class MainMenuController : MonoBehaviour
         RebuildLobbyTopLeftBarHeights();
     }
 
+    /// <summary>Undoes the two-tier lobby dock experiment: flattens buttons back under <see cref="LobbyActionRowName"/>.</summary>
+    private static void TryFlattenLegacyTwoTierLobbyActionRow(Transform rowTf, RectTransform rowRt)
+    {
+        if (rowTf == null || rowRt == null)
+        {
+            return;
+        }
+
+        Transform p = rowTf.Find(LobbyActionPrimaryRowLegacyName);
+        Transform sec = rowTf.Find(LobbyActionSecondaryRowLegacyName);
+        if (p == null && sec == null)
+        {
+            return;
+        }
+
+        Transform gsi = p != null ? p.Find("GSIButton") : rowTf.Find("GSIButton");
+        Transform shop = sec != null ? sec.Find("ShopButton") : rowTf.Find("ShopButton");
+        Transform inv = sec != null ? sec.Find("InventoryButton") : rowTf.Find("InventoryButton");
+        Transform altar = sec != null ? sec.Find("AltarOfVerityButton") : rowTf.Find("AltarOfVerityButton");
+
+        void Pull(Transform t, int order)
+        {
+            if (t == null)
+            {
+                return;
+            }
+
+            t.SetParent(rowRt, false);
+            t.SetSiblingIndex(order);
+        }
+
+        Pull(gsi, 0);
+        Pull(shop, 1);
+        Pull(inv, 2);
+        Pull(altar, 3);
+
+        if (p != null)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(p.gameObject);
+            }
+            else
+#endif
+            {
+                Destroy(p.gameObject);
+            }
+        }
+
+        if (sec != null)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(sec.gameObject);
+            }
+            else
+#endif
+            {
+                Destroy(sec.gameObject);
+            }
+        }
+
+        if (rowRt.GetComponent<VerticalLayoutGroup>() is VerticalLayoutGroup v)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(v);
+            }
+            else
+#endif
+            {
+                Destroy(v);
+            }
+        }
+    }
+
     private void EnsureLobbyActionRowLayout()
     {
         if (_lobbyRoot == null)
@@ -1210,6 +1291,8 @@ public sealed class MainMenuController : MonoBehaviour
         {
             return;
         }
+
+        TryFlattenLegacyTwoTierLobbyActionRow(rowTf, rowRt);
 
         rowRt.anchorMin = new Vector2(0f, 0f);
         rowRt.anchorMax = new Vector2(1f, 0f);
@@ -1276,7 +1359,7 @@ public sealed class MainMenuController : MonoBehaviour
         stripRt.anchorMax = new Vector2(1f, 1f);
         stripRt.pivot = new Vector2(0.5f, 1f);
         stripRt.anchoredPosition = new Vector2(0f, -LobbyEconomyStripTopInset);
-        stripRt.sizeDelta = new Vector2(-LobbyActionRowSideInset * 2f, 48f);
+        stripRt.sizeDelta = new Vector2(-LobbyActionRowSideInset * 2f, LobbyEconomyStripHeight);
     }
 
     private void BuildLobbyActionRow()
@@ -2070,6 +2153,21 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         RectTransform decor = scaffold.DecorRoot;
+        Transform legacyTagline = decor.Find("LobbyBrandingTagline");
+        if (legacyTagline != null)
+        {
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                DestroyImmediate(legacyTagline.gameObject);
+            }
+            else
+#endif
+            {
+                Destroy(legacyTagline.gameObject);
+            }
+        }
+
         Transform t = decor.Find(LobbyDecorBrandingName);
         TextMeshProUGUI tmp;
         if (t == null)

@@ -8,6 +8,9 @@ public sealed class GSISceneBootstrap : MonoBehaviour
     /// <summary>GSIUIManager.Start보다 먼저 상태를 맞추기 위해 Awake에서 처리합니다.</summary>
     private void Awake()
     {
+        // Inactive scene GameManagers never run Awake, so Instance stays null and Ensure() would
+        // spawn a duplicate host. Wake them first so the scene singleton wins without a throwaway.
+        TryActivateSceneGameManagersIfInstanceMissing();
         GsiCoreServices.Ensure();
         // Lobby hub (Lobby/Shop/Inventory/Altar) does not stop BGM on scene unload; cut music when entering the exam facility.
         GsiAudio.StopMusic();
@@ -18,6 +21,7 @@ public sealed class GSISceneBootstrap : MonoBehaviour
         EnsureMemoryTestController();
         EnsureMotTestController();
         EnsureBulletHellTestController();
+        EnsureCpsTestController();
 
         if (GameManager.Instance == null)
         {
@@ -25,18 +29,42 @@ public sealed class GSISceneBootstrap : MonoBehaviour
             if (orphan != null)
             {
                 Debug.LogWarning(
-                    "[GSISceneBootstrap] GameManager 오브젝트는 있으나 싱글톤 Instance가 비어 있습니다. GsiCoreServices가 GameManager를 생성했는지 확인하세요.");
+                    "[GSISceneBootstrap] GameManager is present but Instance is null. Check Awake/destroy order and duplicate GameManagers.");
             }
             else
             {
                 Debug.LogWarning(
-                    "[GSISceneBootstrap] GameManager가 없습니다. Intro 직후 GSIScene이거나 GsiCoreServices.Ensure()가 호출되었는지 확인하세요.");
+                    "[GSISceneBootstrap] No GameManager after GsiCoreServices.Ensure() — check Intro path and GsiCoreServices.Ensure() calls.");
             }
 
             return;
         }
 
         GameManager.Instance.SetGameState(GameState.MainMenu);
+    }
+
+    private static void TryActivateSceneGameManagersIfInstanceMissing()
+    {
+        if (GameManager.Instance != null)
+        {
+            return;
+        }
+
+        GameManager[] found = Object.FindObjectsByType<GameManager>(
+            FindObjectsInactive.Include,
+            FindObjectsSortMode.None);
+        for (int i = 0; i < found.Length; i++)
+        {
+            if (found[i] == null)
+            {
+                continue;
+            }
+
+            if (!found[i].gameObject.activeInHierarchy)
+            {
+                found[i].gameObject.SetActive(true);
+            }
+        }
     }
 
     private void EnsureMemoryTestController()
@@ -79,6 +107,20 @@ public sealed class GSISceneBootstrap : MonoBehaviour
         if (progress.GetComponent<BulletHellTestController>() == null)
         {
             progress.gameObject.AddComponent<BulletHellTestController>();
+        }
+    }
+
+    private void EnsureCpsTestController()
+    {
+        Transform progress = transform.Find("Panels/TestInProgressPanel");
+        if (progress == null)
+        {
+            return;
+        }
+
+        if (progress.GetComponent<CpsTestController>() == null)
+        {
+            progress.gameObject.AddComponent<CpsTestController>();
         }
     }
 }

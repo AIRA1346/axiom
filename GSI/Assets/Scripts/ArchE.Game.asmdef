@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "ArchE.Platform",
+        "com.rlabrecque.steamworks.net",
         "Unity.TextMeshPro",
         "Unity.InputSystem",
         "UnityEngine.UI",

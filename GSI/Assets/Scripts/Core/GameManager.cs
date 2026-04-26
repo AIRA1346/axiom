@@ -17,14 +17,16 @@ public enum TestMode
     // 다중 추적(MOT): 핵심 표식 유지력
     MultipleObjectTracking,
     /// <summary>Bullet Hell — danmaku dodge (survival).</summary>
-    BulletHell
+    BulletHell,
+    /// <summary>Average CPS over a 10s window (clicks in the target area only).</summary>
+    ClicksPerSecond
 }
 
 public enum TestType
 {
     Practice,
     OfficialExam,
-    /// <summary>6과목 통합 공식 시험(순서 랜덤, 응시권 1회, 최종 보상 1회).</summary>
+    /// <summary>7과목 통합 공식 시험(순서 랜덤, 응시권 1회, 최종 보상 1회).</summary>
     UnifiedOfficialExam
 }
 
@@ -59,7 +61,7 @@ public sealed class GameManager : MonoBehaviour
     public TestMode CurrentTestMode { get; private set; } = TestMode.Reaction;
     public TestType CurrentTestType { get; private set; } = TestType.Practice;
 
-    /// <summary>통합 공식 시험에서 현재 진행 블록(1~6). 통합이 아니면 0.</summary>
+    /// <summary>통합 공식 시험에서 현재 진행 블록(1~7). 통합이 아니면 0.</summary>
     public int UnifiedExamSegmentOrdinalDisplay
     {
         get
@@ -69,7 +71,7 @@ public sealed class GameManager : MonoBehaviour
                 return 0;
             }
 
-            return Mathf.Clamp(_unifiedNextIndex + 1, 1, 6);
+            return Mathf.Clamp(_unifiedNextIndex + 1, 1, 7);
         }
     }
 
@@ -94,6 +96,7 @@ public sealed class GameManager : MonoBehaviour
     private const string PracticeGradeRhythmKey = "GSI_PracticeGrade_Rhythm";
     private const string PracticeGradeMotKey = "GSI_PracticeGrade_MOT";
     private const string PracticeGradeBulletHellKey = "GSI_PracticeGrade_BulletHell";
+    private const string PracticeGradeCpsKey = "GSI_PracticeGrade_Cps";
 
     /// <summary>연습 모드 전용(레거시). 반응 연습 급수와 동일합니다.</summary>
     public int PracticeGrade => _practiceGradeReaction;
@@ -104,6 +107,7 @@ public sealed class GameManager : MonoBehaviour
     private int _practiceGradeRhythm = 9;
     private int _practiceGradeMot = 9;
     private int _practiceGradeBulletHell = 9;
+    private int _practiceGradeCps = 9;
     private bool _isInputSubscribed;
 
     private void Awake()
@@ -111,7 +115,7 @@ public sealed class GameManager : MonoBehaviour
         if (Instance != null && Instance != this)
         {
 #if UNITY_EDITOR
-            Debug.LogWarning($"{gameObject.name}의 중복된 매니저 파괴됨.");
+            Debug.LogWarning($"GameManager: duplicate on '{gameObject.name}' was destroyed; singleton already exists.");
 #endif
             Destroy(gameObject);
             return;
@@ -122,6 +126,12 @@ public sealed class GameManager : MonoBehaviour
         VersusAsyncBridge.ApplyTransportFromSettings();
         VersusAsyncBridge.RequestFlushOutboxOnBoot();
         SteamworksService.InitializePlaceholder();
+        GsiSteamCloudSync.TryApplyCloudIfNewer();
+        if (PlayerDataManager.Instance != null)
+        {
+            PlayerDataManager.Instance.ReloadFromPreferences();
+        }
+
         LoadPracticeGrade();
         CosmeticTheme.ApplyFromSave();
         GsiGameplayWorldCameraHooks.Initialize();
@@ -148,6 +158,7 @@ public sealed class GameManager : MonoBehaviour
             _practiceGradeRhythm = legacy;
             _practiceGradeMot = legacy;
             _practiceGradeBulletHell = legacy;
+            _practiceGradeCps = legacy;
             SavePracticeGrades();
             return;
         }
@@ -183,6 +194,16 @@ public sealed class GameManager : MonoBehaviour
         {
             _practiceGradeBulletHell = Mathf.Clamp(PlayerPrefs.GetInt(PracticeGradeBulletHellKey, 9), 1, 9);
         }
+
+        if (!PlayerPrefs.HasKey(PracticeGradeCpsKey))
+        {
+            _practiceGradeCps = Mathf.Clamp(PlayerPrefs.GetInt(PracticeGradePrefsKey, 9), 1, 9);
+            SavePracticeGrades();
+        }
+        else
+        {
+            _practiceGradeCps = Mathf.Clamp(PlayerPrefs.GetInt(PracticeGradeCpsKey, 9), 1, 9);
+        }
     }
 
     /// <summary>연습 모드별 급수(1급이 가장 어렵고 9급이 가장 쉬움).</summary>
@@ -202,6 +223,8 @@ public sealed class GameManager : MonoBehaviour
                 return _practiceGradeMot;
             case TestMode.BulletHell:
                 return _practiceGradeBulletHell;
+            case TestMode.ClicksPerSecond:
+                return _practiceGradeCps;
             default:
                 return 9;
         }
@@ -231,6 +254,9 @@ public sealed class GameManager : MonoBehaviour
             case TestMode.BulletHell:
                 _practiceGradeBulletHell = g;
                 break;
+            case TestMode.ClicksPerSecond:
+                _practiceGradeCps = g;
+                break;
             default:
                 return;
         }
@@ -246,6 +272,7 @@ public sealed class GameManager : MonoBehaviour
         PlayerPrefs.SetInt(PracticeGradeRhythmKey, _practiceGradeRhythm);
         PlayerPrefs.SetInt(PracticeGradeMotKey, _practiceGradeMot);
         PlayerPrefs.SetInt(PracticeGradeBulletHellKey, _practiceGradeBulletHell);
+        PlayerPrefs.SetInt(PracticeGradeCpsKey, _practiceGradeCps);
         PlayerPrefs.SetInt(PracticeGradePrefsKey, _practiceGradeReaction);
         PlayerPrefs.Save();
     }
@@ -255,6 +282,7 @@ public sealed class GameManager : MonoBehaviour
         // Lobby 등 GSI 씬이 아닐 때도 입력·터치 피드백 싱글톤이 붙도록 보강(GSIScene 전용 Ensure에만 의존하지 않음).
         GsiCoreServices.Ensure();
         SubscribeToInputManager();
+        TrySyncSteamRichPresence();
         StartCoroutine(EnsureLocalizationBootCoroutine());
     }
 
@@ -284,6 +312,7 @@ public sealed class GameManager : MonoBehaviour
         if (Instance == this)
         {
             GsiGameplayWorldCameraHooks.Shutdown();
+            GsiSteamRichPresence.Clear();
             SteamworksService.ShutdownPlaceholder();
             Instance = null;
         }
@@ -341,6 +370,7 @@ public sealed class GameManager : MonoBehaviour
 
         CurrentState = newState;
         OnGameStateChanged?.Invoke(CurrentState);
+        TrySyncSteamRichPresence();
     }
 
     /// <summary>응시권 1장을 소모하고 통합 공식 시험을 시작합니다. 실패 시 false.</summary>
@@ -368,10 +398,11 @@ public sealed class GameManager : MonoBehaviour
             TestMode.MemorySequence,
             TestMode.RhythmTiming,
             TestMode.MultipleObjectTracking,
-            TestMode.BulletHell
+            TestMode.BulletHell,
+            TestMode.ClicksPerSecond
         };
         ShuffleModes(_unifiedOrder);
-        _unifiedRecords = new UnifiedExamSegmentRecord[6];
+        _unifiedRecords = new UnifiedExamSegmentRecord[7];
         CurrentTestType = TestType.UnifiedOfficialExam;
         CurrentTestMode = _unifiedOrder[0];
         SetGameState(GameState.TestBriefing);
@@ -387,13 +418,13 @@ public sealed class GameManager : MonoBehaviour
     /// <summary>통합 시험 대기 화면 안내 문구(다음 과목).</summary>
     public string GetUnifiedExamInterstitialText()
     {
-        if (_unifiedOrder == null || _unifiedNextIndex >= 6 || _unifiedNextIndex < 0)
+        if (_unifiedOrder == null || _unifiedNextIndex >= 7 || _unifiedNextIndex < 0)
         {
             return string.Empty;
         }
 
         TestMode next = _unifiedOrder[_unifiedNextIndex];
-        return GameLocalization.FormatUiString(UiStringKeys.GsiInterstitialBodyFmt, "{0}/6, next subject: {1}",
+        return GameLocalization.FormatUiString(UiStringKeys.GsiInterstitialBodyFmt, "{0}/7, next subject: {1}",
             _unifiedNextIndex + 1, GetUnifiedModeLabel(next));
     }
 
@@ -413,6 +444,8 @@ public sealed class GameManager : MonoBehaviour
                 return GameLocalization.GetUiString(UiStringKeys.ModeMot, "Multiple object tracking (MOT)");
             case TestMode.BulletHell:
                 return GameLocalization.GetUiString(UiStringKeys.ModeBulletHell, "Bullet Hell");
+            case TestMode.ClicksPerSecond:
+                return GameLocalization.GetUiString(UiStringKeys.ModeCps, "Clicks per second");
             default:
                 return m.ToString();
         }
@@ -427,7 +460,7 @@ public sealed class GameManager : MonoBehaviour
         }
 
         int idx = _unifiedNextIndex;
-        if (idx < 0 || idx >= 6)
+        if (idx < 0 || idx >= 7)
         {
             return;
         }
@@ -444,7 +477,7 @@ public sealed class GameManager : MonoBehaviour
         };
 
         _unifiedNextIndex++;
-        if (_unifiedNextIndex < 6)
+        if (_unifiedNextIndex < 7)
         {
             CurrentTestMode = _unifiedOrder[_unifiedNextIndex];
             SetGameState(GameState.UnifiedExamInterstitial);
@@ -459,7 +492,7 @@ public sealed class GameManager : MonoBehaviour
     {
         float total = 0f;
         bool anySegmentBest = false;
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 7; i++)
         {
             if (_unifiedRecords[i] != null)
             {
@@ -469,12 +502,12 @@ public sealed class GameManager : MonoBehaviour
 
         float minTotal = UnifiedExamScoring.OverallPassMinTotalScore(UnifiedExamGrade);
         bool overallPass = total + 0.001f >= minTotal;
-        float avg = total / 6f;
+        float avg = total / 7f;
         string rewardTier = overallPass ? UnifiedExamScoring.TierLetterFromAverage(avg) : "F";
 
         if (PlayerDataManager.Instance != null)
         {
-            for (int i = 0; i < 6; i++)
+            for (int i = 0; i < 7; i++)
             {
                 if (_unifiedRecords[i] != null)
                 {
@@ -530,19 +563,19 @@ public sealed class GameManager : MonoBehaviour
         sb.Append(UnifiedExamGrade);
         sb.Append(" | Total ");
         sb.Append(total.ToString("F1"));
-        sb.Append("/600 | cutoff ");
+        sb.Append("/700 | cutoff ");
         sb.Append(minTotal.ToString("F0"));
         sb.Append(" | ");
         sb.Append(overallPass
             ? GameLocalization.GetUiString(UiStringKeys.ResultUnifiedFinalPass, "Final pass")
             : GameLocalization.GetUiString(UiStringKeys.ResultUnifiedFinalFail, "Final fail"));
         sb.Append(" | ");
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 7; i++)
         {
             if (_unifiedRecords[i] != null)
             {
                 sb.Append(_unifiedRecords[i].SummaryLine);
-                if (i < 5)
+                if (i < 6)
                 {
                     sb.Append(" | ");
                 }
@@ -554,8 +587,8 @@ public sealed class GameManager : MonoBehaviour
 
     private string[] CollectUnifiedSegmentSummaryLines()
     {
-        var lines = new string[6];
-        for (int i = 0; i < 6; i++)
+        var lines = new string[7];
+        for (int i = 0; i < 7; i++)
         {
             lines[i] = _unifiedRecords[i] != null ? _unifiedRecords[i].SummaryLine : string.Empty;
         }
@@ -588,6 +621,8 @@ public sealed class GameManager : MonoBehaviour
         {
             AbandonUnifiedExamSession();
         }
+
+        TrySyncSteamRichPresence();
     }
 
     private void CleanupUnifiedExamAfterResult()
@@ -608,8 +643,25 @@ public sealed class GameManager : MonoBehaviour
         }
     }
 
+    private void TrySyncSteamRichPresence()
+    {
+        if (Instance != this)
+        {
+            return;
+        }
+
+        GsiSteamRichPresence.ApplyFrom(
+            CurrentState,
+            CurrentTestMode,
+            CurrentTestType,
+            UnifiedExamSegmentOrdinalDisplay);
+    }
+
     private void OnApplicationQuit()
     {
+        GsiSteamCloudSync.TryPushLocalToCloud();
+        GsiSteamRichPresence.Clear();
+
         if (CurrentTestType == TestType.UnifiedOfficialExam && !_unifiedExamFinalized)
         {
             AbandonUnifiedExamSession();
@@ -622,6 +674,7 @@ public sealed class GameManager : MonoBehaviour
     public void SetTestMode(TestMode mode)
     {
         CurrentTestMode = mode;
+        TrySyncSteamRichPresence();
     }
 
     /// <summary>
@@ -630,6 +683,7 @@ public sealed class GameManager : MonoBehaviour
     public void SetTestType(TestType type)
     {
         CurrentTestType = type;
+        TrySyncSteamRichPresence();
     }
 
     /// <summary>
@@ -644,15 +698,13 @@ public sealed class GameManager : MonoBehaviour
 
         if (InputManager.Instance == null)
         {
-            Debug.LogError("GameManager: 치명적 오류 - InputManager 인스턴스가 씬에 없습니다! GameObject에 붙어있는지 확인하세요.");
+            Debug.LogError("GameManager: InputManager is missing; add InputManager to the scene or GsiCoreServices host.");
             return;
         }
 
         InputManager.Instance.OnInputDown += HandleInputDown;
         _isInputSubscribed = true;
-#if UNITY_EDITOR
-        Debug.Log("GameManager: InputManager 이벤트 구독 완료.");
-#endif
+        GsiLog.Dev("GameManager: InputManager subscribed.");
     }
 
     /// <summary>
@@ -674,9 +726,7 @@ public sealed class GameManager : MonoBehaviour
     /// </summary>
     private void HandleInputDown(Vector2 screenPosition)
     {
-#if UNITY_EDITOR
-        Debug.Log($"GameManager: HandleInputDown 진입 성공! 현재 상태: {CurrentState}");
-#endif
+        GsiLog.Dev($"GameManager: HandleInputDown, state: {CurrentState}");
         switch (CurrentState)
         {
             case GameState.MainMenu:
@@ -687,9 +737,7 @@ public sealed class GameManager : MonoBehaviour
 
             case GameState.TestStandby:
                 SetGameState(GameState.TestInProgress);
-#if UNITY_EDITOR
-                Debug.Log("G.S.I: Test Started.");
-#endif
+                GsiLog.Dev("G.S.I: test started.");
                 break;
 
             case GameState.UnifiedExamInterstitial:

@@ -284,6 +284,8 @@ public sealed class ResultScreenController : MonoBehaviour
                 return GameLocalization.GetUiString(UiStringKeys.ResultTitlePracticeMot, "MOT PRACTICE");
             case TestMode.BulletHell:
                 return GameLocalization.GetUiString(UiStringKeys.ResultTitlePracticeBulletHell, "BULLET HELL PRACTICE");
+            case TestMode.ClicksPerSecond:
+                return GameLocalization.GetUiString(UiStringKeys.ResultTitlePracticeCps, "CPS PRACTICE");
             default:
                 return string.Empty;
         }
@@ -305,6 +307,8 @@ public sealed class ResultScreenController : MonoBehaviour
                 return GameLocalization.GetUiString(UiStringKeys.ResultTitleExamMot, "OFFICIAL MOT EXAM");
             case TestMode.BulletHell:
                 return GameLocalization.GetUiString(UiStringKeys.ResultTitleExamBulletHell, "OFFICIAL BULLET HELL EXAM");
+            case TestMode.ClicksPerSecond:
+                return GameLocalization.GetUiString(UiStringKeys.ResultTitleExamCps, "OFFICIAL CPS EXAM");
             default:
                 return string.Empty;
         }
@@ -351,7 +355,7 @@ public sealed class ResultScreenController : MonoBehaviour
             }
 
             sb.AppendLine(GameLocalization.FormatUiString(UiStringKeys.ResultUnifiedLine1Fmt,
-                "Grade {0} exam, total {1:F1} / 600",
+                "Grade {0} exam, total {1:F1} / 700",
                 GameManager.Instance.UnifiedExamGrade, ScoreManager.Instance.LastUnifiedExamTotalScore));
             string finalWord = ScoreManager.Instance.LastUnifiedExamOverallPass
                 ? GameLocalization.GetUiString(UiStringKeys.ResultUnifiedFinalPass, "Final pass")
@@ -412,6 +416,14 @@ public sealed class ResultScreenController : MonoBehaviour
                 float limit = AimDifficulty.GetPassMaxTotalSeconds(g);
                 _resultText.text = GameLocalization.FormatUiString(UiStringKeys.ResultFailAimFmt,
                     "FAILED\nAim {0:F2}s (pass {1:F1}s or lower)", t, limit);
+            }
+            else if (GameManager.Instance != null && GameManager.Instance.CurrentTestMode == TestMode.ClicksPerSecond)
+            {
+                float c = ScoreManager.Instance.LastCpsAverage;
+                int g = GameManager.Instance.GetPracticeGrade(TestMode.ClicksPerSecond);
+                float need = CpsDifficulty.GetMinPassCps(g);
+                _resultText.text = GameLocalization.FormatUiString(UiStringKeys.ResultFailCpsFmt,
+                    "FAILED\nAverage {0:F2} /s (pass {1:F2} /s or higher)", c, need);
             }
             else
             {
@@ -495,6 +507,22 @@ public sealed class ResultScreenController : MonoBehaviour
 
             string tierLineBh = GameLocalization.FormatUiString(UiStringKeys.ResultTierLabelFmt, "TIER: {0}", tier);
             _resultText.text = line1 + "\n" + tierLineBh;
+
+            if (_rewardText != null)
+            {
+                _rewardText.text = GameLocalization.FormatUiString(UiStringKeys.ResultRewardPlusGoldFmt, "REWARD: +{0} gold",
+                    ScoreManager.Instance.LastEarnedTokens);
+            }
+        }
+        else if (GameManager.Instance != null && GameManager.Instance.CurrentTestMode == TestMode.ClicksPerSecond)
+        {
+            string tier = ScoreManager.Instance.GetTier();
+            float cps = ScoreManager.Instance.LastCpsAverage;
+            int g = GameManager.Instance.GetPracticeGrade(TestMode.ClicksPerSecond);
+            float need = CpsDifficulty.GetMinPassCps(g);
+            _resultText.text = GameLocalization.FormatUiString(UiStringKeys.ResultCpsBodyFmt,
+                "Average: {0:F2} clicks/s (10s total)\nGrade {1} pass: {2:F2} /s or higher\nTIER: {3}",
+                cps, g, need, tier);
 
             if (_rewardText != null)
             {

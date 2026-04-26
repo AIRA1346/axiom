@@ -351,6 +351,9 @@ public sealed class GSIUIManager : MonoBehaviour
         float bestBh = PlayerDataManager.Instance != null
             ? PlayerDataManager.Instance.BestBulletHellTime
             : -1f;
+        float bestCps = PlayerDataManager.Instance != null
+            ? PlayerDataManager.Instance.BestCps
+            : -1f;
 
         string r = bestReaction >= 99.99f ? "--" : $"{bestReaction:F3}s";
         string a = bestAim >= 99.99f ? "--" : $"{bestAim:F3}s";
@@ -358,9 +361,10 @@ public sealed class GSIUIManager : MonoBehaviour
         string y = bestRhythmAcc < 0f ? "--" : $"{bestRhythmAcc:F1}%";
         string o = bestMotAcc < 0f ? "--" : $"{bestMotAcc:F1}%";
         string h = bestBh < 0f ? "--" : $"{bestBh:F1}s";
+        string c = bestCps < 0f ? "--" : $"{bestCps:F2}/s";
         _bestRecordText.text = GameLocalization.FormatUiString(UiStringKeys.GsiLobbyBestRecordsFmt,
-            "BEST  Reaction {0}   Aim {1}   Memory {2}\nBEST  Rhythm {3}   MOT {4}   Bullet Hell {5}",
-            r, a, m, y, o, h);
+            "BEST  Reaction {0}   Aim {1}   Memory {2}\nBEST  Rhythm {3}   MOT {4}   Bullet Hell {5}   CPS {6}",
+            r, a, m, y, o, h, c);
         _bestRecordText.fontSize = 18f;
         _bestRecordText.lineSpacing = 0f;
         _bestRecordText.raycastTarget = false;

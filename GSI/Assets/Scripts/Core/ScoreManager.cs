@@ -25,6 +25,9 @@ public sealed class ScoreManager : MonoBehaviour
 
     public bool LastBulletHellWasGrade1 { get; private set; }
 
+    /// <summary>Average CPS (total clicks in target / 10s).</summary>
+    public float LastCpsAverage { get; private set; }
+
     public bool IsFailed { get; private set; }
     public bool IsNewRecord { get; private set; }
     public int LastEarnedTokens { get; private set; }
@@ -49,9 +52,9 @@ public sealed class ScoreManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    /// <summary>통합 공식 시험 6과목 종료 후 한 번만 호출(골드 보상 포함).</summary>
+    /// <summary>Unified official exam (7 subjects) final call — run once, includes gold reward.</summary>
     public void ApplyUnifiedExamFinalResult(
-        float totalScore0To600,
+        float totalScore0To700,
         bool overallPass,
         int examGrade1to9,
         string rewardTierLetter,
@@ -65,10 +68,11 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         LastUnifiedExamSessionTimestamp = string.IsNullOrEmpty(sessionCompletedAt)
             ? UnifiedExamHistoryStorage.FormatCompletedAtNow()
             : sessionCompletedAt;
-        LastUnifiedExamTotalScore = totalScore0To600;
+        LastUnifiedExamTotalScore = totalScore0To700;
         LastUnifiedExamOverallPass = overallPass;
         LastUnifiedExamGrade = examGrade1to9;
         LastUnifiedExamRewardTier = string.IsNullOrEmpty(rewardTierLetter) ? "F" : rewardTierLetter;
@@ -91,6 +95,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         IsFailed = false;
         if (GameManager.Instance != null)
         {
@@ -118,6 +123,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         IsFailed = failed;
         IsNewRecord = false;
 
@@ -146,6 +152,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         IsFailed = failed;
         IsNewRecord = false;
 
@@ -174,6 +181,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = accuracyPercent;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         IsFailed = failed;
         IsNewRecord = false;
 
@@ -202,6 +210,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = survivalSecondsSum;
         LastBulletHellWasGrade1 = grade1;
+        LastCpsAverage = 0f;
         IsFailed = failed;
         IsNewRecord = false;
 
@@ -216,6 +225,35 @@ public sealed class ScoreManager : MonoBehaviour
             && GameManager.Instance.CurrentTestMode == TestMode.BulletHell)
         {
             IsNewRecord = PlayerDataManager.Instance.CheckAndSaveBestBulletHellTime(survivalSecondsSum);
+        }
+
+        ApplyEconomyRewards();
+    }
+
+    public void SaveCpsResult(float averageCps, bool failed)
+    {
+        LastReactionTime = 0f;
+        LastMemoryScore = 0f;
+        LastRhythmMeanErrorMs = 0f;
+        LastRhythmAccuracyPercent = 0f;
+        LastMotAccuracyPercent = 0f;
+        LastBulletHellSurvivalSeconds = 0f;
+        LastBulletHellWasGrade1 = false;
+        LastCpsAverage = averageCps;
+        IsFailed = failed;
+        IsNewRecord = false;
+
+        if (failed)
+        {
+            LastEarnedTokens = 0;
+            return;
+        }
+
+        if (PlayerDataManager.Instance != null && GameManager.Instance != null
+            && GameManager.Instance.CurrentTestType == TestType.OfficialExam
+            && GameManager.Instance.CurrentTestMode == TestMode.ClicksPerSecond)
+        {
+            IsNewRecord = PlayerDataManager.Instance.CheckAndSaveBestCps(averageCps);
         }
 
         ApplyEconomyRewards();
@@ -285,6 +323,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         IsFailed = true;
         IsNewRecord = false;
         LastEarnedTokens = 0;
@@ -299,6 +338,7 @@ public sealed class ScoreManager : MonoBehaviour
         LastMotAccuracyPercent = 0f;
         LastBulletHellSurvivalSeconds = 0f;
         LastBulletHellWasGrade1 = false;
+        LastCpsAverage = 0f;
         IsFailed = false;
         IsNewRecord = false;
         LastEarnedTokens = 0;
@@ -391,6 +431,18 @@ public sealed class ScoreManager : MonoBehaviour
 
             case TestMode.BulletHell:
                 return TierForBulletHell(LastBulletHellSurvivalSeconds, LastBulletHellWasGrade1);
+
+            case TestMode.ClicksPerSecond:
+                if (GameManager.Instance != null)
+                {
+                    int g = GameManager.Instance.GetPracticeGrade(TestMode.ClicksPerSecond);
+                    if (!CpsDifficulty.IsPass(LastCpsAverage, g))
+                    {
+                        return "F";
+                    }
+                }
+
+                return TierForCps(LastCpsAverage);
 
             default:
                 return "F";
@@ -487,6 +539,31 @@ public sealed class ScoreManager : MonoBehaviour
         }
 
         if (survivalSecondsSum >= 6f)
+        {
+            return "C";
+        }
+
+        return "F";
+    }
+
+    private static string TierForCps(float averageCps)
+    {
+        if (averageCps >= 7.2f)
+        {
+            return "S";
+        }
+
+        if (averageCps >= 5.2f)
+        {
+            return "A";
+        }
+
+        if (averageCps >= 3.2f)
+        {
+            return "B";
+        }
+
+        if (averageCps >= 1.0f)
         {
             return "C";
         }

@@ -620,7 +620,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
             if (ht != null)
             {
                 ht.text = GameLocalization.GetUiString(UiStringKeys.HubUnifiedHint,
-                    "Six subjects in random order. Pass lines and final total use the rank below.");
+                    "Seven subjects in random order. Pass lines and final total use the rank below.");
             }
         }
 
@@ -1194,7 +1194,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         }
 
         hintTmp.text = GameLocalization.GetUiString(UiStringKeys.HubUnifiedHint,
-            "Six subjects in random order. Pass lines and final total use the rank below.");
+            "Seven subjects in random order. Pass lines and final total use the rank below.");
         hintTmp.fontSize = 12;
         hintTmp.alignment = TextAlignmentOptions.Center;
         hintTmp.color = GsiUiAppearance.TextSecondary;

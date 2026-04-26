@@ -4,31 +4,29 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
 /// <summary>
-/// 씬 전환 시 검정 페이드와 비동기 로드를 묶습니다. 루트는 DontDestroyOnLoad로 유지됩니다.
+/// Full-screen black fade with async load for single-scene transitions. Root is DontDestroyOnLoad.
 /// </summary>
 [DefaultExecutionOrder(-100)]
 public sealed class GsiSceneTransition : MonoBehaviour
 {
-    /// <summary>다른 Screen Space Overlay 씬 UI보다 위에 두기 위한 값(플랫폼별 정렬 한도 내).</summary>
+    /// <summary>Sort order so the fade canvas draws above other screen-space UI (within platform limits).</summary>
     private const int OverlaySortOrder = 32767;
 
     private static GsiSceneTransition _instance;
 
-    [Header("페이드 (초, Unscaled)")]
+    [Header("Fade (sec, unscaled)")]
     [SerializeField] private float fadeOutDuration = 0.18f;
     [SerializeField] private float fadeInDuration = 0.22f;
 
     private CanvasGroup _group;
     private bool _busy;
 
-    /// <summary>
-    /// 현재 씬을 내리고 <paramref name="sceneName"/> 으로 전환합니다(빌드 설정에 등록된 씬 이름).
-    /// </summary>
+    /// <summary>Loads <paramref name="sceneName"/> (must be in Build Settings) with fade.</summary>
     public static void LoadScene(string sceneName)
     {
         if (string.IsNullOrEmpty(sceneName))
         {
-            Debug.LogWarning("[GsiSceneTransition] 빈 씬 이름입니다.");
+            Debug.LogWarning("[GsiSceneTransition] Empty scene name; ignoring.");
             return;
         }
 
@@ -150,7 +148,7 @@ public sealed class GsiSceneTransition : MonoBehaviour
     {
         if (_busy)
         {
-            Debug.LogWarning("[GsiSceneTransition] 이미 씬 전환 중입니다. 무시: " + sceneName);
+            Debug.LogWarning("[GsiSceneTransition] Transition already in progress; ignoring: " + sceneName);
             yield break;
         }
 
@@ -163,8 +161,8 @@ public sealed class GsiSceneTransition : MonoBehaviour
         if (!IsSceneInBuildSettings(sceneName))
         {
             Debug.LogError(
-                "[GsiSceneTransition] 빌드 설정에 씬이 없거나 이름이 맞지 않습니다: \"" + sceneName +
-                "\". File → Build Settings(체크된 씬) 와 SceneNames 상수를 확인하세요.");
+                "[GsiSceneTransition] Scene is not in Build Settings or name mismatch: \"" + sceneName +
+                "\". Check File → Build Settings and SceneNames.");
             yield break;
         }
 
@@ -175,7 +173,7 @@ public sealed class GsiSceneTransition : MonoBehaviour
 
         if (_group == null)
         {
-            Debug.LogError("[GsiSceneTransition] 페이드 오버레이를 만들 수 없습니다.");
+            Debug.LogError("[GsiSceneTransition] Could not build fade overlay.");
             yield break;
         }
 
@@ -193,7 +191,7 @@ public sealed class GsiSceneTransition : MonoBehaviour
             AsyncOperation op = SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single);
             if (op == null)
             {
-                Debug.LogError("[GsiSceneTransition] LoadSceneAsync 가 null 입니다: " + sceneName);
+                Debug.LogError("[GsiSceneTransition] LoadSceneAsync returned null: " + sceneName);
                 yield break;
             }
 

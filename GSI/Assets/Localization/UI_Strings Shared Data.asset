@@ -767,6 +767,58 @@ MonoBehaviour:
     m_Key: lobby.top_left_title
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697274
+    m_Key: hub.practice.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697275
+    m_Key: mode.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697276
+    m_Key: mode.short.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697277
+    m_Key: briefing.title.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697278
+    m_Key: briefing.body.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697279
+    m_Key: result.title.practice.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697280
+    m_Key: result.title.exam.cps
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697281
+    m_Key: result.cps.body_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697282
+    m_Key: result.fail.cps_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697283
+    m_Key: unified.segment.summary_cps_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697284
+    m_Key: cps.hud.line_fmt
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697285
+    m_Key: cps.tap_button
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697286
+    m_Key: settings.quit_to_desktop
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

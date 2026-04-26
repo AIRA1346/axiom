@@ -19,10 +19,10 @@ public static class GsiTestBriefingTexts
         if (GameManager.Instance.CurrentTestType == TestType.UnifiedOfficialExam)
         {
             int seg = GameManager.Instance.UnifiedExamSegmentOrdinalDisplay;
-            if (seg >= 1 && seg <= 6)
+            if (seg >= 1 && seg <= 7)
             {
                 string line = GameLocalization.FormatUiString(UiStringKeys.BriefingUnifiedSegmentLineFmt,
-                    "Unified exam — subject {0}/6", seg);
+                    "Unified exam — subject {0}/7", seg);
                 body = body + "\n\n" + line;
             }
         }
@@ -61,6 +61,11 @@ public static class GsiTestBriefingTexts
                 title = GameLocalization.GetUiString(UiStringKeys.BriefingTitleBulletHell, "Bullet Hell");
                 body = GameLocalization.GetUiString(UiStringKeys.BriefingBodyBulletHell,
                     "Avoid projectiles and survive as long as possible. Movement is constrained to the play area.");
+                break;
+            case TestMode.ClicksPerSecond:
+                title = GameLocalization.GetUiString(UiStringKeys.BriefingTitleCps, "Clicks per second");
+                body = GameLocalization.GetUiString(UiStringKeys.BriefingBodyCps,
+                    "For 10 seconds, click the large target as fast as you can. Only clicks on the target count. Your result is the average clicks per second.");
                 break;
             default:
                 title = GameLocalization.GetUiString(UiStringKeys.BriefingTitleDefault, "Test");

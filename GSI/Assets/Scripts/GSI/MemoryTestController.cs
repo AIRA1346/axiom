@@ -197,6 +197,11 @@ public sealed class MemoryTestController : MonoBehaviour
                 SetAimAreaVisible(false);
                 break;
 
+            case TestMode.ClicksPerSecond:
+                SetReactionTargetVisible(false);
+                SetAimAreaVisible(false);
+                break;
+
             default:
                 SetOtherMinigameVisuals(false);
                 break;

@@ -16,6 +16,7 @@ public sealed class PlayerDataManager : MonoBehaviour
     private const string BestRhythmMeanErrorKey = "BestRhythmMeanError";
     private const string BestMotAccuracyKey = "BestMotAccuracy";
     private const string BestBulletHellTimeKey = "BestBulletHellTime";
+    private const string BestCpsKey = "BestCpsAverage";
     private const string BestUnifiedExamTotalKey = "BestUnifiedExamTotal";
     private const string UnifiedExamHistoryKey = "UnifiedExamHistory";
     private const string UnifiedExamHistoryJsonKey = "GSI_UnifiedExamHistoryJson_v1";
@@ -43,7 +44,10 @@ public sealed class PlayerDataManager : MonoBehaviour
     /// <summary>공식 시험 Bullet Hell: 최고 생존 시간 합(초). 없으면 -1.</summary>
     public float BestBulletHellTime { get; private set; } = -1f;
 
-    /// <summary>통합 공식 시험 최고 총점(6과목 합, 최대 600). 없으면 -1.</summary>
+    /// <summary>공식 시험 CPS: 최고 평균 클릭/초. 없으면 -1.</summary>
+    public float BestCps { get; private set; } = -1f;
+
+    /// <summary>통합 공식 시험 최고 총점(7과목 합, 최대 700). 없으면 -1.</summary>
     public float BestUnifiedExamTotal { get; private set; } = -1f;
 
     private void Awake()
@@ -56,6 +60,16 @@ public sealed class PlayerDataManager : MonoBehaviour
 
         Instance = this;
         DontDestroyOnLoad(gameObject);
+    }
+
+    private void Start()
+    {
+        LoadPlayerData();
+    }
+
+    /// <summary>After Steam Cloud merge or external PlayerPrefs writes, refresh cached fields.</summary>
+    public void ReloadFromPreferences()
+    {
         LoadPlayerData();
     }
 
@@ -189,6 +203,27 @@ public sealed class PlayerDataManager : MonoBehaviour
         return false;
     }
 
+    public bool CheckAndSaveBestCps(float averageCps)
+    {
+        if (BestCps < 0f)
+        {
+            BestCps = averageCps;
+            PlayerPrefs.SetFloat(BestCpsKey, BestCps);
+            PlayerPrefs.Save();
+            return true;
+        }
+
+        if (averageCps > BestCps + 0.02f)
+        {
+            BestCps = averageCps;
+            PlayerPrefs.SetFloat(BestCpsKey, BestCps);
+            PlayerPrefs.Save();
+            return true;
+        }
+
+        return false;
+    }
+
     /// <summary>
     /// Loads the stored best reaction time or applies the default placeholder value.
     /// </summary>
@@ -201,6 +236,7 @@ public sealed class PlayerDataManager : MonoBehaviour
         BestRhythmMeanError = PlayerPrefs.GetFloat(BestRhythmMeanErrorKey, 999f);
         BestMotAccuracy = PlayerPrefs.GetFloat(BestMotAccuracyKey, -1f);
         BestBulletHellTime = PlayerPrefs.GetFloat(BestBulletHellTimeKey, -1f);
+        BestCps = PlayerPrefs.GetFloat(BestCpsKey, -1f);
         BestUnifiedExamTotal = PlayerPrefs.GetFloat(BestUnifiedExamTotalKey, -1f);
     }
 
@@ -232,12 +268,15 @@ public sealed class PlayerDataManager : MonoBehaviour
             case TestMode.BulletHell:
                 return CheckAndSaveBestBulletHellTime(p.Primary);
 
+            case TestMode.ClicksPerSecond:
+                return CheckAndSaveBestCps(p.Primary);
+
             default:
                 return false;
         }
     }
 
-    /// <summary>통합 시험 총점(600 만점) 최고 기록 갱신.</summary>
+    /// <summary>통합 시험 총점(700 만점) 최고 기록 갱신.</summary>
     public bool CheckAndSaveBestUnifiedExamTotal(float totalScore)
     {
         if (BestUnifiedExamTotal < 0f || totalScore > BestUnifiedExamTotal + 0.01f)

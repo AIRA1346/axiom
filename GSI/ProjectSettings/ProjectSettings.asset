@@ -143,7 +143,7 @@ PlayerSettings:
   loadStoreDebugModeEnabled: 0
   visionOSBundleVersion: 1.0
   tvOSBundleVersion: 1.0
-  bundleVersion: 0.1.0
+  bundleVersion: 0.1.1
   preloadedAssets: []
   metroInputSource: 0
   wsaTransparentSwapchain: 0
@@ -826,7 +826,8 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Standalone: STEAMWORKS_NET
+    Editor: STEAMWORKS_NET;STEAMWORKS_ENABLED
+    Standalone: STEAMWORKS_NET;STEAMWORKS_ENABLED
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
@@ -928,7 +929,7 @@ PlayerSettings:
   cloudProjectId: 8363741b-2bca-4002-a687-b279950dfa0a
   framebufferDepthMemorylessMode: 0
   qualitySettingsNames: []
-  projectName: The Axiom
+  projectName: G.S.I
   organizationId: rkdwltjr1222
   cloudEnabled: 0
   legacyClampBlendShapeWeights: 0

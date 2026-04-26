@@ -79,6 +79,13 @@ public static class GsiHubPracticeCatalog
             "PracticeRow_BulletHell",
             UiStringKeys.HubPracticeBulletHell,
             "Practice: Bullet Hell"),
+        new Entry(
+            TestMode.ClicksPerSecond,
+            "PracticeCps",
+            "ExamCps",
+            "PracticeRow_Cps",
+            UiStringKeys.HubPracticeCps,
+            "Practice: Clicks per second"),
     };
 
     public static IReadOnlyList<Entry> All => EntriesOrdered;
