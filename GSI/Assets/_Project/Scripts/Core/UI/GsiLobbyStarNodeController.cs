@@ -28,11 +28,18 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
     public float BounceFactor = 0.92f;
     public float MaxVelocity = 1800f;
     public float MinDriftSpeed = 80f;
-    
+    public float CollisionRadius = 30f; // Made smaller for a premium tighter overlap feel
+
+    [Header("Audio Config")]
+    [Tooltip("Optional custom collision sound effect. If null, falls back to GsiUiSound hover/click settings.")]
+    public AudioClip CollisionSfx;
+
     private RectTransform _rectTransform;
     private RectTransform _starVisualRoot;
     private CanvasGroup _labelCanvasGroup;
     private TextMeshProUGUI _labelTmp;
+
+    private float _lastCollisionSoundTime = 0f;
 
     private Vector2 _velocity;
     private bool _isDragging = false;
@@ -225,8 +232,7 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
             return;
         }
 
-        float collisionRadius = 46f;
-        float minDistance = collisionRadius * 2f;
+        float minDistance = CollisionRadius * 2f;
 
         // Retrieve all active star nodes in the same canvas container
         var otherStars = transform.parent.GetComponentsInChildren<GsiLobbyStarNodeController>();
@@ -278,6 +284,29 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
                     if (!other._isDragging)
                     {
                         other._velocity += impulse;
+                    }
+
+                    // Play premium tactile collision sound based on relative velocity with a small cooldown
+                    float relativeSpeed = Mathf.Abs(velAlongNormal);
+                    if (relativeSpeed > 30f && Time.unscaledTime - _lastCollisionSoundTime > 0.15f)
+                    {
+                        _lastCollisionSoundTime = Time.unscaledTime;
+                        other._lastCollisionSoundTime = Time.unscaledTime;
+
+                        float volumeScale = Mathf.Clamp(relativeSpeed / 500f, 0.15f, 0.75f);
+                        if (CollisionSfx != null)
+                        {
+                            GsiAudio.PlaySfx(CollisionSfx, volumeScale);
+                        }
+                        else if (GsiUiSound.Settings != null)
+                        {
+                            // Dynamic fallback to Click (high speed) or Hover (low speed) UI sounds
+                            AudioClip defaultClip = relativeSpeed > 180f ? GsiUiSound.Settings.PrimaryClick : GsiUiSound.Settings.Hover;
+                            if (defaultClip != null)
+                            {
+                                GsiAudio.PlaySfx(defaultClip, volumeScale);
+                            }
+                        }
                     }
                 }
             }
