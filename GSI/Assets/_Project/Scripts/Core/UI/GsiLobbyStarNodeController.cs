@@ -42,6 +42,7 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
     // Track drag movement to separate drags from pure clicks
     private Vector2 _dragStartPos;
     private float _totalDragDist;
+    private Vector2 _lastDragFramePos;
 
     private void Start()
     {
@@ -192,6 +193,17 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
 
             // Bounce off boundaries
             HandleScreenBoundaries();
+        }
+        else
+        {
+            // Calculate velocity based on actual movement in this frame during the drag
+            Vector2 currentPos = _rectTransform.anchoredPosition;
+            Vector2 positionDelta = currentPos - _lastDragFramePos;
+            Vector2 frameVelocity = positionDelta / Mathf.Max(Time.unscaledDeltaTime, 0.001f);
+            
+            // Smooth the velocity to filter out single-frame mouse jitter
+            _velocity = Vector2.Lerp(_velocity, frameVelocity, 0.22f);
+            _lastDragFramePos = currentPos;
         }
 
         // 3. Resolve star-to-star collisions!
@@ -420,6 +432,7 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
     {
         _isDragging = true;
         _velocity = Vector2.zero;
+        _lastDragFramePos = _rectTransform.anchoredPosition;
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -432,10 +445,6 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
         // Move position based on scaled pointer movement
         Vector2 delta = eventData.delta / scaleFactor;
         _rectTransform.anchoredPosition += delta;
-
-        // Calculate dynamic velocity smoothing to make throwing/flicking feel natural
-        Vector2 frameVelocity = delta / Mathf.Max(Time.unscaledDeltaTime, 0.001f);
-        _velocity = Vector2.Lerp(_velocity, frameVelocity, 0.35f);
     }
 
     public void OnEndDrag(PointerEventData eventData)
