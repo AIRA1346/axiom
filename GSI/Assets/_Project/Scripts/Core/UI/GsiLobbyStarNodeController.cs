@@ -27,6 +27,7 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
     public float Friction = 0.45f;
     public float BounceFactor = 0.92f;
     public float MaxVelocity = 1800f;
+    public float MinDriftSpeed = 80f;
     
     private RectTransform _rectTransform;
     private RectTransform _starVisualRoot;
@@ -180,13 +181,33 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
         if (!_isDragging)
         {
             // Apply speed clamp
-            if (_velocity.magnitude > MaxVelocity)
+            float currentSpeed = _velocity.magnitude;
+            if (currentSpeed > MaxVelocity)
             {
                 _velocity = _velocity.normalized * MaxVelocity;
+                currentSpeed = MaxVelocity;
             }
 
-            // Apply friction
-            _velocity *= Mathf.Exp(-Friction * Time.unscaledDeltaTime);
+            // Apply friction only above MinDriftSpeed; clamp to MinDriftSpeed to float infinitely
+            if (currentSpeed > MinDriftSpeed)
+            {
+                float newSpeed = currentSpeed * Mathf.Exp(-Friction * Time.unscaledDeltaTime);
+                newSpeed = Mathf.Max(newSpeed, MinDriftSpeed);
+                _velocity = _velocity.normalized * newSpeed;
+            }
+            else if (currentSpeed < MinDriftSpeed)
+            {
+                // Smoothly restore or boost velocity to MinDriftSpeed so it never stops drifting
+                if (currentSpeed < 0.01f)
+                {
+                    Vector2 randomDir = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
+                    _velocity = randomDir * MinDriftSpeed;
+                }
+                else
+                {
+                    _velocity = _velocity.normalized * MinDriftSpeed;
+                }
+            }
 
             // Update position
             _rectTransform.anchoredPosition += _velocity * Time.unscaledDeltaTime;
