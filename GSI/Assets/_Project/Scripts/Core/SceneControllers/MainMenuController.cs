@@ -117,6 +117,7 @@ public sealed class MainMenuController : MonoBehaviour
     private Image _panelBackground;
     private Image _heroImage;
     private bool _lobbyShellBuilt;
+    private static Sprite _proceduralSpaceSprite;
     private TextMeshProUGUI _lobbyTopLeftTitleTmp;
     private TextMeshProUGUI _lobbyTopLeftTimeTmp;
     private long _lobbyClockSecondStamp = -1L;
@@ -1522,7 +1523,10 @@ public sealed class MainMenuController : MonoBehaviour
 
         if (_panelBackground != null)
         {
-            _panelBackground.color = GsiUiAppearance.ShopScreenBackground;
+            _panelBackground.sprite = GetOrCreateSpaceSprite();
+            _panelBackground.type = Image.Type.Simple;
+            _panelBackground.preserveAspect = false;
+            _panelBackground.color = Color.white;
             _panelBackground.raycastTarget = false;
         }
 
@@ -2063,6 +2067,91 @@ public sealed class MainMenuController : MonoBehaviour
         }
     }
 
+    private Sprite GetOrCreateSpaceSprite()
+    {
+        if (_proceduralSpaceSprite == null)
+        {
+            _proceduralSpaceSprite = CreateProceduralSpaceSprite(1024, 576);
+        }
+        return _proceduralSpaceSprite;
+    }
+
+    private static Sprite CreateProceduralSpaceSprite(int width, int height)
+    {
+        var tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        tex.name = "GSI_CosmicSpaceBackground";
+        tex.wrapMode = TextureWrapMode.Clamp;
+        tex.filterMode = FilterMode.Bilinear;
+
+        Color spaceDark = new Color(0.012f, 0.006f, 0.022f, 1f); // Deep void black/violet
+        Color indigoBlack = new Color(0.004f, 0.012f, 0.032f, 1f); // Deep void indigo
+
+        // Define brilliant glowing star coordinates and intensities
+        var brightStars = new (float x, float y, float r, float intensity)[]
+        {
+            (0.15f, 0.72f, 8f, 0.9f),
+            (0.32f, 0.24f, 6f, 0.8f),
+            (0.55f, 0.85f, 12f, 0.95f), // A bright star in upper middle
+            (0.78f, 0.42f, 10f, 0.85f),
+            (0.88f, 0.78f, 7f, 0.75f),
+            (0.22f, 0.48f, 5f, 0.7f),
+            (0.48f, 0.18f, 9f, 0.85f),
+            (0.68f, 0.62f, 6f, 0.75f)
+        };
+
+        for (int y = 0; y < height; y++)
+        {
+            float v = (float)y / (height - 1);
+            for (int x = 0; x < width; x++)
+            {
+                float u = (float)x / (width - 1);
+
+                // Base gradient
+                Color pixelColor = Color.Lerp(spaceDark, indigoBlack, v + u * 0.15f);
+
+                // Nebula 1: Large soft violet clouds
+                float n1 = Mathf.PerlinNoise(u * 2.2f + 4.5f, v * 1.8f + 1.2f);
+                float n2 = Mathf.PerlinNoise(u * 4.8f - 2.5f, v * 3.6f + 3.8f);
+                float neb1 = Mathf.Max(0f, (n1 * 0.65f + n2 * 0.35f) - 0.35f) * 1.8f;
+                Color nebColor1 = new Color(0.16f, 0.05f, 0.28f, 1f) * neb1;
+
+                // Nebula 2: Glowing cosmic cyan/teal clouds
+                float n3 = Mathf.PerlinNoise(u * 3.5f - 8.2f, v * 2.8f + 5.5f);
+                float n4 = Mathf.PerlinNoise(u * 6.5f + 1.1f, v * 5.2f - 4.2f);
+                float neb2 = Mathf.Max(0f, (n3 * 0.58f + n4 * 0.42f) - 0.42f) * 1.9f;
+                Color nebColor2 = new Color(0.03f, 0.18f, 0.24f, 1f) * neb2;
+
+                pixelColor += nebColor1 + nebColor2;
+
+                // Sparkling background stars (pseudo-random fast hash)
+                float starSeed = Mathf.Repeat(Mathf.Sin(x * 12.9898f + y * 78.233f) * 43758.5453f, 1.0f);
+                if (starSeed > 0.9975f)
+                {
+                    float starBrightness = (starSeed - 0.9975f) / 0.0025f;
+                    pixelColor += new Color(starBrightness, starBrightness, starBrightness * 1.08f, 0f) * 0.85f;
+                }
+
+                // Draw soft glow for the brilliant stars
+                foreach (var star in brightStars)
+                {
+                    float sx = star.x * width;
+                    float sy = star.y * height;
+                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(sx, sy));
+                    if (dist < star.r)
+                    {
+                        float glow = Mathf.Pow(1.0f - dist / star.r, 2.2f);
+                        pixelColor += new Color(star.intensity, star.intensity, star.intensity * 1.05f, 0f) * glow * 0.9f;
+                    }
+                }
+
+                tex.SetPixel(x, y, pixelColor);
+            }
+        }
+
+        tex.Apply(false, true);
+        return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f);
+    }
+
     private void TryApplyFarDistantLayerArt()
     {
         if (_lobbyCenterStage?.FarImage == null)
@@ -2071,25 +2160,10 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         Image far = _lobbyCenterStage.FarImage;
-        Sprite s = _lobbyFarDistantSpriteOverride;
-        if (s == null)
-        {
-            s = Resources.Load<Sprite>(LobbyFarDistantResourcePath);
-        }
-
-        if (s != null)
-        {
-            far.sprite = s;
-            far.type = Image.Type.Simple;
-            far.preserveAspect = false;
-            far.color = Color.white;
-            return;
-        }
-
-        Color f = GsiUiAppearance.ShopScreenBackground;
-        f.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.22f : 0.14f;
-        far.color = f;
-        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(far);
+        far.sprite = GetOrCreateSpaceSprite();
+        far.type = Image.Type.Simple;
+        far.preserveAspect = false;
+        far.color = Color.white;
     }
 
     private void TryApplyMidgroundLayerArt()
