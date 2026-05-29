@@ -195,19 +195,6 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
                 newSpeed = Mathf.Max(newSpeed, MinDriftSpeed);
                 _velocity = _velocity.normalized * newSpeed;
             }
-            else if (currentSpeed < MinDriftSpeed)
-            {
-                // Smoothly restore or boost velocity to MinDriftSpeed so it never stops drifting
-                if (currentSpeed < 0.01f)
-                {
-                    Vector2 randomDir = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f)).normalized;
-                    _velocity = randomDir * MinDriftSpeed;
-                }
-                else
-                {
-                    _velocity = _velocity.normalized * MinDriftSpeed;
-                }
-            }
 
             // Update position
             _rectTransform.anchoredPosition += _velocity * Time.unscaledDeltaTime;
