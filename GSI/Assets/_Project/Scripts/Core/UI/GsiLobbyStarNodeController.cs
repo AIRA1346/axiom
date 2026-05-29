@@ -187,6 +187,75 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
             // Bounce off boundaries
             HandleScreenBoundaries();
         }
+
+        // 3. Resolve star-to-star collisions!
+        HandleStarCollisions();
+    }
+
+    private void HandleStarCollisions()
+    {
+        if (transform.parent == null)
+        {
+            return;
+        }
+
+        float collisionRadius = 46f;
+        float minDistance = collisionRadius * 2f;
+
+        // Retrieve all active star nodes in the same canvas container
+        var otherStars = transform.parent.GetComponentsInChildren<GsiLobbyStarNodeController>();
+        foreach (var other in otherStars)
+        {
+            if (other == this)
+            {
+                continue;
+            }
+
+            Vector2 diff = other.GetComponent<RectTransform>().anchoredPosition - _rectTransform.anchoredPosition;
+            float distance = diff.magnitude;
+
+            // Avoid division by zero if they are exactly on top of each other
+            if (distance < 0.01f)
+            {
+                _rectTransform.anchoredPosition += new Vector2(Random.Range(-5f, 5f), Random.Range(-5f, 5f));
+                continue;
+            }
+
+            if (distance < minDistance)
+            {
+                Vector2 normal = diff / distance;
+                float overlap = minDistance - distance;
+
+                // 1. Resolve overlap (push apart based on dragging state)
+                float pushSelf = _isDragging ? 0f : (other._isDragging ? 1f : 0.5f);
+                float pushOther = other._isDragging ? 0f : (_isDragging ? 1f : 0.5f);
+
+                _rectTransform.anchoredPosition -= normal * overlap * pushSelf;
+                other.GetComponent<RectTransform>().anchoredPosition += normal * overlap * pushOther;
+
+                // 2. Resolve elastic impulse bounce
+                Vector2 rv = other._velocity - _velocity;
+                float velAlongNormal = Vector2.Dot(rv, normal);
+
+                // Only resolve if they are moving towards each other
+                if (velAlongNormal < 0f)
+                {
+                    float restitution = 0.96f; // Elastic bounce coefficient
+                    float impulseScalar = -(1f + restitution) * velAlongNormal / 2f; // assumes equal mass
+
+                    Vector2 impulse = normal * impulseScalar;
+
+                    if (!_isDragging)
+                    {
+                        _velocity -= impulse;
+                    }
+                    if (!other._isDragging)
+                    {
+                        other._velocity += impulse;
+                    }
+                }
+            }
+        }
     }
 
     private void HandleScreenBoundaries()
