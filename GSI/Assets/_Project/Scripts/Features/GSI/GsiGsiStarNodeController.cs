@@ -118,6 +118,9 @@ public sealed class GsiGsiStarNodeController : MonoBehaviour,
 
         // 5. 초기 자율 영동 유영 속도 부여
         _velocity = new Vector2(UnityEngine.Random.Range(-90f, 90f), UnityEngine.Random.Range(-90f, 90f));
+
+        // 6. 저장된 성간 위치 및 유영 속도 로드
+        LoadState();
     }
 
     private void BuildTooltipLabel()
@@ -517,6 +520,75 @@ public sealed class GsiGsiStarNodeController : MonoBehaviour,
     {
         _isDragging = false;
         OnEndDragAction?.Invoke();
+        SaveState();
+    }
+
+    #endregion
+
+    #region State Save / Load
+
+    private void OnDestroy()
+    {
+        SaveState();
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveState();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus)
+        {
+            SaveState();
+        }
+    }
+
+    private void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            SaveState();
+        }
+    }
+
+    public void SaveState()
+    {
+        if (_rectTransform == null) return;
+
+        string nameKey = gameObject.name;
+        if (string.IsNullOrEmpty(nameKey)) return;
+
+        string prefix = "GsiStar_" + nameKey;
+        Vector2 pos = _rectTransform.anchoredPosition;
+
+        PlayerPrefs.SetFloat(prefix + "_PosX", pos.x);
+        PlayerPrefs.SetFloat(prefix + "_PosY", pos.y);
+        PlayerPrefs.SetFloat(prefix + "_VelX", _velocity.x);
+        PlayerPrefs.SetFloat(prefix + "_VelY", _velocity.y);
+        PlayerPrefs.SetInt(prefix + "_HasState", 1);
+        PlayerPrefs.Save();
+    }
+
+    private void LoadState()
+    {
+        if (_rectTransform == null) return;
+
+        string nameKey = gameObject.name;
+        if (string.IsNullOrEmpty(nameKey)) return;
+
+        string prefix = "GsiStar_" + nameKey;
+        if (PlayerPrefs.GetInt(prefix + "_HasState", 0) == 1)
+        {
+            float px = PlayerPrefs.GetFloat(prefix + "_PosX", InitialPosition.x);
+            float py = PlayerPrefs.GetFloat(prefix + "_PosY", InitialPosition.y);
+            float vx = PlayerPrefs.GetFloat(prefix + "_VelX", _velocity.x);
+            float vy = PlayerPrefs.GetFloat(prefix + "_VelY", _velocity.y);
+
+            _rectTransform.anchoredPosition = new Vector2(px, py);
+            _velocity = new Vector2(vx, vy);
+        }
     }
 
     #endregion

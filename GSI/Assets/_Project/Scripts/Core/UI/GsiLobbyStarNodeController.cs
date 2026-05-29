@@ -106,6 +106,9 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
 
         // 6. Give a small random initial drift velocity
         _velocity = new Vector2(Random.Range(-90f, 90f), Random.Range(-90f, 90f));
+
+        // 7. Load saved cosmic position & velocity state if it exists
+        LoadState();
     }
 
     private void BuildTooltipLabel()
@@ -504,6 +507,75 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
     public void OnEndDrag(PointerEventData eventData)
     {
         _isDragging = false;
+        SaveState();
+    }
+
+    #endregion
+
+    #region State Save / Load
+
+    private void OnDestroy()
+    {
+        SaveState();
+    }
+
+    private void OnApplicationQuit()
+    {
+        SaveState();
+    }
+
+    private void OnApplicationFocus(bool hasFocus)
+    {
+        if (!hasFocus)
+        {
+            SaveState();
+        }
+    }
+
+    private void OnApplicationPause(bool pause)
+    {
+        if (pause)
+        {
+            SaveState();
+        }
+    }
+
+    public void SaveState()
+    {
+        if (_rectTransform == null) return;
+
+        string nameKey = gameObject.name;
+        if (string.IsNullOrEmpty(nameKey)) return;
+
+        string prefix = "LobbyStar_" + nameKey;
+        Vector2 pos = _rectTransform.anchoredPosition;
+
+        PlayerPrefs.SetFloat(prefix + "_PosX", pos.x);
+        PlayerPrefs.SetFloat(prefix + "_PosY", pos.y);
+        PlayerPrefs.SetFloat(prefix + "_VelX", _velocity.x);
+        PlayerPrefs.SetFloat(prefix + "_VelY", _velocity.y);
+        PlayerPrefs.SetInt(prefix + "_HasState", 1);
+        PlayerPrefs.Save();
+    }
+
+    private void LoadState()
+    {
+        if (_rectTransform == null) return;
+
+        string nameKey = gameObject.name;
+        if (string.IsNullOrEmpty(nameKey)) return;
+
+        string prefix = "LobbyStar_" + nameKey;
+        if (PlayerPrefs.GetInt(prefix + "_HasState", 0) == 1)
+        {
+            float px = PlayerPrefs.GetFloat(prefix + "_PosX", InitialPosition.x);
+            float py = PlayerPrefs.GetFloat(prefix + "_PosY", InitialPosition.y);
+            float vx = PlayerPrefs.GetFloat(prefix + "_VelX", _velocity.x);
+            float vy = PlayerPrefs.GetFloat(prefix + "_VelY", _velocity.y);
+
+            _rectTransform.anchoredPosition = new Vector2(px, py);
+            _velocity = new Vector2(vx, vy);
+        }
     }
 
     #endregion
