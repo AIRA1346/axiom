@@ -9,7 +9,7 @@
 ## 💎 1. 필수 동기화 표준 (Must Be Identical)
 
 ### A. 우주 물리 공식 및 상수 (Kinematics & Constants)
-두 씬에 상주하는 모든 별 노드(`GsiLobbyStarNodeController`, `GsiGsiStarNodeController`)는 동일한 우주 마찰력 및 물리 관성 계수를 공유합니다.
+두 씬에 상주하는 모든 별 노드(`GsiLobbyStarNodeController`, `GsiGsiStarNodeController`)는 공용 추상 기반 클래스 `StarNodeControllerBase`를 상속받아 동일한 우주 마찰력 및 물리 관성 계수를 **코드 레벨에서 자동 공유**합니다. 물리 계수를 변경할 때는 `StarNodeControllerBase`만 수정하면 양 씬에 즉시 반영됩니다.
 - **마찰력 저항 (`Friction`)**: `0.45f` (지수적 감속 적용: `Mathf.Exp(-Friction * Time.unscaledDeltaTime)`)
 - **최대 속도 제한 (`MaxVelocity`)**: `1800f`
 - **최저 자율 유영 속도 (`MinDriftSpeed`)**: `80f` (감속하다가 이 속도에 도달하면 마찰력을 무시하고 무한 유영)
