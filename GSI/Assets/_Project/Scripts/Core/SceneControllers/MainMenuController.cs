@@ -784,7 +784,7 @@ public sealed class MainMenuController : MonoBehaviour
             bgRt.SetParent(stripRoot, false);
             GsiUiRuntimeWidgets.StretchFull(bgRt);
             var img = bgGo.AddComponent<Image>();
-            img.color = GsiUiAppearance.LobbyEconomyStripGlass;
+            img.color = Color.clear;
             img.raycastTarget = false;
             GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(img);
             LayoutElement bgLe = bgGo.GetComponent<LayoutElement>();
@@ -800,7 +800,7 @@ public sealed class MainMenuController : MonoBehaviour
         {
             if (bgTf.TryGetComponent(out Image existing))
             {
-                existing.color = GsiUiAppearance.LobbyEconomyStripGlass;
+                existing.color = Color.clear;
                 GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(existing);
             }
 
@@ -1824,13 +1824,13 @@ public sealed class MainMenuController : MonoBehaviour
             return;
         }
 
-        float topInset = LobbyEconomyStripTopInset + LobbyEconomyStripHeight + LobbyCenterStageExtraTopGap;
-        float bottomInset = LobbyActionRowBottomInset + LobbyActionRowHeight;
+        // Stretch 100% full screen to completely remove top/bottom borders/margins!
         stageRt.anchorMin = Vector2.zero;
         stageRt.anchorMax = Vector2.one;
-        // Edge-to-edge horizontally; top/bottom still clear economy strip and action row.
-        stageRt.offsetMin = new Vector2(0f, bottomInset);
-        stageRt.offsetMax = new Vector2(0f, -topInset);
+        stageRt.pivot = new Vector2(0.5f, 0.5f);
+        stageRt.anchoredPosition = Vector2.zero;
+        stageRt.sizeDelta = Vector2.zero;
+
         EnsureLobbyCenterStageClipsChildren(stageRt);
     }
 
@@ -1970,29 +1970,20 @@ public sealed class MainMenuController : MonoBehaviour
         TryApplyMidgroundLayerArt();
         TryApplyNeargroundLayerArt();
 
+        // Deactivate Glow, Vignette, and Scrim layers to keep screen purely cosmic space
         if (_lobbyCenterStage.GlowImage != null)
         {
-            // Lighter than before so the mid art reads clearly (less "grey card").
-            Color g = GsiUiAppearance.TextPrimary;
-            g.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.032f : 0.026f;
-            _lobbyCenterStage.GlowImage.color = g;
-            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.GlowImage);
+            _lobbyCenterStage.GlowImage.gameObject.SetActive(false);
         }
 
         if (_lobbyCenterStage.VignetteImage != null)
         {
-            Color v = GsiUiAppearance.OverlayScrim;
-            v.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.15f : 0.08f;
-            _lobbyCenterStage.VignetteImage.color = v;
-            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.VignetteImage);
+            _lobbyCenterStage.VignetteImage.gameObject.SetActive(false);
         }
 
         if (_lobbyCenterStage.UiScrimImage != null)
         {
-            Color u = GsiUiAppearance.OverlayScrim;
-            u.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.26f : 0.18f;
-            _lobbyCenterStage.UiScrimImage.color = u;
-            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.UiScrimImage);
+            _lobbyCenterStage.UiScrimImage.gameObject.SetActive(false);
         }
 
         SetLobbyStageArtNonBlockingRaycasts(_lobbyCenterStage);
