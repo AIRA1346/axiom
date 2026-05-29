@@ -51,6 +51,7 @@ public sealed class GSISceneBootstrap : MonoBehaviour
             GameManager.Instance.OnGameStateChanged += HandleGameStateChanged;
             _isSubscribed = true;
         }
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     private void OnDestroy()
@@ -59,9 +60,55 @@ public sealed class GSISceneBootstrap : MonoBehaviour
         {
             GameManager.Instance.OnGameStateChanged -= HandleGameStateChanged;
         }
+        SceneManager.sceneLoaded -= OnSceneLoaded;
 
         // 혹시 비정상적으로 씬이 꺼지더라도 동적 인스턴스 및 추가 씬을 청소합니다.
         CleanupActiveGame();
+    }
+
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (scene.name == _activeLoadedSceneName)
+        {
+            GameObject[] rootObjects = scene.GetRootGameObjects();
+            foreach (var go in rootObjects)
+            {
+                var controller = go.GetComponentInChildren<ArchE.Game.IMiniGameController>(true);
+                if (controller != null)
+                {
+                    InitializeAndStartController(controller);
+                    break;
+                }
+            }
+        }
+    }
+
+    private void InitializeAndStartController(ArchE.Game.IMiniGameController controller)
+    {
+        if (GameManager.Instance == null) return;
+
+        TestMode mode = GameManager.Instance.CurrentTestMode;
+        int grade = 9;
+        if (GameManager.Instance.CurrentTestType == TestType.Practice)
+        {
+            grade = GameManager.Instance.GetPracticeGrade(mode);
+        }
+        else if (GameManager.Instance.CurrentTestType == TestType.UnifiedOfficialExam)
+        {
+            grade = GameManager.Instance.UnifiedExamGrade;
+        }
+        else
+        {
+            grade = GameManager.Instance.GetPracticeGrade(mode);
+        }
+
+        Debug.Log($"[GSISceneBootstrap] 다형성 초기화 및 시작: {controller.GameId} (Grade: {grade})");
+        controller.InitializeGame(grade);
+        controller.OnGameFinished += (score, passed) =>
+        {
+            Debug.Log($"[GSISceneBootstrap] 미니게임 완료 이벤트 수신: {controller.GameId}, Score: {score}, Passed: {passed}");
+        };
+        controller.StartGame();
     }
 
     private void HandleGameStateChanged(GameState newState)
@@ -137,6 +184,16 @@ public sealed class GSISceneBootstrap : MonoBehaviour
                 _activeGameInstance = new GameObject(mode + "_LegacyController");
                 _activeGameInstance.transform.SetParent(progressPanel, false);
                 _activeGameInstance.AddComponent(t);
+            }
+        }
+
+        // 5. 다형성 인터페이스 연동 (동적 폴백 스폰 시 즉시 초기화 및 시작)
+        if (_activeGameInstance != null)
+        {
+            var controller = _activeGameInstance.GetComponentInChildren<ArchE.Game.IMiniGameController>(true);
+            if (controller != null)
+            {
+                InitializeAndStartController(controller);
             }
         }
     }
