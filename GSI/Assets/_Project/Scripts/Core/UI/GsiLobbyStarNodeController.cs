@@ -4,6 +4,23 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
+/* =========================================================================================================
+ * 🌌 DEVELOPER WARNING: COSMIC ALIGNMENT STANDARDS (우주 물리 및 비주얼 동기화 표준)
+ * =========================================================================================================
+ * 이 스크립트(GsiLobbyStarNodeController)는 GSI 시설 내 별 노드(GsiGsiStarNodeController)와 
+ * 물리 관성 및 조작감이 100% 동일하게 작동해야 합니다.
+ * 
+ * 수정 시 반드시 아래 파일을 먼저 검토하고 두 스크립트를 상호 동기화하십시오:
+ * 📄 관련 설계 문서: Assets/_Project/Docs/GSI_COSMIC_PHYSICS_DESIGN_STANDARDS.md
+ * 
+ * 동기화 대상 주요 물리 계수:
+ *   - Friction (마찰력 저항 계수): 0.45f
+ *   - BounceFactor (스크린 벽 탄성 계수): 0.92f
+ *   - MaxVelocity (최대 이동 속도 제한): 1800f
+ *   - MinDriftSpeed (최저 우주 유영 속도): 80f
+ *   - CollisionRadius (별-별 충돌 판정 반경): 30f (직경 60f)
+ * ========================================================================================================= */
+
 /// <summary>
 /// Controls a lobby button transformed into a floating, draggable star with kinetic physics,
 /// boundary bouncing, hover micro-animations, and a fading tooltip label.
