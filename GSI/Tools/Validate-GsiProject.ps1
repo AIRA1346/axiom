@@ -83,6 +83,8 @@ $files = @(
     "Assets\Scripts\Core\GsiUiAppearance.cs",
     "Assets\Scripts\Core\GsiUiScreenLayout.cs",
     "Assets\Scripts\Core\GsiUiRuntimeWidgets.cs",
+    "Assets\Scripts\Core\GsiArcaneUi.cs",
+    "Assets\Scripts\Core\GsiUserFacingNotice.cs",
     "Assets\Scripts\Core\GsiTestBriefingTexts.cs",
     "Assets\Scripts\Core\GsiTestBriefingUi.cs",
     "Assets\Scripts\Core\GsiUserSettings.cs",
@@ -102,10 +104,28 @@ $files = @(
     "Assets\Editor\AltarOfVeritySceneSetupMenu.cs",
     "Assets\Editor\VersusAsyncBackendEditorWindow.cs",
     "Assets\Editor\SteamworksBuildDefinesMenu.cs",
+    "Assets\Editor\SteamReleaseReadinessMenu.cs",
+    "Assets\Editor\SteamWindowsReleaseBuilder.cs",
     "Assets\Scripts\Shop\CosmeticTheme.cs",
     "Assets\Scripts\Shop\PlayerCosmetics.cs",
     "Assets\Scripts\Shop\ShopCatalog.cs",
-    "Assets\Scripts\Shop\ShopSceneController.cs"
+    "Assets\Scripts\Shop\ShopSceneController.cs",
+    "Assets\Localization\UI_Strings Shared Data.asset",
+    "Assets\Localization\UI_Strings_en.asset",
+    "Assets\Localization\UI_Strings_ko-KR.asset",
+    "Assets\Tests\EditMode\GsiSteamCloudSnapshotEditModeTests.cs",
+    "Assets\Docs\STEAM_RELEASE_CHECKLIST.md",
+    "Assets\Docs\STEAM_EULA_TEMPLATE.md",
+    "Assets\Docs\STEAM_PRIVACY_TEMPLATE.md",
+    "Assets\Docs\STEAM_SUPPORT_RUNBOOK.md",
+    "Assets\Docs\STEAM_STORE_PAGE_CHECKLIST.md",
+    "Assets\Docs\STEAM_QA_MATRIX.md",
+    "Assets\Resources\Art\Arcane\README.md",
+    "Tools\Validate-SteamRelease.ps1",
+    "Tools\SteamPipe\README.md",
+    "Tools\SteamPipe\New-SteamPipeBuildFiles.ps1",
+    "Tools\SteamPipe\app_build_the_axiom.vdf.template",
+    "Tools\SteamPipe\depot_build_windows.vdf.template"
 )
 
 foreach ($f in $files) {

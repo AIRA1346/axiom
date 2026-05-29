@@ -15,6 +15,8 @@
 /GSI/[Uu]ser[Ss]ettings/
 # Steam: 로컬 App ID (예시는 steam_appid.txt.example 커밋)
 /GSI/steam_appid.txt
+# SteamPipe: generated Partner build files (templates are committed)
+/GSI/Tools/SteamPipe/*.vdf
 # GSI 루트에 생기는 배치/에디터 로그(커밋 불필요)
 /GSI/*.log
 

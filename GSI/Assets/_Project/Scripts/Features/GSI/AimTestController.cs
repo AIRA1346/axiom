@@ -346,7 +346,7 @@ public sealed class AimTestController : MonoBehaviour, IMiniGameController
         }
 
         const string prefsKey = "GSI_EquippedAimTarget";
-        string equipped_aim_target = PlayerPrefs.GetString(prefsKey, "Aim_Default");
+        string equipped_aim_target = GsiSaveSystem.GetString(prefsKey, "Aim_Default");
 
         switch (equipped_aim_target)
         {

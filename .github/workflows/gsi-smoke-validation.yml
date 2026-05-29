@@ -84,6 +84,8 @@ jobs:
           need_file GSI/Assets/Scripts/Core/GsiUiAppearance.cs
           need_file GSI/Assets/Scripts/Core/GsiUiScreenLayout.cs
           need_file GSI/Assets/Scripts/Core/GsiUiRuntimeWidgets.cs
+          need_file GSI/Assets/Scripts/Core/GsiArcaneUi.cs
+          need_file GSI/Assets/Scripts/Core/GsiUserFacingNotice.cs
           need_file GSI/Assets/Scripts/Core/GsiTestBriefingTexts.cs
           need_file GSI/Assets/Scripts/Core/GsiTestBriefingUi.cs
           need_file GSI/Assets/Scripts/Core/GsiUserSettings.cs
@@ -107,6 +109,24 @@ jobs:
           need_file GSI/Assets/Scripts/Shop/ShopSceneController.cs
           need_file GSI/Assets/Editor/VersusAsyncBackendEditorWindow.cs
           need_file GSI/Assets/Editor/SteamworksBuildDefinesMenu.cs
+          need_file GSI/Assets/Editor/SteamReleaseReadinessMenu.cs
+          need_file GSI/Assets/Editor/SteamWindowsReleaseBuilder.cs
+          need_file GSI/Assets/Localization/UI_Strings Shared Data.asset
+          need_file GSI/Assets/Localization/UI_Strings_en.asset
+          need_file GSI/Assets/Localization/UI_Strings_ko-KR.asset
+          need_file GSI/Assets/Tests/EditMode/GsiSteamCloudSnapshotEditModeTests.cs
+          need_file GSI/Assets/Docs/STEAM_RELEASE_CHECKLIST.md
+          need_file GSI/Assets/Docs/STEAM_EULA_TEMPLATE.md
+          need_file GSI/Assets/Docs/STEAM_PRIVACY_TEMPLATE.md
+          need_file GSI/Assets/Docs/STEAM_SUPPORT_RUNBOOK.md
+          need_file GSI/Assets/Docs/STEAM_STORE_PAGE_CHECKLIST.md
+          need_file GSI/Assets/Docs/STEAM_QA_MATRIX.md
+          need_file GSI/Assets/Resources/Art/Arcane/README.md
+          need_file GSI/Tools/Validate-SteamRelease.ps1
+          need_file GSI/Tools/SteamPipe/README.md
+          need_file GSI/Tools/SteamPipe/New-SteamPipeBuildFiles.ps1
+          need_file GSI/Tools/SteamPipe/app_build_the_axiom.vdf.template
+          need_file GSI/Tools/SteamPipe/depot_build_windows.vdf.template
           need_file GSI/steam_appid.txt.example
           need_file GSI/Assets/Audio/README.txt
 

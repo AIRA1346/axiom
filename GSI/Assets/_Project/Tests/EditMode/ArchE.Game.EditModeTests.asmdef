@@ -1,0 +1,16 @@
+{
+    "name": "ArchE.Game.EditModeTests",
+    "rootNamespace": "",
+    "references": [
+        "ArchE.Game",
+        "ArchE.Platform"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "autoReferenced": true
+}

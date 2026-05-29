@@ -1,0 +1,28 @@
+# GSI Unity tests are manual until UNITY_LICENSE/UNITY_EMAIL/UNITY_PASSWORD are configured.
+name: GSI Unity tests
+
+on:
+  workflow_dispatch:
+
+jobs:
+  editmode-tests:
+    name: EditMode
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          lfs: true
+
+      - name: Run GSI EditMode tests
+        uses: game-ci/unity-test-runner@v4
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          unityVersion: 6000.3.10f1
+          projectPath: GSI
+          testMode: editmode
+          artifactsPath: gsi-test-results
+          githubToken: ${{ secrets.GITHUB_TOKEN }}

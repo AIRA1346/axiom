@@ -6,22 +6,22 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/IntroScene.unity
+    path: Assets/_Project/Scenes/IntroScene.unity
     guid: 4d2e39398d2657546a944b6b48b2af16
   - enabled: 1
-    path: Assets/Scenes/LobbyScene.unity
+    path: Assets/_Project/Scenes/LobbyScene.unity
     guid: e8914f2a9c3d4b5e8f071a2b3c4d5e6f
   - enabled: 1
-    path: Assets/Scenes/ShopScene.unity
+    path: Assets/_Project/Scenes/ShopScene.unity
     guid: 3cb24345124087f46800a6b63ac0865f
   - enabled: 1
-    path: Assets/Scenes/InventoryScene.unity
+    path: Assets/_Project/Scenes/InventoryScene.unity
     guid: a1f2e3d4c5b6a79889706f5e4d3c2b1a
   - enabled: 1
-    path: Assets/Scenes/AltarOfVerityScene.unity
+    path: Assets/_Project/Scenes/AltarOfVerityScene.unity
     guid: f3e4d5c6b7a89012fedcba9876543210
   - enabled: 1
-    path: Assets/Scenes/GSIScene.unity
+    path: Assets/_Project/Scenes/GSIScene.unity
     guid: 997d353bec9491446a2487d533607dc8
   m_configObjects:
     com.unity.addressableassets: {fileID: 11400000, guid: 16f1792003c13f74e84ae13859c0588a, type: 2}

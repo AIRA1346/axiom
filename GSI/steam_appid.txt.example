@@ -1,2 +1,4 @@
-# Default for local testing: Spacewar (480). Replace with your Steam App ID from partner.steamgames.com
-480
+# Local Steam testing App ID.
+# The Axiom Steam App ID: 1628285
+# Spacewar (480) is only for SDK smoke tests before the real app exists.
+1628285

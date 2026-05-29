@@ -1,0 +1,627 @@
+{
+    "namespaces": [
+        {
+            "file": "Assets\\_Project\\Scripts\\AsyncVersus\\VersusAsyncBackendSettings.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.AsyncVersus"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\AsyncVersus\\VersusAsyncBridge.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.AsyncVersus"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\AsyncVersus\\VersusAsyncContracts.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.AsyncVersus"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\AsyncVersus\\VersusAsyncHttpTransport.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.AsyncVersus"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\AsyncVersus\\VersusAsyncMainThreadRunner.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.AsyncVersus"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\AsyncVersus\\VersusAsyncOutbox.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.AsyncVersus"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\GameManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\GsiAudioService.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\GsiCoreServices.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\InputManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\PlayerDataManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\ScoreManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\UIManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.Managers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\AltarOfVeritySceneController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.SceneControllers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\GsiSceneNavigation.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.SceneControllers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\GsiSceneTransition.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.SceneControllers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\IntroController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.SceneControllers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\MainMenuController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.SceneControllers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\ResultScreenController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.SceneControllers"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\AddressablesBootstrap.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\CoreDefinitions.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\CosmeticSkinPalettes.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GameLocalization.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GsiGameplayWorldCameraHooks.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GsiLog.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GsiSettingsAudioApplier.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GsiSteamRichPresence.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GsiUserSettings.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\PlayerStats.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\ProductBuildInfo.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\SceneNames.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\TmpFontCache.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\UiStringKeys.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\UnifiedExamScoring.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\UnifiedExamSegmentPayload.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.System"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GlobalSettingsOverlay.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiArcaneUi.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiRuntimeUiBootstrap.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiRuntimeUiRowPool.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiShopLikeCanvasHeaderUi.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiShopLikeEconomyBarTexts.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiShopLikeListScrollUi.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiShopLikeOfferDisplayNames.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiTestBriefingTexts.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiTestBriefingUi.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiAppearance.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiHoverGlowController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiInteractionSound.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiRuntimeWidgets.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiScreenLayout.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiSound.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiSoundHoverWiredMarker.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUiSoundSettings.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUnifiedExamHistoryOverlayRoot.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiUserFacingNotice.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\LobbyButtonLabelHoverBoost.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\LobbyCenterStageParallax.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\LobbyCenterStageScaffold.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\TouchInputFeedback.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\UnifiedExamHistoryEntry.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Core.UI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Economy\\EconomyManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.Economy"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\AchievementManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\AimDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\AimTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\BulletHellDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\BulletHellTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\CpsDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\CpsTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\GSIHubMenuController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\GsiHubPracticeCatalog.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\GSISceneBootstrap.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\GSIUIManager.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\MemoryTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\MotDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\MotTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\PracticeDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\ReactionDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\ReactionTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\RhythmDifficulty.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\RhythmTestController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.GSI"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Inventory\\InventorySceneController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.Inventory"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Shop\\CosmeticTheme.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.Shop"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Shop\\PlayerCosmetics.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.Shop"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Shop\\ShopCatalog.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.Shop"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Shop\\ShopSceneController.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Game.Features.Shop"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Platform\\GsiSteamCloudSnapshot.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Platform"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Platform\\GsiSteamCloudSync.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Platform"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Platform\\SteamRemoteStorageGsi.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Platform"
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Platform\\SteamworksService.cs",
+            "current": "None (Global)",
+            "expected": "ArchE.Platform"
+        }
+    ],
+    "hardcoded_korean": [
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\Managers\\InputManager.cs",
+            "line": 91,
+            "content": "Debug.Log($\"InputManager: 화면 클릭 감지됨! 좌표: {screenPosition}\");",
+            "literals": [
+                "\"InputManager: 화면 클릭 감지됨! 좌표: {screenPosition}\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\IntroController.cs",
+            "line": 30,
+            "content": "[Tooltip(\"씬에 찍힌 TMP보다 우선해 첫 프레임부터 적용됩니다. 인스펙터에서 조절 가능합니다.\")]",
+            "literals": [
+                "\"씬에 찍힌 TMP보다 우선해 첫 프레임부터 적용됩니다. 인스펙터에서 조절 가능합니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\IntroController.cs",
+            "line": 688,
+            "content": "\"[IntroController] Localization/Addressables 부팅이 시간 초과했습니다. 인트로를 계속합니다.\");",
+            "literals": [
+                "\"[IntroController] Localization/Addressables 부팅이 시간 초과했습니다. 인트로를 계속합니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\MainMenuController.cs",
+            "line": 82,
+            "content": "[Tooltip(\"할당 시 G.S.I 시설 씬으로 이동합니다.\")]",
+            "literals": [
+                "\"할당 시 G.S.I 시설 씬으로 이동합니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\MainMenuController.cs",
+            "line": 85,
+            "content": "[Tooltip(\"할당 시 상점 씬(응시권·스킨)으로 이동합니다.\")]",
+            "literals": [
+                "\"할당 시 상점 씬(응시권·스킨)으로 이동합니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\MainMenuController.cs",
+            "line": 88,
+            "content": "[Tooltip(\"할당 시 인벤토리 씬(골드·응시권·스킨)으로 이동합니다.\")]",
+            "literals": [
+                "\"할당 시 인벤토리 씬(골드·응시권·스킨)으로 이동합니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\MainMenuController.cs",
+            "line": 91,
+            "content": "[Tooltip(\"할당 시 통합 시험 기록 씬(Altar of Verity)으로 이동합니다.\")]",
+            "literals": [
+                "\"할당 시 통합 시험 기록 씬(Altar of Verity)으로 이동합니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\SceneControllers\\MainMenuController.cs",
+            "line": 184,
+            "content": "[Tooltip(\"별들끼리 충돌할 때 재생할 효과음 클립. 비어 있으면 런타임에 경쾌한 우주 Synth 비프음이 자동 합성되어 재생됩니다.\")]",
+            "literals": [
+                "\"별들끼리 충돌할 때 재생할 효과음 클립. 비어 있으면 런타임에 경쾌한 우주 Synth 비프음이 자동 합성되어 재생됩니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\AddressablesBootstrap.cs",
+            "line": 40,
+            "content": "Debug.LogWarning($\"[AddressablesBootstrap] 초기화 실패(이후 로드는 계속 시도): {e.Message}\");",
+            "literals": [
+                "\"[AddressablesBootstrap] 초기화 실패(이후 로드는 계속 시도): {e.Message}\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\System\\GameLocalization.cs",
+            "line": 121,
+            "content": "$\"[GameLocalization] 에디터 동기 초기화 실패 — 폴백(영문) 문자열이 사용됩니다: {e.Message}\");",
+            "literals": [
+                "\"[GameLocalization] 에디터 동기 초기화 실패 — 폴백(영문) 문자열이 사용됩니다: {e.Message}\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GlobalSettingsOverlay.cs",
+            "line": 747,
+            "content": "_resolutionLabelTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsResolution, isKo ? \"해상도\" : \"Resolution\");",
+            "literals": [
+                "\"해상도\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GlobalSettingsOverlay.cs",
+            "line": 751,
+            "content": "_screenModeLabelTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsScreenMode, isKo ? \"화면 모드\" : \"Screen Mode\");",
+            "literals": [
+                "\"화면 모드\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GlobalSettingsOverlay.cs",
+            "line": 1171,
+            "content": "return GameLocalization.GetUiString(UiStringKeys.SettingsModeFullscreen, isKo ? \"전체화면\" : \"Fullscreen\");",
+            "literals": [
+                "\"전체화면\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GlobalSettingsOverlay.cs",
+            "line": 1173,
+            "content": "return GameLocalization.GetUiString(UiStringKeys.SettingsModeBorderless, isKo ? \"전체 창모드\" : \"Borderless\");",
+            "literals": [
+                "\"전체 창모드\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GlobalSettingsOverlay.cs",
+            "line": 1175,
+            "content": "return GameLocalization.GetUiString(UiStringKeys.SettingsModeWindowed, isKo ? \"창모드\" : \"Windowed\");",
+            "literals": [
+                "\"창모드\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Core\\UI\\GsiRuntimeUiBootstrap.cs",
+            "line": 39,
+            "content": "$\"[GSI] EventSystem이 씬에 {systems.Length}개 있습니다. UI 입력이 이상하면 중복을 제거하세요.\");",
+            "literals": [
+                "\"[GSI] EventSystem이 씬에 {systems.Length}개 있습니다. UI 입력이 이상하면 중복을 제거하세요.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\ReactionTestController.cs",
+            "line": 184,
+            "content": "Debug.Log(\"부정 출발! 통합 시험 해당 과목 0점 처리.\");",
+            "literals": [
+                "\"부정 출발! 통합 시험 해당 과목 0점 처리.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\ReactionTestController.cs",
+            "line": 202,
+            "content": "Debug.Log(\"부정 출발! 테스트 실패.\");",
+            "literals": [
+                "\"부정 출발! 테스트 실패.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\ReactionTestController.cs",
+            "line": 215,
+            "content": "Debug.Log($\"반응 속도: {reactionTime:F3}초\");",
+            "literals": [
+                "\"반응 속도: {reactionTime:F3}초\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\GSI\\ReactionTestController.cs",
+            "line": 233,
+            "content": "Debug.Log($\"반응 속도: {reactionTime:F3}초\");",
+            "literals": [
+                "\"반응 속도: {reactionTime:F3}초\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Inventory\\InventorySceneController.cs",
+            "line": 250,
+            "content": "Debug.LogWarning(\"[Inventory] InventoryCanvas UI 참조를 채우지 못했습니다.\");",
+            "literals": [
+                "\"[Inventory] InventoryCanvas UI 참조를 채우지 못했습니다.\""
+            ]
+        },
+        {
+            "file": "Assets\\_Project\\Scripts\\Features\\Shop\\ShopSceneController.cs",
+            "line": 248,
+            "content": "Debug.LogWarning(\"[Shop] ShopCanvas UI 참조를 채우지 못했습니다.\");",
+            "literals": [
+                "\"[Shop] ShopCanvas UI 참조를 채우지 못했습니다.\""
+            ]
+        }
+    ]
+}
