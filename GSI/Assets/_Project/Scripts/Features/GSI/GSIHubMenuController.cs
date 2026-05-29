@@ -1,23 +1,6 @@
-using System.Collections.Generic;
-using TMPro;
-using UnityEngine;
-using UnityEngine.Events;
-using UnityEngine.UI;
-#if UNITY_EDITOR
-using UnityEditor;
-using UnityEditor.SceneManagement;
-#endif
-
-/// <summary>
-/// G.S.I ?쒖꽕 濡쒕퉬: ?곗뒿쨌怨듭떇 ?쒗뿕 吏꾩엯. ArchE ?곕룞 鍮뚮뱶?먯꽌留??덈툕濡??뚯븘媛??踰꾪듉???쒖떆?⑸땲??
-/// </summary>
-[ExecuteAlways]
-public sealed class GSIHubMenuController : MonoBehaviour
-{
-    private const string HubHeaderObjectName = "GsiHubHeader";
-    private const string HubSubBarObjectName = "GsiHubSubBar";
 using System;
 using System.Collections.Generic;
+using System.Collections;
 using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
@@ -28,7 +11,7 @@ using UnityEditor.SceneManagement;
 #endif
 
 /// <summary>
-/// G.S.I ?쒖꽕 濡쒕퉬: ?곗뒿쨌怨듭떇 ?쒗땲 吏꾩엯. ArchE ?곕룞 鍮뚮뱶?먯꽌留??덈툕濡??뚯븘媛€??踰꾪듉???쒖떆?⑸땲??
+/// G.S.I 시설 로비: 연습·공식 시험 진입. ArchE 연동 빌드에서만 허브로 돌아가는 버튼을 표시합니다.
 /// </summary>
 [ExecuteAlways]
 public sealed class GSIHubMenuController : MonoBehaviour
