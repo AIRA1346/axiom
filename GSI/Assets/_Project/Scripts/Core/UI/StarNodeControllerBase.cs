@@ -3,6 +3,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using ArchE.Game;
 
 /* =========================================================================================================
  * 🌌 STAR NODE BASE CLASS — 공용 우주 물리 및 비주얼 엔진
@@ -588,12 +589,12 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         string prefix = SaveKeyPrefix + nameKey;
         Vector2 pos = _rectTransform.anchoredPosition;
 
-        PlayerPrefs.SetFloat(prefix + "_PosX", pos.x);
-        PlayerPrefs.SetFloat(prefix + "_PosY", pos.y);
-        PlayerPrefs.SetFloat(prefix + "_VelX", _velocity.x);
-        PlayerPrefs.SetFloat(prefix + "_VelY", _velocity.y);
-        PlayerPrefs.SetInt(prefix + "_HasState", 1);
-        PlayerPrefs.Save();
+        GsiSaveSystem.SetFloat(prefix + "_PosX", pos.x);
+        GsiSaveSystem.SetFloat(prefix + "_PosY", pos.y);
+        GsiSaveSystem.SetFloat(prefix + "_VelX", _velocity.x);
+        GsiSaveSystem.SetFloat(prefix + "_VelY", _velocity.y);
+        GsiSaveSystem.SetInt(prefix + "_HasState", 1);
+        GsiSaveSystem.Save();
     }
 
     private void LoadState()
@@ -604,12 +605,12 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         if (string.IsNullOrEmpty(nameKey)) return;
 
         string prefix = SaveKeyPrefix + nameKey;
-        if (PlayerPrefs.GetInt(prefix + "_HasState", 0) == 1)
+        if (GsiSaveSystem.GetInt(prefix + "_HasState", 0) == 1)
         {
-            float px = PlayerPrefs.GetFloat(prefix + "_PosX", InitialPosition.x);
-            float py = PlayerPrefs.GetFloat(prefix + "_PosY", InitialPosition.y);
-            float vx = PlayerPrefs.GetFloat(prefix + "_VelX", _velocity.x);
-            float vy = PlayerPrefs.GetFloat(prefix + "_VelY", _velocity.y);
+            float px = GsiSaveSystem.GetFloat(prefix + "_PosX", InitialPosition.x);
+            float py = GsiSaveSystem.GetFloat(prefix + "_PosY", InitialPosition.y);
+            float vx = GsiSaveSystem.GetFloat(prefix + "_VelX", _velocity.x);
+            float vy = GsiSaveSystem.GetFloat(prefix + "_VelY", _velocity.y);
 
             _rectTransform.anchoredPosition = new Vector2(px, py);
             _velocity = new Vector2(vx, vy);
