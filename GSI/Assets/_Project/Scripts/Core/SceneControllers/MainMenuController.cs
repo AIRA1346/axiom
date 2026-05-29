@@ -2078,8 +2078,8 @@ public sealed class MainMenuController : MonoBehaviour
         tex.wrapMode = TextureWrapMode.Clamp;
         tex.filterMode = FilterMode.Bilinear;
 
-        Color spaceDark = new Color(0.012f, 0.006f, 0.022f, 1f); // Deep void black/violet
-        Color indigoBlack = new Color(0.004f, 0.012f, 0.032f, 1f); // Deep void indigo
+        Color spaceDark = new Color(0.002f, 0.001f, 0.004f, 1f); // Deep void black/violet
+        Color indigoBlack = new Color(0.001f, 0.002f, 0.006f, 1f); // Deep void indigo
 
         // Define brilliant glowing star coordinates and intensities
         var brightStars = new (float x, float y, float r, float intensity)[]
@@ -2108,13 +2108,13 @@ public sealed class MainMenuController : MonoBehaviour
                 float n1 = Mathf.PerlinNoise(u * 2.2f + 4.5f, v * 1.8f + 1.2f);
                 float n2 = Mathf.PerlinNoise(u * 4.8f - 2.5f, v * 3.6f + 3.8f);
                 float neb1 = Mathf.Max(0f, (n1 * 0.65f + n2 * 0.35f) - 0.35f) * 1.8f;
-                Color nebColor1 = new Color(0.16f, 0.05f, 0.28f, 1f) * neb1;
+                Color nebColor1 = new Color(0.04f, 0.012f, 0.07f, 1f) * neb1;
 
                 // Nebula 2: Glowing cosmic cyan/teal clouds
                 float n3 = Mathf.PerlinNoise(u * 3.5f - 8.2f, v * 2.8f + 5.5f);
                 float n4 = Mathf.PerlinNoise(u * 6.5f + 1.1f, v * 5.2f - 4.2f);
                 float neb2 = Mathf.Max(0f, (n3 * 0.58f + n4 * 0.42f) - 0.42f) * 1.9f;
-                Color nebColor2 = new Color(0.03f, 0.18f, 0.24f, 1f) * neb2;
+                Color nebColor2 = new Color(0.008f, 0.045f, 0.06f, 1f) * neb2;
 
                 pixelColor += nebColor1 + nebColor2;
 
@@ -2123,7 +2123,7 @@ public sealed class MainMenuController : MonoBehaviour
                 if (starSeed > 0.9975f)
                 {
                     float starBrightness = (starSeed - 0.9975f) / 0.0025f;
-                    pixelColor += new Color(starBrightness, starBrightness, starBrightness * 1.08f, 0f) * 0.85f;
+                    pixelColor += new Color(starBrightness, starBrightness, starBrightness * 1.08f, 0f) * 0.6f;
                 }
 
                 // Draw soft glow for the brilliant stars
@@ -2135,7 +2135,7 @@ public sealed class MainMenuController : MonoBehaviour
                     if (dist < star.r)
                     {
                         float glow = Mathf.Pow(1.0f - dist / star.r, 2.2f);
-                        pixelColor += new Color(star.intensity, star.intensity, star.intensity * 1.05f, 0f) * glow * 0.9f;
+                        pixelColor += new Color(star.intensity, star.intensity, star.intensity * 1.05f, 0f) * glow * 0.4f;
                     }
                 }
 
