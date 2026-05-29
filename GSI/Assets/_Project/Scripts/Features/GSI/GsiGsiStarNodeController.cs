@@ -22,6 +22,7 @@ public sealed class GsiGsiStarNodeController : MonoBehaviour,
     public TestMode Mode;
     public Color StarColor = Color.white;
     public string ButtonLabelText = "Practice";
+    public Vector2 InitialPosition = Vector2.zero;
 
     [Header("Physics Config")]
     public float Friction = 0.45f;
@@ -76,6 +77,7 @@ public sealed class GsiGsiStarNodeController : MonoBehaviour,
 
         // 1. 편안한 조작 영역 크기 강제 설정 (120x120)
         _rectTransform.sizeDelta = new Vector2(120f, 120f);
+        _rectTransform.anchoredPosition = InitialPosition;
 
         // 2. 기존 사각형 백그라운드 이미지 완전 투명화 및 터치 영역 보장
         if (TryGetComponent(out Image img))

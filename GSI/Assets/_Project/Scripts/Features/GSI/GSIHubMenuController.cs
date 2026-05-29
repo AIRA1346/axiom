@@ -189,12 +189,12 @@ public sealed class GSIHubMenuController : MonoBehaviour
 #if UNITY_EDITOR
                     if (!Application.isPlaying)
                     {
-                        Object.DestroyImmediate(backLes[bi]);
+                        UnityEngine.Object.DestroyImmediate(backLes[bi]);
                     }
                     else
 #endif
                     {
-                        Object.Destroy(backLes[bi]);
+                        UnityEngine.Object.Destroy(backLes[bi]);
                     }
                 }
 
