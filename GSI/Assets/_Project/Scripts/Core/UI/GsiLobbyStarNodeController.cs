@@ -59,7 +59,13 @@ public sealed class GsiLobbyStarNodeController : MonoBehaviour,
             img.raycastTarget = true;
         }
 
-        // 3. Clear or hijack original text component
+        // 3. Clear or hijack original text component & rule lines
+        var rulesTf = transform.Find("LobbyLabelRules");
+        if (rulesTf != null)
+        {
+            Destroy(rulesTf.gameObject);
+        }
+
         var originalText = GetComponentInChildren<TextMeshProUGUI>(true);
         if (originalText != null && originalText.gameObject != gameObject)
         {

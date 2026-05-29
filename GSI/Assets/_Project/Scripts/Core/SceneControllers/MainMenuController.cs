@@ -1370,6 +1370,13 @@ public sealed class MainMenuController : MonoBehaviour
             Destroy(hb);
         }
 
+        // Remove horizontal rule lines if they exist
+        Transform rules = button.transform.Find("LobbyLabelRules");
+        if (rules != null)
+        {
+            Destroy(rules.gameObject);
+        }
+
         // Set anchors to center to make positioning relative to parent's center
         var rt = button.GetComponent<RectTransform>();
         rt.anchorMin = new Vector2(0.5f, 0.5f);
