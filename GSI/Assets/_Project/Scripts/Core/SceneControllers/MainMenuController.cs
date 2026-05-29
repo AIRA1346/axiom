@@ -1963,10 +1963,7 @@ public sealed class MainMenuController : MonoBehaviour
 
         if (_lobbyCenterStage.BaseImage != null)
         {
-            Color c = GsiUiAppearance.PrimaryActionButton;
-            c.a = Mathf.Clamp01(c.a * 1.85f);
-            _lobbyCenterStage.BaseImage.color = c;
-            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(_lobbyCenterStage.BaseImage);
+            _lobbyCenterStage.BaseImage.gameObject.SetActive(false);
         }
 
         TryApplyFarDistantLayerArt();
@@ -2168,60 +2165,18 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void TryApplyMidgroundLayerArt()
     {
-        if (_lobbyCenterStage?.MidImage == null)
+        if (_lobbyCenterStage?.MidImage != null)
         {
-            return;
+            _lobbyCenterStage.MidImage.gameObject.SetActive(false);
         }
-
-        Image mid = _lobbyCenterStage.MidImage;
-        Sprite s = _lobbyMidgroundSpriteOverride;
-        if (s == null)
-        {
-            s = Resources.Load<Sprite>(LobbyMidgroundResourcePath);
-        }
-
-        if (s != null)
-        {
-            mid.sprite = s;
-            mid.type = Image.Type.Simple;
-            mid.preserveAspect = false;
-            mid.color = Color.white;
-            return;
-        }
-
-        Color m = GsiUiAppearance.TextPrimary;
-        m.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.07f : 0.05f;
-        mid.color = m;
-        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(mid);
     }
 
     private void TryApplyNeargroundLayerArt()
     {
-        if (_lobbyCenterStage?.NearImage == null)
+        if (_lobbyCenterStage?.NearImage != null)
         {
-            return;
+            _lobbyCenterStage.NearImage.gameObject.SetActive(false);
         }
-
-        Image near = _lobbyCenterStage.NearImage;
-        Sprite s = _lobbyNeargroundSpriteOverride;
-        if (s == null)
-        {
-            s = Resources.Load<Sprite>(LobbyNeargroundResourcePath);
-        }
-
-        if (s != null)
-        {
-            near.sprite = s;
-            near.type = Image.Type.Simple;
-            near.preserveAspect = false;
-            near.color = Color.white;
-            return;
-        }
-
-        Color n = GsiUiAppearance.OverlayScrim;
-        n.a = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark ? 0.14f : 0.08f;
-        near.color = n;
-        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(near);
     }
 
     private void EnsureLobbyCenterParallaxWired()
@@ -2260,66 +2215,10 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
-        if (stageTf == null || !stageTf.TryGetComponent(out LobbyCenterStageScaffold scaffold) || scaffold.DecorRoot == null)
+        if (stageTf != null && stageTf.TryGetComponent(out LobbyCenterStageScaffold scaffold) && scaffold.DecorRoot != null)
         {
-            return;
+            scaffold.DecorRoot.gameObject.SetActive(false);
         }
-
-        RectTransform decor = scaffold.DecorRoot;
-        Transform legacyTagline = decor.Find("LobbyBrandingTagline");
-        if (legacyTagline != null)
-        {
-#if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                DestroyImmediate(legacyTagline.gameObject);
-            }
-            else
-#endif
-            {
-                Destroy(legacyTagline.gameObject);
-            }
-        }
-
-        Transform t = decor.Find(LobbyDecorBrandingName);
-        TextMeshProUGUI tmp;
-        if (t == null)
-        {
-            var go = new GameObject(LobbyDecorBrandingName, typeof(RectTransform));
-            t = go.transform;
-            t.SetParent(decor, false);
-            var rt = (RectTransform)t;
-            rt.anchorMin = new Vector2(0.5f, 0.55f);
-            rt.anchorMax = new Vector2(0.5f, 0.55f);
-            rt.pivot = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(1400f, 56f);
-            rt.anchoredPosition = Vector2.zero;
-            tmp = go.AddComponent<TextMeshProUGUI>();
-            if (TmpFontCache.LiberationSansSdf != null)
-            {
-                tmp.font = TmpFontCache.LiberationSansSdf;
-            }
-
-            tmp.alignment = TextAlignmentOptions.Center;
-            tmp.fontSize = 30f;
-            tmp.enableWordWrapping = true;
-            tmp.raycastTarget = false;
-        }
-        else
-        {
-            tmp = t.GetComponent<TextMeshProUGUI>();
-            if (tmp == null)
-            {
-                return;
-            }
-        }
-
-        tmp.text = GameLocalization.GetUiString(UiStringKeys.LobbyBrandingTitle, "The Axiom");
-        Color c = GsiUiAppearance.TextPrimary;
-        c.a = Mathf.Min(0.92f, c.a);
-        tmp.color = c;
-        tmp.fontStyle = FontStyles.Normal;
-        tmp.characterSpacing = 0.6f;
     }
 
 
