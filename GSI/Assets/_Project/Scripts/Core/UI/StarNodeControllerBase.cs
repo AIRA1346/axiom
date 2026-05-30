@@ -41,7 +41,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     public float BounceFactor = 0.92f;
     public float MaxVelocity = 1800f;
     public float MinDriftSpeed = 80f;
-    public float CollisionRadius = 30f;
+    public float CollisionRadius = 24f;
 
     // ─── Audio Config ───────────────────────────────────────────────
     [Header("Audio Config")]
@@ -68,6 +68,12 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     // ═══════════════════════════════════════════════════════════════
     // Scene-specific virtual properties — override in subclasses
     // ═══════════════════════════════════════════════════════════════
+
+    /// <summary>Default touch interaction bounding box size (Lobby & GSI default is 96x96)</summary>
+    protected virtual Vector2 InteractionSize => new Vector2(96f, 96f);
+
+    /// <summary>Default kinetic physics collision radius (Lobby & GSI default is 24f)</summary>
+    protected virtual float BaseCollisionRadius => 24f;
 
     /// <summary>Hover animation target scale (Lobby=1.4f, GSI=1.35f)</summary>
     protected virtual float HoverScale => 1.4f;
@@ -105,8 +111,11 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         _rectTransform = GetComponent<RectTransform>();
 
         // Force the rect size to make standard interaction area comfortable
-        _rectTransform.sizeDelta = new Vector2(120f, 120f);
+        _rectTransform.sizeDelta = InteractionSize;
         _rectTransform.anchoredPosition = InitialPosition;
+
+        // Force collision radius to match scaled visuals
+        CollisionRadius = BaseCollisionRadius;
 
         // Clear original background image, but keep it active as click target
         if (TryGetComponent(out Image img))
@@ -399,7 +408,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         _starVisualRoot.anchorMax = new Vector2(0.5f, 0.5f);
         _starVisualRoot.pivot = new Vector2(0.5f, 0.5f);
         _starVisualRoot.anchoredPosition = Vector2.zero;
-        _starVisualRoot.sizeDelta = new Vector2(32f, 32f);
+        _starVisualRoot.sizeDelta = new Vector2(24f, 24f);
     }
 
     /// <summary>Creates a single star visual layer as a child of the star visual root.</summary>

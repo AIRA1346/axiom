@@ -36,8 +36,8 @@ public sealed class GsiGsiStarNodeController : StarNodeControllerBase
     // ─── GSI-specific visual tuning ─────────────────────────────
     protected override float HoverScale => 1.35f;
     protected override float PointerDownSquash => 0.8f;
-    protected override float TooltipOffsetY => -42f;
-    protected override float TooltipFontSize => 18f;
+    protected override float TooltipOffsetY => -32f;
+    protected override float TooltipFontSize => 15f;
     protected override float TooltipCharSpacing => 0.5f;
     protected override Color TooltipColor => StarColor;
 
@@ -57,16 +57,16 @@ public sealed class GsiGsiStarNodeController : StarNodeControllerBase
         base.BuildStarVisuals(); // Creates _starVisualRoot
 
         // Layer 1: Aura Outer Glow (은은한 백그라운드 오라)
-        CreateStarLayer("OuterGlow", 38f, 38f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.3f));
+        CreateStarLayer("OuterGlow", 28.5f, 28.5f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.3f));
 
         // Layer 2: Spike Vertical (세로 나선 불꽃)
-        CreateStarLayer("SpikeV", 3f, 48f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.92f));
+        CreateStarLayer("SpikeV", 2.25f, 36f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.92f));
 
         // Layer 3: Spike Horizontal (가로 나선 불꽃)
-        CreateStarLayer("SpikeH", 48f, 3f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.92f));
+        CreateStarLayer("SpikeH", 36f, 2.25f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.92f));
 
         // Layer 4: Diamond Core (영롱한 중앙 화이트 코어)
-        CreateStarLayer("CoreDiamond", 12f, 12f, 45f, new Color(1f, 1f, 1f, 0.98f));
+        CreateStarLayer("CoreDiamond", 9f, 9f, 45f, new Color(1f, 1f, 1f, 0.98f));
     }
 
     // ═══════════════════════════════════════════════════════════════

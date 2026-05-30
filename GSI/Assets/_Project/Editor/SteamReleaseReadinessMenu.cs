@@ -12,8 +12,10 @@ public sealed class SteamReleaseReadinessMenu : IPreprocessBuildWithReport, IPos
 {
     private const string MenuPath = "Tools/GSI/Steam/Run Steam Release Readiness Check";
     private const string BetaMenuPath = "Tools/GSI/Steam/Run Steam Beta Readiness Check";
+    private const string BypassMenuPath = "Tools/GSI/Steam/Bypass Readiness Check for Local Builds";
     private const string SteamworksSymbol = "STEAMWORKS_ENABLED";
     private const string SpacewarAppId = "480";
+    private const string BypassPrefsKey = "GSI_BypassSteamReleaseCheck";
     private static bool _allowBetaVersionForNextBuild;
 
     public int callbackOrder => 100;
@@ -43,8 +45,29 @@ public sealed class SteamReleaseReadinessMenu : IPreprocessBuildWithReport, IPos
         }
     }
 
+    [MenuItem(BypassMenuPath)]
+    public static void ToggleBypassCheck()
+    {
+        bool current = EditorPrefs.GetBool(BypassPrefsKey, false);
+        EditorPrefs.SetBool(BypassPrefsKey, !current);
+        Debug.Log($"[SteamRelease] Bypass Steam Release Readiness Check is now: {!current}");
+    }
+
+    [MenuItem(BypassMenuPath, true)]
+    public static bool ToggleBypassCheckValidate()
+    {
+        Menu.SetChecked(BypassMenuPath, EditorPrefs.GetBool(BypassPrefsKey, false));
+        return true;
+    }
+
     public void OnPreprocessBuild(BuildReport report)
     {
+        if (EditorPrefs.GetBool(BypassPrefsKey, false))
+        {
+            Debug.LogWarning("[SteamRelease] Steam Release Readiness Check bypassed via user settings ('Tools > GSI > Steam > Bypass Readiness Check for Local Builds').");
+            return;
+        }
+
         if (report == null || !IsStandaloneWindows(report.summary.platform))
         {
             return;
@@ -60,6 +83,11 @@ public sealed class SteamReleaseReadinessMenu : IPreprocessBuildWithReport, IPos
 
     public void OnPostprocessBuild(BuildReport report)
     {
+        if (EditorPrefs.GetBool(BypassPrefsKey, false))
+        {
+            return;
+        }
+
         if (report == null || !IsStandaloneWindows(report.summary.platform))
         {
             return;
