@@ -137,6 +137,12 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
 
         // Load saved cosmic position & velocity state if it exists
         LoadState();
+
+        // Register in centralized Orrery System
+        if (GsiCosmicOrrerySystem.Instance != null)
+        {
+            GsiCosmicOrrerySystem.Instance.RegisterStarNode(this);
+        }
     }
 
     /// <summary>Override to perform additional cleanup during Start (before tooltip/visual build).</summary>
@@ -151,35 +157,8 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
             _starVisualRoot.localRotation = Quaternion.Euler(0f, 0f, Time.unscaledTime * rotSpeed);
         }
 
-        // 2. Kinetic physics update loop
-        if (!_isDragging)
-        {
-            // Apply speed clamp
-            float currentSpeed = _velocity.magnitude;
-            if (currentSpeed > MaxVelocity)
-            {
-                _velocity = _velocity.normalized * MaxVelocity;
-                currentSpeed = MaxVelocity;
-            }
-
-            // Apply friction only above MinDriftSpeed
-            if (currentSpeed > MinDriftSpeed)
-            {
-                float newSpeed = currentSpeed * Mathf.Exp(-Friction * Time.unscaledDeltaTime);
-                newSpeed = Mathf.Max(newSpeed, MinDriftSpeed);
-                _velocity = _velocity.normalized * newSpeed;
-            }
-
-            // Hook for subclass-specific per-frame forces (e.g. WhiteHole repulsion)
-            ApplyAdditionalForces();
-
-            // Update position
-            _rectTransform.anchoredPosition += _velocity * Time.unscaledDeltaTime;
-
-            // Bounce off boundaries
-            HandleScreenBoundaries();
-        }
-        else
+        // 2. Kinetic drag velocity update (keeps dragging smooth and responsive)
+        if (_isDragging)
         {
             // Calculate velocity based on actual movement in this frame during the drag
             Vector2 currentPos = _rectTransform.anchoredPosition;
@@ -190,9 +169,39 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
             _velocity = Vector2.Lerp(_velocity, frameVelocity, 0.22f);
             _lastDragFramePos = currentPos;
         }
+    }
 
-        // 3. Resolve star-to-star collisions
-        HandleStarCollisions();
+    /// <summary>
+    /// GsiCosmicOrrerySystem에 의해 중앙 호출되는 물리 연산 틱입니다.
+    /// </summary>
+    public void UpdatePhysicsTick(float deltaTime)
+    {
+        if (_isDragging) return;
+
+        // Apply speed clamp
+        float currentSpeed = _velocity.magnitude;
+        if (currentSpeed > MaxVelocity)
+        {
+            _velocity = _velocity.normalized * MaxVelocity;
+            currentSpeed = MaxVelocity;
+        }
+
+        // Apply friction only above MinDriftSpeed
+        if (currentSpeed > MinDriftSpeed)
+        {
+            float newSpeed = currentSpeed * Mathf.Exp(-Friction * deltaTime);
+            newSpeed = Mathf.Max(newSpeed, MinDriftSpeed);
+            _velocity = _velocity.normalized * newSpeed;
+        }
+
+        // Hook for subclass-specific per-frame forces (e.g. WhiteHole repulsion)
+        ApplyAdditionalForces();
+
+        // Update position
+        _rectTransform.anchoredPosition += _velocity * deltaTime;
+
+        // Bounce off boundaries
+        HandleScreenBoundaries();
     }
 
     /// <summary>Override to apply per-frame forces (e.g. GSI WhiteHole repulsion). Called before position update.</summary>
@@ -202,94 +211,79 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     // Star Collision System
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Resolves elastic sphere-sphere collisions with all sibling star nodes.</summary>
-    private void HandleStarCollisions()
+    /// <summary>
+    /// GsiCosmicOrrerySystem에 의해 호출되며 두 별 간의 탄성 구체 충돌을 해결합니다.
+    /// </summary>
+    public void ResolveCollisionWith(StarNodeControllerBase other)
     {
-        if (transform.parent == null)
+        if (other == null || other == this) return;
+
+        RectTransform otherRt = other._rectTransform;
+        if (otherRt == null || _rectTransform == null) return;
+
+        float minDistance = CollisionRadius + other.CollisionRadius;
+        Vector2 diff = otherRt.anchoredPosition - _rectTransform.anchoredPosition;
+        float distance = diff.magnitude;
+
+        // Avoid division by zero if they are exactly on top of each other
+        if (distance < 0.01f)
         {
+            _rectTransform.anchoredPosition += new Vector2(Random.Range(-5f, 5f), Random.Range(-5f, 5f));
             return;
         }
 
-        float minDistance = CollisionRadius * 2f;
-
-        // Get all sibling stars of the same base type
-        var otherStars = transform.parent.GetComponentsInChildren<StarNodeControllerBase>();
-        foreach (var other in otherStars)
+        if (distance < minDistance)
         {
-            if (other == this)
+            Vector2 normal = diff / distance;
+            float overlap = minDistance - distance;
+
+            // 1. Resolve overlap (push apart based on dragging state)
+            float pushSelf = _isDragging ? 0f : (other._isDragging ? 1f : 0.5f);
+            float pushOther = other._isDragging ? 0f : (_isDragging ? 1f : 0.5f);
+
+            _rectTransform.anchoredPosition -= normal * overlap * pushSelf;
+            otherRt.anchoredPosition += normal * overlap * pushOther;
+
+            // 2. Resolve elastic impulse bounce
+            Vector2 rv = other._velocity - _velocity;
+            float velAlongNormal = Vector2.Dot(rv, normal);
+
+            // Only resolve if they are moving towards each other
+            if (velAlongNormal < 0f)
             {
-                continue;
-            }
+                float restitution = 0.96f; // Elastic bounce coefficient
+                float impulseScalar = -(1f + restitution) * velAlongNormal / 2f; // assumes equal mass
 
-            RectTransform otherRt = other._rectTransform;
-            if (otherRt == null)
-            {
-                continue;
-            }
+                Vector2 impulse = normal * impulseScalar;
 
-            Vector2 diff = otherRt.anchoredPosition - _rectTransform.anchoredPosition;
-            float distance = diff.magnitude;
-
-            // Avoid division by zero if they are exactly on top of each other
-            if (distance < 0.01f)
-            {
-                _rectTransform.anchoredPosition += new Vector2(Random.Range(-5f, 5f), Random.Range(-5f, 5f));
-                continue;
-            }
-
-            if (distance < minDistance)
-            {
-                Vector2 normal = diff / distance;
-                float overlap = minDistance - distance;
-
-                // 1. Resolve overlap (push apart based on dragging state)
-                float pushSelf = _isDragging ? 0f : (other._isDragging ? 1f : 0.5f);
-                float pushOther = other._isDragging ? 0f : (_isDragging ? 1f : 0.5f);
-
-                _rectTransform.anchoredPosition -= normal * overlap * pushSelf;
-                otherRt.anchoredPosition += normal * overlap * pushOther;
-
-                // 2. Resolve elastic impulse bounce
-                Vector2 rv = other._velocity - _velocity;
-                float velAlongNormal = Vector2.Dot(rv, normal);
-
-                // Only resolve if they are moving towards each other
-                if (velAlongNormal < 0f)
+                if (!_isDragging)
                 {
-                    float restitution = 0.96f; // Elastic bounce coefficient
-                    float impulseScalar = -(1f + restitution) * velAlongNormal / 2f; // assumes equal mass
+                    _velocity -= impulse;
+                }
+                if (!other._isDragging)
+                {
+                    other._velocity += impulse;
+                }
 
-                    Vector2 impulse = normal * impulseScalar;
+                // Play premium tactile collision sound based on relative velocity with cooldown
+                float relativeSpeed = Mathf.Abs(velAlongNormal);
+                if (relativeSpeed > 30f && Time.unscaledTime - _lastCollisionSoundTime > 0.15f)
+                {
+                    _lastCollisionSoundTime = Time.unscaledTime;
+                    other._lastCollisionSoundTime = Time.unscaledTime;
 
-                    if (!_isDragging)
+                    float volumeScale = Mathf.Clamp(relativeSpeed / 500f, 0.15f, 0.75f);
+                    if (CollisionSfx != null)
                     {
-                        _velocity -= impulse;
+                        GsiAudio.PlaySfx(CollisionSfx, volumeScale);
                     }
-                    if (!other._isDragging)
+                    else if (GsiUiSound.Settings != null)
                     {
-                        other._velocity += impulse;
-                    }
-
-                    // Play premium tactile collision sound based on relative velocity with cooldown
-                    float relativeSpeed = Mathf.Abs(velAlongNormal);
-                    if (relativeSpeed > 30f && Time.unscaledTime - _lastCollisionSoundTime > 0.15f)
-                    {
-                        _lastCollisionSoundTime = Time.unscaledTime;
-                        other._lastCollisionSoundTime = Time.unscaledTime;
-
-                        float volumeScale = Mathf.Clamp(relativeSpeed / 500f, 0.15f, 0.75f);
-                        if (CollisionSfx != null)
+                        // Dynamic fallback to Click (high speed) or Hover (low speed) UI sounds
+                        AudioClip defaultClip = relativeSpeed > 180f ? GsiUiSound.Settings.PrimaryClick : GsiUiSound.Settings.Hover;
+                        if (defaultClip != null)
                         {
-                            GsiAudio.PlaySfx(CollisionSfx, volumeScale);
-                        }
-                        else if (GsiUiSound.Settings != null)
-                        {
-                            // Dynamic fallback to Click (high speed) or Hover (low speed) UI sounds
-                            AudioClip defaultClip = relativeSpeed > 180f ? GsiUiSound.Settings.PrimaryClick : GsiUiSound.Settings.Hover;
-                            if (defaultClip != null)
-                            {
-                                GsiAudio.PlaySfx(defaultClip, volumeScale);
-                            }
+                            GsiAudio.PlaySfx(defaultClip, volumeScale);
                         }
                     }
                 }
@@ -555,6 +549,10 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
 
     protected virtual void OnDestroy()
     {
+        if (GsiCosmicOrrerySystem.Instance != null)
+        {
+            GsiCosmicOrrerySystem.Instance.UnregisterStarNode(this);
+        }
         SaveState();
     }
 

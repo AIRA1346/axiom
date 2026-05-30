@@ -75,29 +75,9 @@ public sealed class GsiGsiStarNodeController : StarNodeControllerBase
 
     protected override void ApplyAdditionalForces()
     {
-        if (transform.parent == null)
+        if (ArchE.Game.GsiCosmicOrrerySystem.Instance != null)
         {
-            return;
-        }
-
-        // 부모 산하에서 화이트홀 탐색
-        var whiteHole = transform.parent.GetComponentInChildren<GsiWhiteHoleNodeController>();
-        if (whiteHole != null)
-        {
-            Vector2 whPos = whiteHole.Rect.anchoredPosition;
-            Vector2 starPos = _rectTransform.anchoredPosition;
-            Vector2 diff = starPos - whPos;
-            float dist = diff.magnitude;
-
-            const float repulsionOuterRadius = 240f;
-            if (dist < repulsionOuterRadius && dist > 0.1f)
-            {
-                // 밀어내는 척력 강도 (가까워질수록 포물선 궤적으로 증폭)
-                float factor = 1f - dist / repulsionOuterRadius;
-                float force = factor * factor * 580f;
-
-                _velocity += diff.normalized * force * Time.unscaledDeltaTime;
-            }
+            _velocity += ArchE.Game.GsiCosmicOrrerySystem.Instance.GetWhiteHoleRepulsion(_rectTransform.anchoredPosition) * Time.unscaledDeltaTime;
         }
     }
 

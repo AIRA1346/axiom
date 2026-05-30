@@ -4,6 +4,7 @@ using System.Globalization;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
+using ArchE.Game;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -35,8 +36,8 @@ public sealed class MainMenuController : MonoBehaviour
     private const string LobbyEconomyStripSpacerName = "LobbyEconomyStripSpacer";
     /// <summary>Strip ?덉뿉??怨⑤뱶/?곗폆?????⑹뼱由щ줈 臾띠뼱 ?곗긽?⑥뿉 怨좎젙 ??쑝濡?諛곗튂?⑸땲??(CSF+HLG 瑗ъ엫 諛⑹?).</summary>
     private const string LobbyEconomyRightClusterName = "LobbyEconomyRightCluster";
-    private const float LobbyEconomyClusterMinWidth = 520f;
-    private const float LobbyEconomyClusterPreferredWidth = 600f;
+    private const float LobbyEconomyClusterMinWidth = 780f;
+    private const float LobbyEconomyClusterPreferredWidth = 900f;
     private const float LobbyEconomyLabelMinWidth = 200f;
     private const float LobbyEconomyLabelPreferredWidth = 280f;
     private const string LobbyTopLeftBarName = "LobbyTopLeftBar";
@@ -87,6 +88,7 @@ public sealed class MainMenuController : MonoBehaviour
     [SerializeField] private Button _aimExamButton;
 
     [SerializeField] private TextMeshProUGUI _tokenText;
+    [SerializeField] private TextMeshProUGUI _astralCoreText;
     [SerializeField] private TextMeshProUGUI _ticketText;
 
     [Header("Audio")]
@@ -117,7 +119,6 @@ public sealed class MainMenuController : MonoBehaviour
     private Image _panelBackground;
     private Image _heroImage;
     private bool _lobbyShellBuilt;
-    private static Sprite _proceduralSpaceSprite;
     private TextMeshProUGUI _lobbyTopLeftTitleTmp;
     private TextMeshProUGUI _lobbyTopLeftTimeTmp;
     private long _lobbyClockSecondStamp = -1L;
@@ -461,6 +462,12 @@ public sealed class MainMenuController : MonoBehaviour
             return;
         }
 
+        // Ensure Orrery System exists to drive star node physics
+        if (Application.isPlaying && ArchE.Game.GsiCosmicOrrerySystem.Instance == null)
+        {
+            gameObject.AddComponent<ArchE.Game.GsiCosmicOrrerySystem>();
+        }
+
         RemoveLegacyLobbyHeaderAndSettings();
         BuildLobbyActionRow();
         EnsureLobbyActionRowLayout();
@@ -522,7 +529,7 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void EnsureLobbyEconomyStrip()
     {
-        if (_lobbyRoot == null || (_tokenText == null && _ticketText == null))
+        if (_lobbyRoot == null || (_tokenText == null && _astralCoreText == null && _ticketText == null))
         {
             return;
         }
@@ -684,6 +691,23 @@ public sealed class MainMenuController : MonoBehaviour
             tLe.minWidth = LobbyEconomyLabelMinWidth;
             tLe.preferredWidth = LobbyEconomyLabelPreferredWidth;
             tLe.flexibleWidth = 0f;
+        }
+
+        if (_astralCoreText != null)
+        {
+            _astralCoreText.transform.SetParent(clusterRt, false);
+            RemoveContentSizeFitterIfAny(_astralCoreText.gameObject);
+            _astralCoreText.alignment = TextAlignmentOptions.MidlineLeft;
+            _astralCoreText.enableWordWrapping = false;
+            _astralCoreText.overflowMode = TextOverflowModes.Overflow;
+            if (!_astralCoreText.gameObject.TryGetComponent(out LayoutElement acLe))
+            {
+                acLe = _astralCoreText.gameObject.AddComponent<LayoutElement>();
+            }
+
+            acLe.minWidth = LobbyEconomyLabelMinWidth;
+            acLe.preferredWidth = LobbyEconomyLabelPreferredWidth;
+            acLe.flexibleWidth = 0f;
         }
 
         if (_ticketText != null)
@@ -1530,10 +1554,7 @@ public sealed class MainMenuController : MonoBehaviour
 
         if (_panelBackground != null)
         {
-            _panelBackground.sprite = GetOrCreateSpaceSprite();
-            _panelBackground.type = Image.Type.Simple;
-            _panelBackground.preserveAspect = false;
-            _panelBackground.color = Color.white;
+            ProceduralSpaceBackground.ApplyToImage(_panelBackground);
             _panelBackground.raycastTarget = false;
         }
 
@@ -2062,90 +2083,7 @@ public sealed class MainMenuController : MonoBehaviour
         }
     }
 
-    private Sprite GetOrCreateSpaceSprite()
-    {
-        if (_proceduralSpaceSprite == null)
-        {
-            _proceduralSpaceSprite = CreateProceduralSpaceSprite(1024, 576);
-        }
-        return _proceduralSpaceSprite;
-    }
 
-    private static Sprite CreateProceduralSpaceSprite(int width, int height)
-    {
-        var tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        tex.name = "GSI_CosmicSpaceBackground";
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.filterMode = FilterMode.Bilinear;
-
-        Color spaceDark = new Color(0.002f, 0.001f, 0.004f, 1f); // Deep void black/violet
-        Color indigoBlack = new Color(0.001f, 0.002f, 0.006f, 1f); // Deep void indigo
-
-        // Define brilliant glowing star coordinates and intensities
-        var brightStars = new (float x, float y, float r, float intensity)[]
-        {
-            (0.15f, 0.72f, 8f, 0.9f),
-            (0.32f, 0.24f, 6f, 0.8f),
-            (0.55f, 0.85f, 12f, 0.95f), // A bright star in upper middle
-            (0.78f, 0.42f, 10f, 0.85f),
-            (0.88f, 0.78f, 7f, 0.75f),
-            (0.22f, 0.48f, 5f, 0.7f),
-            (0.48f, 0.18f, 9f, 0.85f),
-            (0.68f, 0.62f, 6f, 0.75f)
-        };
-
-        for (int y = 0; y < height; y++)
-        {
-            float v = (float)y / (height - 1);
-            for (int x = 0; x < width; x++)
-            {
-                float u = (float)x / (width - 1);
-
-                // Base gradient
-                Color pixelColor = Color.Lerp(spaceDark, indigoBlack, v + u * 0.15f);
-
-                // Nebula 1: Large soft violet clouds
-                float n1 = Mathf.PerlinNoise(u * 2.2f + 4.5f, v * 1.8f + 1.2f);
-                float n2 = Mathf.PerlinNoise(u * 4.8f - 2.5f, v * 3.6f + 3.8f);
-                float neb1 = Mathf.Max(0f, (n1 * 0.65f + n2 * 0.35f) - 0.35f) * 1.8f;
-                Color nebColor1 = new Color(0.04f, 0.012f, 0.07f, 1f) * neb1;
-
-                // Nebula 2: Glowing cosmic cyan/teal clouds
-                float n3 = Mathf.PerlinNoise(u * 3.5f - 8.2f, v * 2.8f + 5.5f);
-                float n4 = Mathf.PerlinNoise(u * 6.5f + 1.1f, v * 5.2f - 4.2f);
-                float neb2 = Mathf.Max(0f, (n3 * 0.58f + n4 * 0.42f) - 0.42f) * 1.9f;
-                Color nebColor2 = new Color(0.008f, 0.045f, 0.06f, 1f) * neb2;
-
-                pixelColor += nebColor1 + nebColor2;
-
-                // Sparkling background stars (pseudo-random fast hash)
-                float starSeed = Mathf.Repeat(Mathf.Sin(x * 12.9898f + y * 78.233f) * 43758.5453f, 1.0f);
-                if (starSeed > 0.9975f)
-                {
-                    float starBrightness = (starSeed - 0.9975f) / 0.0025f;
-                    pixelColor += new Color(starBrightness, starBrightness, starBrightness * 1.08f, 0f) * 0.6f;
-                }
-
-                // Draw soft glow for the brilliant stars
-                foreach (var star in brightStars)
-                {
-                    float sx = star.x * width;
-                    float sy = star.y * height;
-                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(sx, sy));
-                    if (dist < star.r)
-                    {
-                        float glow = Mathf.Pow(1.0f - dist / star.r, 2.2f);
-                        pixelColor += new Color(star.intensity, star.intensity, star.intensity * 1.05f, 0f) * glow * 0.4f;
-                    }
-                }
-
-                tex.SetPixel(x, y, pixelColor);
-            }
-        }
-
-        tex.Apply(false, true);
-        return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f);
-    }
 
     private void TryApplyFarDistantLayerArt()
     {
@@ -2155,10 +2093,7 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         Image far = _lobbyCenterStage.FarImage;
-        far.sprite = GetOrCreateSpaceSprite();
-        far.type = Image.Type.Simple;
-        far.preserveAspect = false;
-        far.color = Color.white;
+        ProceduralSpaceBackground.ApplyToImage(far);
     }
 
     private void TryApplyMidgroundLayerArt()
@@ -2276,33 +2211,14 @@ public sealed class MainMenuController : MonoBehaviour
 
     private static Color LobbyPrimaryActionLabelColor()
     {
-        if (CosmeticSkinPalettes.TryGetActive(out _))
-        {
-            return GsiUiAppearance.TextPrimary;
-        }
-
-        return GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark
-            ? Color.white
-            : GsiUiAppearance.TextPrimary;
+        return GsiUiAppearance.TextPrimary;
     }
 
     private static Color LobbyPrimaryActionRuleLineColor()
     {
-        if (CosmeticSkinPalettes.TryGetActive(out _))
-        {
-            Color c = GsiUiAppearance.TextPrimary;
-            c.a = Mathf.Clamp01(c.a * 0.45f);
-            return c;
-        }
-
-        if (GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark)
-        {
-            return new Color(1f, 1f, 1f, 0.42f);
-        }
-
-        Color c2 = GsiUiAppearance.TextPrimary;
-        c2.a = Mathf.Clamp01(c2.a * 0.45f);
-        return c2;
+        Color c = GsiUiAppearance.TextPrimary;
+        c.a = Mathf.Clamp01(c.a * 0.45f);
+        return c;
     }
 
     private static void ApplyLobbySecondaryButton(Button btn)
@@ -2540,17 +2456,27 @@ public sealed class MainMenuController : MonoBehaviour
     {
         if (_tokenText != null)
         {
-            int gold = EconomyManager.Instance != null ? EconomyManager.Instance.Tokens : 0;
-            _tokenText.text = GameLocalization.FormatUiString(UiStringKeys.LobbyCurrencyGoldFmt, "Gold: {0}", gold);
-            _tokenText.color = GsiUiAppearance.ShopGoldText;
+            int stardust = EconomyManager.Instance != null ? EconomyManager.Instance.Stardust : 0;
+            _tokenText.text = GameLocalization.FormatUiString(UiStringKeys.LobbyCurrencyStardustFmt, "Stardust: {0}", stardust);
+            _tokenText.color = GsiUiAppearance.ShopStardustText;
             _tokenText.fontSize = 24f;
             _tokenText.enableWordWrapping = false;
             GsiUiRuntimeWidgets.ApplyEconomyLineTypography(_tokenText);
         }
 
+        if (_astralCoreText != null)
+        {
+            int astralCores = EconomyManager.Instance != null ? EconomyManager.Instance.AstralCores : 0;
+            _astralCoreText.text = GameLocalization.FormatUiString(UiStringKeys.LobbyCurrencyAstralCoreFmt, "Astral Cores: {0}", astralCores);
+            _astralCoreText.color = GsiUiAppearance.ShopAstralCoreText;
+            _astralCoreText.fontSize = 24f;
+            _astralCoreText.enableWordWrapping = false;
+            GsiUiRuntimeWidgets.ApplyEconomyLineTypography(_astralCoreText);
+        }
+
         if (_ticketText != null)
         {
-            int tickets = EconomyManager.Instance != null ? EconomyManager.Instance.ExamTickets : 0;
+            int tickets = EconomyManager.Instance != null ? EconomyManager.Instance.ArcTickets : 0;
             _ticketText.text =
                 GameLocalization.FormatUiString(UiStringKeys.LobbyCurrencyTicketFmt, "Exam tickets: {0}", tickets);
             _ticketText.color = GsiUiAppearance.ShopTicketText;

@@ -5,6 +5,7 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
+using ArchE.Game;
 #if UNITY_EDITOR
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -22,6 +23,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
     [SerializeField] private Button _backToArchEButton;
     [SerializeField] private TextMeshProUGUI _tokenText;
+    [SerializeField] private TextMeshProUGUI _astralCoreText;
     [SerializeField] private TextMeshProUGUI _ticketText;
 
     private Image _lobbyPanelImage;
@@ -31,7 +33,6 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
     private RectTransform _cosmicStage;
     private GsiGsiOrbitalSelector _activeSelector;
-    private static Sprite _proceduralSpaceSprite;
 
     private readonly Dictionary<TestMode, Button> _practiceButtonsByMode = new Dictionary<TestMode, Button>();
     private readonly List<(Button Button, UnityAction Action)> _practiceClickBindings = new List<(Button, UnityAction)>();
@@ -667,8 +668,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         {
             if (Application.isPlaying)
             {
-                _lobbyPanelImage.sprite = GetOrCreateSpaceSprite();
-                _lobbyPanelImage.color = Color.white;
+                ProceduralSpaceBackground.ApplyToImage(_lobbyPanelImage);
             }
             else
             {
@@ -695,7 +695,12 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
         if (_tokenText != null)
         {
-            _tokenText.color = GsiUiAppearance.ShopGoldText;
+            _tokenText.color = GsiUiAppearance.ShopStardustText;
+        }
+
+        if (_astralCoreText != null)
+        {
+            _astralCoreText.color = GsiUiAppearance.ShopAstralCoreText;
         }
 
         if (_ticketText != null)
@@ -1347,16 +1352,25 @@ public sealed class GSIHubMenuController : MonoBehaviour
     {
         if (_tokenText != null)
         {
-            int gold = EconomyManager.Instance != null ? EconomyManager.Instance.Tokens : 0;
-            _tokenText.text = GameLocalization.FormatUiString(UiStringKeys.HubCurrencyGoldFmt, "Gold: {0}", gold);
-            _tokenText.color = GsiUiAppearance.ShopGoldText;
+            int stardust = EconomyManager.Instance != null ? EconomyManager.Instance.Stardust : 0;
+            _tokenText.text = GameLocalization.FormatUiString(UiStringKeys.HubCurrencyStardustFmt, "Stardust: {0}", stardust);
+            _tokenText.color = GsiUiAppearance.ShopStardustText;
             _tokenText.fontSize = GsiUiScreenLayout.EconomyLineFontSize;
             GsiUiRuntimeWidgets.ApplyEconomyLineTypography(_tokenText);
         }
 
+        if (_astralCoreText != null)
+        {
+            int astralCores = EconomyManager.Instance != null ? EconomyManager.Instance.AstralCores : 0;
+            _astralCoreText.text = GameLocalization.FormatUiString(UiStringKeys.HubCurrencyAstralCoreFmt, "Astral Cores: {0}", astralCores);
+            _astralCoreText.color = GsiUiAppearance.ShopAstralCoreText;
+            _astralCoreText.fontSize = GsiUiScreenLayout.EconomyLineFontSize;
+            GsiUiRuntimeWidgets.ApplyEconomyLineTypography(_astralCoreText);
+        }
+
         if (_ticketText != null)
         {
-            int tickets = EconomyManager.Instance != null ? EconomyManager.Instance.ExamTickets : 0;
+            int tickets = EconomyManager.Instance != null ? EconomyManager.Instance.ArcTickets : 0;
             _ticketText.text =
                 GameLocalization.FormatUiString(UiStringKeys.HubCurrencyTicketFmt, "Exam tickets: {0}", tickets);
             _ticketText.color = GsiUiAppearance.ShopTicketText;
@@ -1365,84 +1379,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         }
     }
 
-    private Sprite GetOrCreateSpaceSprite()
-    {
-        if (_proceduralSpaceSprite == null)
-        {
-            _proceduralSpaceSprite = CreateProceduralSpaceSprite(1024, 576);
-        }
-        return _proceduralSpaceSprite;
-    }
 
-    private static Sprite CreateProceduralSpaceSprite(int width, int height)
-    {
-        var tex = new Texture2D(width, height, TextureFormat.RGBA32, false);
-        tex.name = "GSI_HubCosmicSpaceBackground";
-        tex.wrapMode = TextureWrapMode.Clamp;
-        tex.filterMode = FilterMode.Bilinear;
-
-        Color spaceDark = new Color(0.002f, 0.001f, 0.004f, 1f); // Deep void black/violet
-        Color indigoBlack = new Color(0.001f, 0.002f, 0.006f, 1f); // Deep void indigo
-
-        var brightStars = new (float x, float y, float r, float intensity)[]
-        {
-            (0.15f, 0.72f, 8f, 0.9f),
-            (0.32f, 0.24f, 6f, 0.8f),
-            (0.55f, 0.85f, 12f, 0.95f),
-            (0.78f, 0.42f, 10f, 0.85f),
-            (0.88f, 0.78f, 7f, 0.75f),
-            (0.22f, 0.48f, 5f, 0.7f),
-            (0.48f, 0.18f, 9f, 0.85f),
-            (0.68f, 0.62f, 6f, 0.75f)
-        };
-
-        for (int y = 0; y < height; y++)
-        {
-            float v = (float)y / (height - 1);
-            for (int x = 0; x < width; x++)
-            {
-                float u = (float)x / (width - 1);
-
-                Color pixelColor = Color.Lerp(spaceDark, indigoBlack, v + u * 0.15f);
-
-                float n1 = Mathf.PerlinNoise(u * 2.2f + 4.5f, v * 1.8f + 1.2f);
-                float n2 = Mathf.PerlinNoise(u * 4.8f - 2.5f, v * 3.6f + 3.8f);
-                float neb1 = Mathf.Max(0f, (n1 * 0.65f + n2 * 0.35f) - 0.35f) * 1.8f;
-                Color nebColor1 = new Color(0.04f, 0.012f, 0.07f, 1f) * neb1;
-
-                float n3 = Mathf.PerlinNoise(u * 3.5f - 8.2f, v * 2.8f + 5.5f);
-                float n4 = Mathf.PerlinNoise(u * 6.5f + 1.1f, v * 5.2f - 4.2f);
-                float neb2 = Mathf.Max(0f, (n3 * 0.58f + n4 * 0.42f) - 0.42f) * 1.9f;
-                Color nebColor2 = new Color(0.008f, 0.045f, 0.06f, 1f) * neb2;
-
-                pixelColor += nebColor1 + nebColor2;
-
-                float starSeed = Mathf.Repeat(Mathf.Sin(x * 12.9898f + y * 78.233f) * 43758.5453f, 1.0f);
-                if (starSeed > 0.9975f)
-                {
-                    float starBrightness = (starSeed - 0.9975f) / 0.0025f;
-                    pixelColor += new Color(starBrightness, starBrightness, starBrightness * 1.08f, 0f) * 0.6f;
-                }
-
-                foreach (var star in brightStars)
-                {
-                    float sx = star.x * width;
-                    float sy = star.y * height;
-                    float dist = Vector2.Distance(new Vector2(x, y), new Vector2(sx, sy));
-                    if (dist < star.r)
-                    {
-                        float glow = Mathf.Pow(1.0f - dist / star.r, 2.2f);
-                        pixelColor += new Color(star.intensity, star.intensity, star.intensity * 1.05f, 0f) * glow * 0.4f;
-                    }
-                }
-
-                tex.SetPixel(x, y, pixelColor);
-            }
-        }
-
-        tex.Apply(false, true);
-        return Sprite.Create(tex, new Rect(0, 0, width, height), new Vector2(0.5f, 0.5f), 100f);
-    }
 
     private void BuildCosmicHubStage()
     {
@@ -1454,8 +1391,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
         if (_lobbyPanelImage != null)
         {
-            _lobbyPanelImage.sprite = GetOrCreateSpaceSprite();
-            _lobbyPanelImage.color = Color.white;
+            ProceduralSpaceBackground.ApplyToImage(_lobbyPanelImage);
         }
 
         var stageGo = new GameObject("GsiCosmicStage", typeof(RectTransform));
@@ -1466,6 +1402,12 @@ public sealed class GSIHubMenuController : MonoBehaviour
         _cosmicStage.offsetMin = Vector2.zero;
         _cosmicStage.offsetMax = Vector2.zero;
         _cosmicStage.SetAsFirstSibling();
+
+        // Ensure Orrery System exists to drive star node physics
+        if (Application.isPlaying && ArchE.Game.GsiCosmicOrrerySystem.Instance == null)
+        {
+            gameObject.AddComponent<ArchE.Game.GsiCosmicOrrerySystem>();
+        }
 
         SpawnWhiteHoleNode();
         SpawnPracticeStarNodes();
@@ -1485,6 +1427,13 @@ public sealed class GSIHubMenuController : MonoBehaviour
         rt.sizeDelta = new Vector2(160f, 160f);
 
         var controller = whGo.AddComponent<GsiWhiteHoleNodeController>();
+        
+        // Centralize WhiteHole settings in Orrery System
+        if (ArchE.Game.GsiCosmicOrrerySystem.Instance != null)
+        {
+            ArchE.Game.GsiCosmicOrrerySystem.Instance.SetWhiteHoleSingularity(rt, 240f, 580f);
+        }
+
         controller.OnClickedAction = (node) => {
             SpawnOrbitalSelector(node.Rect, new Color(0.2f, 0.85f, 1f, 1f), (grade) => {
                 _unifiedExamSelectedGrade = grade;

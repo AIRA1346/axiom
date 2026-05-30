@@ -153,7 +153,7 @@ public static class GsiArcaneUi
 
         button.transition = Selectable.Transition.ColorTint;
         Color baseCol = primary ? GsiUiAppearance.PrimaryActionButton : GsiUiAppearance.SecondaryButton;
-        Color accent = primary ? GsiUiAppearance.ShopGoldText : GsiUiAppearance.TextSecondary;
+        Color accent = primary ? GsiUiAppearance.ShopStardustText : GsiUiAppearance.TextSecondary;
         ColorBlock c = button.colors;
         c.fadeDuration = 0.12f;
         c.colorMultiplier = 1f;
@@ -168,7 +168,7 @@ public static class GsiArcaneUi
         {
             img.color = baseCol;
             GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(img);
-            Color rim = primary ? GsiUiAppearance.ShopGoldText : GsiUiAppearance.UiControlRim;
+            Color rim = primary ? GsiUiAppearance.ShopStardustText : GsiUiAppearance.UiControlRim;
             rim.a = primary ? 0.62f : Mathf.Max(rim.a, 0.28f);
             AddOrUpdateOutline(img.gameObject, rim, new Vector2(1f, -1f));
         }

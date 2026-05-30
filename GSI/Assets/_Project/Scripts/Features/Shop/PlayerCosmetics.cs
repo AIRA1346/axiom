@@ -10,10 +10,12 @@ public static class PlayerCosmetics
     private const string EquippedKey = "GSI_Cosmetic_EquippedId";
     private const string OwnedPrefix = "GSI_Cosmetic_Owned_";
 
-    public const string DefaultSkinId = "skin_default";
+    public const string DefaultSkinId = "skin_default_dark";
+    public const string SkinDefaultLightId = "skin_default_light";
     public const string SkinOceanId = "skin_ocean";
     public const string SkinAmberId = "skin_amber";
     public const string SkinVioletId = "skin_violet";
+    public const string SkinAstralVoidId = "skin_astral_void";
 
     public static event Action CosmeticsChanged;
 
@@ -35,7 +37,7 @@ public static class PlayerCosmetics
 
     public static bool IsSkinOwned(string skinId)
     {
-        if (skinId == DefaultSkinId)
+        if (skinId == DefaultSkinId || skinId == SkinDefaultLightId)
         {
             return true;
         }
@@ -45,7 +47,7 @@ public static class PlayerCosmetics
 
     public static void UnlockSkin(string skinId)
     {
-        if (skinId == DefaultSkinId)
+        if (skinId == DefaultSkinId || skinId == SkinDefaultLightId)
         {
             return;
         }
@@ -71,12 +73,16 @@ public static class PlayerCosmetics
     {
         switch (skinId)
         {
+            case SkinDefaultLightId:
+                return new Color(0.18f, 0.48f, 0.58f, 1f);
             case SkinOceanId:
                 return new Color(0.28f, 0.78f, 0.88f, 1f);
             case SkinAmberId:
                 return new Color(0.95f, 0.55f, 0.2f, 1f);
             case SkinVioletId:
                 return new Color(0.72f, 0.45f, 0.98f, 1f);
+            case SkinAstralVoidId:
+                return new Color(0.5f, 0.4f, 1f, 1f);
             default:
                 return new Color(0.72f, 0.72f, 0.73f, 1f);
         }

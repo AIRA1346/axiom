@@ -10,10 +10,12 @@ public static class GsiShopLikeOfferDisplayNames
         {
             UiStringKeys.ShopOfferTickets1 => GameLocalization.GetUiString(UiStringKeys.ShopOfferTickets1, "Exam ticket x1"),
             UiStringKeys.ShopOfferTickets5 => GameLocalization.GetUiString(UiStringKeys.ShopOfferTickets5, "Exam ticket x5"),
-            UiStringKeys.ShopOfferSkinDefault => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinDefault, "UI skin: Default"),
+            UiStringKeys.ShopOfferSkinDefaultDark => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinDefaultDark, "UI Skin: Default Dark"),
+            UiStringKeys.ShopOfferSkinDefaultLight => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinDefaultLight, "UI Skin: Default Light"),
             UiStringKeys.ShopOfferSkinOcean => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinOcean, "UI skin: Ocean"),
             UiStringKeys.ShopOfferSkinAmber => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinAmber, "UI skin: Amber"),
             UiStringKeys.ShopOfferSkinViolet => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinViolet, "UI skin: Violet"),
+            UiStringKeys.ShopOfferSkinAstralVoid => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinAstralVoid, "UI Skin: Astral Void"),
             _ => offer.Id
         };
     }

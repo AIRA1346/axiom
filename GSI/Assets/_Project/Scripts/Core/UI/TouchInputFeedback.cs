@@ -142,7 +142,8 @@ public sealed class TouchInputFeedback : MonoBehaviour
 
     private static Color RippleColor(float alpha)
     {
-        if (GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark)
+        bool isLight = PlayerCosmetics.EquippedSkinId == PlayerCosmetics.SkinDefaultLightId;
+        if (!isLight)
         {
             return new Color(0.48f, 0.76f, 1f, alpha);
         }

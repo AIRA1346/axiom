@@ -25,14 +25,9 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     private Slider _masterSlider;
     private Slider _sfxSlider;
     private Slider _musicSlider;
-    private Button _langEnButton;
-    private Button _langKoButton;
     private TextMeshProUGUI _closeTmp;
     private TextMeshProUGUI _titleTmp;
     private TextMeshProUGUI _langLabelTmp;
-    private TextMeshProUGUI _appearanceLabelTmp;
-    private Button _appearanceDarkButton;
-    private Button _appearanceLightButton;
     private Image _dimImage;
     private Image _panelImage;
     private Image _closeButtonImage;
@@ -49,6 +44,19 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     private readonly System.Collections.Generic.List<ResolutionInfo> _resolutionsList = new();
     private int _currentResolutionIndex = 0;
 
+    private struct LanguageInfo
+    {
+        public string code;
+        public string displayName;
+    }
+
+    private readonly System.Collections.Generic.List<LanguageInfo> _languagesList = new()
+    {
+        new LanguageInfo { code = "en", displayName = "English" },
+        new LanguageInfo { code = "ko-KR", displayName = "한국어" }
+    };
+    private int _currentLanguageIndex = 0;
+
     private readonly FullScreenMode[] _screenModes = new[]
     {
         FullScreenMode.FullScreenWindow,
@@ -61,6 +69,7 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     private TextMeshProUGUI _resolutionValueTmp;
     private TextMeshProUGUI _screenModeLabelTmp;
     private TextMeshProUGUI _screenModeValueTmp;
+    private TextMeshProUGUI _langValueTmp;
     private readonly System.Collections.Generic.List<Button> _selectorButtons = new();
 
     private bool _built;
@@ -400,46 +409,14 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
 
         _titleTmp = AddCenterTitle(box.transform, "");
 
-        _appearanceLabelTmp = AddSectionLabel(box.transform, "");
-        var appearanceRow = new GameObject("AppearanceRow", typeof(RectTransform));
-        appearanceRow.transform.SetParent(box.transform, false);
-        var appearanceH = appearanceRow.AddComponent<HorizontalLayoutGroup>();
-        appearanceH.spacing = 12f;
-        appearanceH.childAlignment = TextAnchor.MiddleCenter;
-        appearanceH.childForceExpandWidth = true;
-        appearanceH.childForceExpandHeight = true;
-        var appearanceLe = appearanceRow.AddComponent<LayoutElement>();
-        appearanceLe.minHeight = 44f;
 
-        _appearanceDarkButton = AddChipButton(appearanceRow.transform,
-            GameLocalization.GetUiString(UiStringKeys.SettingsDark, "Dark"),
-            () => ApplyAppearanceMode(GsiUiAppearanceMode.Dark));
-        _appearanceLightButton = AddChipButton(appearanceRow.transform,
-            GameLocalization.GetUiString(UiStringKeys.SettingsLight, "Light"),
-            () => ApplyAppearanceMode(GsiUiAppearanceMode.Light));
-
-        _langLabelTmp = AddSectionLabel(box.transform, "");
-        var langRow = new GameObject("LanguageRow", typeof(RectTransform));
-        langRow.transform.SetParent(box.transform, false);
-        var langH = langRow.AddComponent<HorizontalLayoutGroup>();
-        langH.spacing = 12f;
-        langH.childAlignment = TextAnchor.MiddleCenter;
-        langH.childForceExpandWidth = true;
-        langH.childForceExpandHeight = true;
-        var langLe = langRow.AddComponent<LayoutElement>();
-        langLe.minHeight = 44f;
-
-        _langEnButton = AddChipButton(langRow.transform,
-            GameLocalization.GetUiString(UiStringKeys.SettingsLangEnglish, "English"),
-            () => ApplyLanguage("en"));
-        _langKoButton = AddChipButton(langRow.transform,
-            GameLocalization.GetUiString(UiStringKeys.SettingsLangKorean, "Korean"),
-            () => ApplyLanguage("ko-KR"));
 
         _selectorButtons.Clear();
         InitResolutions();
         InitScreenMode();
+        InitLanguages();
 
+        _langLabelTmp = AddSelectorRow(box.transform, "", () => CycleLanguage(-1), () => CycleLanguage(1), out _langValueTmp);
         _resolutionLabelTmp = AddSelectorRow(box.transform, "", () => CycleResolution(-1), () => CycleResolution(1), out _resolutionValueTmp);
         _screenModeLabelTmp = AddSelectorRow(box.transform, "", () => CycleScreenMode(-1), () => CycleScreenMode(1), out _screenModeValueTmp);
 
@@ -555,11 +532,6 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     }
 #endif
 
-    private static void ApplyAppearanceMode(GsiUiAppearanceMode mode)
-    {
-        GsiUiAppearance.SetMode(mode);
-    }
-
     private void RefreshAppearanceChrome()
     {
         if (_dimImage != null)
@@ -585,11 +557,6 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_titleTmp != null)
         {
             _titleTmp.color = GsiUiAppearance.TextPrimary;
-        }
-
-        if (_appearanceLabelTmp != null)
-        {
-            _appearanceLabelTmp.color = GsiUiAppearance.TextSecondary;
         }
 
         if (_langLabelTmp != null)
@@ -625,6 +592,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             _screenModeValueTmp.color = GsiUiAppearance.TextPrimary;
         }
 
+        if (_langValueTmp != null)
+        {
+            _langValueTmp.color = GsiUiAppearance.TextPrimary;
+        }
+
         if (_resolutionLabelTmp != null)
         {
             _resolutionLabelTmp.color = GsiUiAppearance.TextPrimary;
@@ -640,12 +612,7 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             RefreshChipLabels(btn);
         }
 
-        RefreshChipLabels(_langEnButton);
-        RefreshChipLabels(_langKoButton);
-        RefreshChipLabels(_appearanceDarkButton);
-        RefreshChipLabels(_appearanceLightButton);
-        UpdateLanguageButtonHighlight();
-        UpdateAppearanceButtonHighlight();
+        UpdateLanguageSelectorText();
     }
 
     private static void RefreshChipLabels(Button btn)
@@ -681,16 +648,10 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         }
 
         GameLocalization.SavePreferredLocale(code);
+        InitLanguages();
         RefreshLocalizedTexts();
-        UpdateLanguageButtonHighlight();
+        UpdateLanguageSelectorText();
         RefreshAppearanceChrome();
-    }
-
-    private void UpdateAppearanceButtonHighlight()
-    {
-        bool dark = GsiUiAppearance.Mode == GsiUiAppearanceMode.Dark;
-        SetChipSelected(_appearanceDarkButton, dark);
-        SetChipSelected(_appearanceLightButton, !dark);
     }
 
     private void RefreshLocalizedTexts()
@@ -698,11 +659,6 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_titleTmp != null)
         {
             _titleTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsTitle, "Settings");
-        }
-
-        if (_appearanceLabelTmp != null)
-        {
-            _appearanceLabelTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsAppearance, "Appearance");
         }
 
         if (_langLabelTmp != null)
@@ -736,11 +692,6 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             }
         }
 
-        ApplyChipButtonLocalizedText(_appearanceDarkButton, UiStringKeys.SettingsDark, "Dark");
-        ApplyChipButtonLocalizedText(_appearanceLightButton, UiStringKeys.SettingsLight, "Light");
-        ApplyChipButtonLocalizedText(_langEnButton, UiStringKeys.SettingsLangEnglish, "English");
-        ApplyChipButtonLocalizedText(_langKoButton, UiStringKeys.SettingsLangKorean, "Korean");
-
         if (_resolutionLabelTmp != null)
         {
             _resolutionLabelTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsResolution, "Resolution");
@@ -749,6 +700,7 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         {
             _screenModeLabelTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsScreenMode, "Screen Mode");
         }
+        UpdateLanguageSelectorText();
         UpdateDisplaySelectorTexts();
     }
 
@@ -768,14 +720,7 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         tmp.text = GameLocalization.GetUiString(localizationKey, englishFallback);
     }
 
-    private void UpdateLanguageButtonHighlight()
-    {
-        string code = GameLocalization.GetSavedLocaleCode();
-        bool en = code.StartsWith("en", System.StringComparison.OrdinalIgnoreCase);
-        bool ko = code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
-        SetChipSelected(_langEnButton, en);
-        SetChipSelected(_langKoButton, ko);
-    }
+
 
     private static void SetChipSelected(Button btn, bool selected)
     {
@@ -1176,10 +1121,50 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         }
     }
 
+    private void InitLanguages()
+    {
+        string curCode = GameLocalization.GetSavedLocaleCode();
+        _currentLanguageIndex = 0;
+        for (int i = 0; i < _languagesList.Count; i++)
+        {
+            if (_languagesList[i].code.Equals(curCode, System.StringComparison.OrdinalIgnoreCase))
+            {
+                _currentLanguageIndex = i;
+                break;
+            }
+        }
+    }
+
+    private void CycleLanguage(int direction)
+    {
+        if (_languagesList.Count == 0) return;
+        _currentLanguageIndex = (_currentLanguageIndex + direction + _languagesList.Count) % _languagesList.Count;
+        ApplyLanguageSettings();
+    }
+
+    private void ApplyLanguageSettings()
+    {
+        if (_currentLanguageIndex >= 0 && _currentLanguageIndex < _languagesList.Count)
+        {
+            var lang = _languagesList[_currentLanguageIndex];
+            ApplyLanguage(lang.code);
+        }
+    }
+
+    private void UpdateLanguageSelectorText()
+    {
+        if (_langValueTmp != null && _currentLanguageIndex >= 0 && _currentLanguageIndex < _languagesList.Count)
+        {
+            _langValueTmp.text = _languagesList[_currentLanguageIndex].displayName;
+        }
+    }
+
     private void SyncDisplaySettingsFromModel()
     {
         InitResolutions();
         InitScreenMode();
+        InitLanguages();
         UpdateDisplaySelectorTexts();
+        UpdateLanguageSelectorText();
     }
 }
