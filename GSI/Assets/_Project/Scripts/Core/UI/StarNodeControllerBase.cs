@@ -41,7 +41,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     public float BounceFactor = 0.92f;
     public float MaxVelocity = 1800f;
     public float MinDriftSpeed = 80f;
-    public float CollisionRadius = 24f;
+    public float CollisionRadius = 16f;
 
     // ─── Audio Config ───────────────────────────────────────────────
     [Header("Audio Config")]
@@ -69,11 +69,11 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     // Scene-specific virtual properties — override in subclasses
     // ═══════════════════════════════════════════════════════════════
 
-    /// <summary>Default touch interaction bounding box size (Lobby & GSI default is 96x96)</summary>
-    protected virtual Vector2 InteractionSize => new Vector2(96f, 96f);
+    /// <summary>Default touch interaction bounding box size (Lobby & GSI default is 80x80)</summary>
+    protected virtual Vector2 InteractionSize => new Vector2(80f, 80f);
 
-    /// <summary>Default kinetic physics collision radius (Lobby & GSI default is 24f)</summary>
-    protected virtual float BaseCollisionRadius => 24f;
+    /// <summary>Default kinetic physics collision radius (Lobby & GSI default is 16f)</summary>
+    protected virtual float BaseCollisionRadius => 16f;
 
     /// <summary>Hover animation target scale (Lobby=1.4f, GSI=1.35f)</summary>
     protected virtual float HoverScale => 1.4f;
@@ -164,6 +164,28 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         {
             float rotSpeed = _isHovered ? 48f : 12f;
             _starVisualRoot.localRotation = Quaternion.Euler(0f, 0f, Time.unscaledTime * rotSpeed);
+
+            // ─── Procedural Soft Twinkling Effect (은은하게 반짝이는 효과) ───
+            // Slowly breathe the glows
+            float glowPulse = 0.82f + Mathf.PingPong(Time.unscaledTime * 0.5f, 0.25f); // pulses between 0.82 and 1.07
+            
+            Transform aura = _starVisualRoot.Find("AuraGlow");
+            if (aura != null) aura.localScale = new Vector3(glowPulse, glowPulse, 1f);
+            
+            Transform outer = _starVisualRoot.Find("OuterGlow");
+            if (outer != null) outer.localScale = new Vector3(glowPulse, glowPulse, 1f);
+            
+            Transform inner = _starVisualRoot.Find("InnerRingGlow");
+            if (inner != null) inner.localScale = new Vector3(glowPulse, glowPulse, 1f);
+
+            // Twist and stretch the flare spikes in opposite phases
+            float spikePulse = 0.88f + Mathf.PingPong(Time.unscaledTime * 1.2f, 0.22f); // faster twinkling
+            
+            Transform spikeV = _starVisualRoot.Find("SpikeV");
+            if (spikeV != null) spikeV.localScale = new Vector3(1f, spikePulse, 1f);
+            
+            Transform spikeH = _starVisualRoot.Find("SpikeH");
+            if (spikeH != null) spikeH.localScale = new Vector3(spikePulse, 1f, 1f);
         }
 
         // 2. Kinetic drag velocity update (keeps dragging smooth and responsive)
@@ -408,7 +430,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         _starVisualRoot.anchorMax = new Vector2(0.5f, 0.5f);
         _starVisualRoot.pivot = new Vector2(0.5f, 0.5f);
         _starVisualRoot.anchoredPosition = Vector2.zero;
-        _starVisualRoot.sizeDelta = new Vector2(24f, 24f);
+        _starVisualRoot.sizeDelta = new Vector2(16f, 16f);
     }
 
     /// <summary>Creates a single star visual layer as a child of the star visual root.</summary>

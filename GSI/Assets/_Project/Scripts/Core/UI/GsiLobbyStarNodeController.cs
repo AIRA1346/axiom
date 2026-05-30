@@ -11,8 +11,8 @@ public sealed class GsiLobbyStarNodeController : StarNodeControllerBase
     // ─── Lobby-specific visual tuning ────────────────────────────
     protected override float HoverScale => 1.4f;
     protected override float PointerDownSquash => 0.85f;
-    protected override float TooltipOffsetY => -36f;
-    protected override float TooltipFontSize => 16f;
+    protected override float TooltipOffsetY => -32f;
+    protected override float TooltipFontSize => 20f;
     protected override float TooltipCharSpacing => 0.35f;
     protected override Color TooltipColor => Color.white;
 
@@ -45,19 +45,19 @@ public sealed class GsiLobbyStarNodeController : StarNodeControllerBase
         base.BuildStarVisuals(); // Creates _starVisualRoot
 
         // Layer 1: Aura Outer Glow (Vibrant background bloom)
-        CreateStarLayer("AuraGlow", 30f, 30f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.35f));
+        CreateStarLayer("AuraGlow", 20f, 20f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.35f));
 
         // Layer 2: Secondary soft ring glow (Lobby exclusive)
-        CreateStarLayer("InnerRingGlow", 18f, 18f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.15f));
+        CreateStarLayer("InnerRingGlow", 12f, 12f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.15f));
 
         // Layer 3: Vertical Flare Spike
-        CreateStarLayer("SpikeV", 2.6f, 39f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.95f));
+        CreateStarLayer("SpikeV", 1.8f, 28f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.95f));
 
         // Layer 4: Horizontal Flare Spike
-        CreateStarLayer("SpikeH", 39f, 2.6f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.95f));
+        CreateStarLayer("SpikeH", 28f, 1.8f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.95f));
 
         // Layer 5: Sparkling Diamond Core (Always bright white/light center)
-        CreateStarLayer("CoreDiamond", 10f, 10f, 45f, new Color(1f, 1.0f, 0.96f, 0.98f));
+        CreateStarLayer("CoreDiamond", 7f, 7f, 45f, new Color(1f, 1.0f, 0.96f, 0.98f));
     }
 
     // ═══════════════════════════════════════════════════════════════
