@@ -32,6 +32,8 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     private Image _panelImage;
     private Image _closeButtonImage;
     private Image _quitButtonImage;
+    private Image _trayButtonImage;
+    private TextMeshProUGUI _trayTmp;
     private TextMeshProUGUI _quitTmp;
     private readonly System.Collections.Generic.List<TextMeshProUGUI> _sliderLabelTmps = new();
 
@@ -91,6 +93,9 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
 
         var go = new GameObject("GlobalSettingsOverlay");
         go.AddComponent<GlobalSettingsOverlay>();
+
+        var trayGo = new GameObject("GsiWin32TrayManager");
+        trayGo.AddComponent<GsiWin32TrayManager>();
     }
 
     public static void OpenSettings()
@@ -458,6 +463,37 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             _quitTmp.font = TmpFontCache.LiberationSansSdf;
         }
 
+        var trayGo = new GameObject("TrayButton", typeof(RectTransform));
+        trayGo.transform.SetParent(box.transform, false);
+        var trayBtn = trayGo.AddComponent<Button>();
+        var trayImg = trayGo.AddComponent<Image>();
+        _trayButtonImage = trayImg;
+        trayImg.color = GsiUiAppearance.SecondaryButton;
+        trayBtn.targetGraphic = trayImg;
+        trayBtn.onClick.AddListener(() =>
+        {
+            Close();
+            if (GsiWin32TrayManager.Instance != null)
+            {
+                GsiWin32TrayManager.Instance.MinimizeToTray();
+            }
+        });
+        GsiArcaneUi.ApplyButton(trayBtn, primary: false);
+        var trayBtnLe = trayGo.AddComponent<LayoutElement>();
+        trayBtnLe.minHeight = 44f;
+        trayBtnLe.preferredHeight = 44f;
+
+        var trayLabel = new GameObject("Text", typeof(RectTransform));
+        trayLabel.transform.SetParent(trayGo.transform, false);
+        StretchFull(trayLabel.GetComponent<RectTransform>());
+        _trayTmp = trayLabel.AddComponent<TextMeshProUGUI>();
+        _trayTmp.fontSize = 22f;
+        _trayTmp.alignment = TextAlignmentOptions.Center;
+        if (TmpFontCache.LiberationSansSdf != null)
+        {
+            _trayTmp.font = TmpFontCache.LiberationSansSdf;
+        }
+
         var closeGo = new GameObject("CloseButton", typeof(RectTransform));
         closeGo.transform.SetParent(box.transform, false);
         var closeBtn = closeGo.AddComponent<Button>();
@@ -554,6 +590,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
             GsiArcaneUi.ApplyButton(_quitButtonImage.GetComponent<Button>(), primary: false);
         }
 
+        if (_trayButtonImage != null)
+        {
+            GsiArcaneUi.ApplyButton(_trayButtonImage.GetComponent<Button>(), primary: false);
+        }
+
         if (_titleTmp != null)
         {
             _titleTmp.color = GsiUiAppearance.TextPrimary;
@@ -572,6 +613,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_quitTmp != null)
         {
             _quitTmp.color = GsiUiAppearance.TextPrimary;
+        }
+
+        if (_trayTmp != null)
+        {
+            _trayTmp.color = GsiUiAppearance.TextPrimary;
         }
 
         foreach (TextMeshProUGUI lab in _sliderLabelTmps)
@@ -674,6 +720,11 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_quitTmp != null)
         {
             _quitTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsQuitToDesktop, "Quit to desktop");
+        }
+
+        if (_trayTmp != null)
+        {
+            _trayTmp.text = GameLocalization.GetUiString(UiStringKeys.SettingsMinimizeToTray, "Minimize to Tray");
         }
 
         string[] keys =

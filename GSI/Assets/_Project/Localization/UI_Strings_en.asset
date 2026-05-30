@@ -858,6 +858,10 @@ MonoBehaviour:
     m_Localized: Windowed
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697296
+    m_Localized: Minimize to Tray
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

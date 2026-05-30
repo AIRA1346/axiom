@@ -855,6 +855,10 @@ MonoBehaviour:
     m_Key: settings.mode.windowed
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697296
+    m_Key: settings.minimize_to_tray
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:

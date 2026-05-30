@@ -858,6 +858,10 @@ MonoBehaviour:
     m_Localized: "\uCC3D \uBAA8\uB4DC"
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697296
+    m_Localized: "\uD2B8\uB808\uC774 \uBAA8\uB4DC\uB85C \uCD5C\uC18C\uD654"
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []
