@@ -838,6 +838,26 @@ MonoBehaviour:
     m_Localized: This skin is not owned yet.
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697291
+    m_Localized: Resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697292
+    m_Localized: Screen Mode
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697293
+    m_Localized: Fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697294
+    m_Localized: Borderless
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697295
+    m_Localized: Windowed
+    m_Metadata:
+      m_Items: []
   references:
     version: 2
     RefIds: []

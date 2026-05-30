@@ -1,4 +1,4 @@
-﻿%YAML 1.1
+%YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
 --- !u!114 &11400000
 MonoBehaviour:
@@ -836,6 +836,26 @@ MonoBehaviour:
       m_Items: []
   - m_Id: 1522245204697290
     m_Localized: "\uC544\uC9C1 \uBCF4\uC720\uD558\uC9C0 \uC54A\uC740 \uC2A4\uD0A8\uC785\uB2C8\uB2E4."
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697291
+    m_Localized: "\uD574\uC0C1\uB3C4"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697292
+    m_Localized: "\uD654\uBA74 \uBAA8\uB4DC"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697293
+    m_Localized: "\uC804\uCCB4 \uD654\uBA74"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697294
+    m_Localized: "\uD14C\uB450\uB9AC \uC5C6\uC74C"
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697295
+    m_Localized: "\uCC3D \uBAA8\uB4DC"
     m_Metadata:
       m_Items: []
   references:

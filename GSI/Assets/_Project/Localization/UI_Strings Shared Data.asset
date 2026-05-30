@@ -835,6 +835,26 @@ MonoBehaviour:
     m_Key: notice.skin_locked
     m_Metadata:
       m_Items: []
+  - m_Id: 1522245204697291
+    m_Key: settings.resolution
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697292
+    m_Key: settings.screen_mode
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697293
+    m_Key: settings.mode.fullscreen
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697294
+    m_Key: settings.mode.borderless
+    m_Metadata:
+      m_Items: []
+  - m_Id: 1522245204697295
+    m_Key: settings.mode.windowed
+    m_Metadata:
+      m_Items: []
   m_Metadata:
     m_Items: []
   m_KeyGenerator:
