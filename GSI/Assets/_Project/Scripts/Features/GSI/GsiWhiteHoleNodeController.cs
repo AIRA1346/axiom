@@ -82,7 +82,7 @@ public sealed class GsiWhiteHoleNodeController : MonoBehaviour,
             labelRt.anchorMin = new Vector2(0.5f, 0.5f);
             labelRt.anchorMax = new Vector2(0.5f, 0.5f);
             labelRt.pivot = new Vector2(0.5f, 0.5f);
-            labelRt.anchoredPosition = new Vector2(0f, -56f);
+            labelRt.anchoredPosition = new Vector2(0f, -32f);
             labelRt.sizeDelta = new Vector2(300f, 36f);
 
             _labelTmp.alignment = TextAlignmentOptions.Center;
@@ -110,20 +110,20 @@ public sealed class GsiWhiteHoleNodeController : MonoBehaviour,
         _whiteHoleVisualRoot.anchorMax = new Vector2(0.5f, 0.5f);
         _whiteHoleVisualRoot.pivot = new Vector2(0.5f, 0.5f);
         _whiteHoleVisualRoot.anchoredPosition = Vector2.zero;
-        _whiteHoleVisualRoot.sizeDelta = new Vector2(80f, 80f);
+        _whiteHoleVisualRoot.sizeDelta = new Vector2(20f, 20f);
 
         // A. 팽창형 고광도 아우라 (Intense Outward Aura Glow)
-        CreateWhiteHoleLayer("OutwardAuraGlow", 94f, 94f, 0f, new Color(EmissionDiskColor.r, EmissionDiskColor.g, EmissionDiskColor.b, 0.32f));
+        CreateWhiteHoleLayer("OutwardAuraGlow", 24f, 24f, 0f, new Color(EmissionDiskColor.r, EmissionDiskColor.g, EmissionDiskColor.b, 0.32f));
 
         // B. 분출원반 고리 (Emission Disk, 회전 및 외부 팽창감 연출)
-        var diskGo = CreateWhiteHoleLayer("EmissionDiskRing", 78f, 78f, -45f, new Color(EmissionDiskColor.r * 1.1f, EmissionDiskColor.g * 1.1f, EmissionDiskColor.b * 1.1f, 0.78f));
+        var diskGo = CreateWhiteHoleLayer("EmissionDiskRing", 20f, 20f, -45f, new Color(EmissionDiskColor.r * 1.1f, EmissionDiskColor.g * 1.1f, EmissionDiskColor.b * 1.1f, 0.78f));
         _emissionDiskRt = diskGo.GetComponent<RectTransform>();
 
         // C. 고에너지 코어 아웃라인 (High energy core edge)
-        CreateWhiteHoleLayer("InnerFlareRing", 50f, 50f, 45f, new Color(CoreGlowColor.r, CoreGlowColor.g, CoreGlowColor.b, 0.85f));
+        CreateWhiteHoleLayer("InnerFlareRing", 13f, 13f, 45f, new Color(CoreGlowColor.r, CoreGlowColor.g, CoreGlowColor.b, 0.85f));
 
         // D. 화이트홀 특이점 코어 (Singularity Core, 순수한 백색 광원)
-        CreateWhiteHoleLayer("SingularityCore", 32f, 32f, 0f, new Color(1f, 1f, 1f, 0.98f));
+        CreateWhiteHoleLayer("SingularityCore", 8f, 8f, 0f, new Color(1f, 1f, 1f, 0.98f));
     }
 
     private GameObject CreateWhiteHoleLayer(string layerName, float w, float h, float rotZ, Color color)
