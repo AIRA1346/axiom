@@ -416,9 +416,9 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         InitScreenMode();
         InitLanguages();
 
-        _langLabelTmp = AddSelectorRow(box.transform, "", () => CycleLanguage(-1), () => CycleLanguage(1), out _langValueTmp);
-        _resolutionLabelTmp = AddSelectorRow(box.transform, "", () => CycleResolution(-1), () => CycleResolution(1), out _resolutionValueTmp);
-        _screenModeLabelTmp = AddSelectorRow(box.transform, "", () => CycleScreenMode(-1), () => CycleScreenMode(1), out _screenModeValueTmp);
+        _langLabelTmp = AddSelectorRow(box.transform, "", () => CycleLanguage(-1), () => CycleLanguage(1), OpenLanguageDropdown, out _langValueTmp);
+        _resolutionLabelTmp = AddSelectorRow(box.transform, "", () => CycleResolution(-1), () => CycleResolution(1), OpenResolutionDropdown, out _resolutionValueTmp);
+        _screenModeLabelTmp = AddSelectorRow(box.transform, "", () => CycleScreenMode(-1), () => CycleScreenMode(1), OpenScreenModeDropdown, out _screenModeValueTmp);
 
         _sliderLabelTmps.Clear();
         _masterSlider = AddSliderRow(box.transform, "", v =>
@@ -815,7 +815,7 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         return btn;
     }
 
-    private TextMeshProUGUI AddSelectorRow(Transform parent, string label, UnityAction onLeft, UnityAction onRight, out TextMeshProUGUI valueTmp)
+    private TextMeshProUGUI AddSelectorRow(Transform parent, string label, UnityAction onLeft, UnityAction onRight, UnityAction onCenterClick, out TextMeshProUGUI valueTmp)
     {
         var row = new GameObject("SelectorRow_" + label, typeof(RectTransform));
         row.transform.SetParent(parent, false);
@@ -862,10 +862,30 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         var leftBtn = AddSelectorButton(selGo.transform, "<", onLeft);
         _selectorButtons.Add(leftBtn);
         
-        // Value Text
-        var valGo = new GameObject("ValueText", typeof(RectTransform));
+        // Value Container as Button
+        var valGo = new GameObject("ValueButton", typeof(RectTransform));
         valGo.transform.SetParent(selGo.transform, false);
-        var valTmpLocal = valGo.AddComponent<TextMeshProUGUI>();
+        
+        var valLe = valGo.AddComponent<LayoutElement>();
+        valLe.preferredWidth = 220f;
+        valLe.minHeight = 36f;
+        valLe.flexibleWidth = 1f;
+
+        var valImg = valGo.AddComponent<Image>();
+        valImg.color = GsiUiAppearance.ChipInactive;
+        GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(valImg);
+
+        var valBtn = valGo.AddComponent<Button>();
+        valBtn.targetGraphic = valImg;
+        valBtn.onClick.AddListener(onCenterClick);
+        GsiArcaneUi.ApplyButton(valBtn, primary: false);
+        _selectorButtons.Add(valBtn);
+
+        var labelGo = new GameObject("Label", typeof(RectTransform));
+        labelGo.transform.SetParent(valGo.transform, false);
+        StretchFull(labelGo.GetComponent<RectTransform>());
+
+        var valTmpLocal = labelGo.AddComponent<TextMeshProUGUI>();
         valTmpLocal.text = "";
         if (TmpFontCache.LiberationSansSdf != null)
         {
@@ -874,9 +894,6 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         valTmpLocal.fontSize = 18f;
         valTmpLocal.alignment = TextAlignmentOptions.Center;
         valTmpLocal.color = GsiUiAppearance.TextPrimary;
-        var valLe = valGo.AddComponent<LayoutElement>();
-        valLe.preferredWidth = 200f;
-        valLe.flexibleWidth = 1f;
 
         // Right button
         var rightBtn = AddSelectorButton(selGo.transform, ">", onRight);
@@ -1095,14 +1112,14 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         if (_resolutionValueTmp != null && _currentResolutionIndex >= 0 && _currentResolutionIndex < _resolutionsList.Count)
         {
             var res = _resolutionsList[_currentResolutionIndex];
-            _resolutionValueTmp.text = $"{res.width} x {res.height}";
+            _resolutionValueTmp.text = $"{res.width} x {res.height}  ▼";
         }
 
         if (_screenModeValueTmp != null && _currentScreenModeIndex >= 0 && _currentScreenModeIndex < _screenModes.Length)
         {
             var mode = _screenModes[_currentScreenModeIndex];
             string modeStr = GetLocalizedScreenModeName(mode);
-            _screenModeValueTmp.text = modeStr;
+            _screenModeValueTmp.text = modeStr + "  ▼";
         }
     }
 
@@ -1155,7 +1172,7 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
     {
         if (_langValueTmp != null && _currentLanguageIndex >= 0 && _currentLanguageIndex < _languagesList.Count)
         {
-            _langValueTmp.text = _languagesList[_currentLanguageIndex].displayName;
+            _langValueTmp.text = _languagesList[_currentLanguageIndex].displayName + "  ▼";
         }
     }
 
@@ -1166,5 +1183,238 @@ public sealed class GlobalSettingsOverlay : MonoBehaviour
         InitLanguages();
         UpdateDisplaySelectorTexts();
         UpdateLanguageSelectorText();
+    }
+
+    private GameObject _activeDropdown;
+
+    private void CloseActiveDropdown()
+    {
+        if (_activeDropdown != null)
+        {
+            Destroy(_activeDropdown);
+            _activeDropdown = null;
+        }
+    }
+
+    private void OpenLanguageDropdown()
+    {
+        var names = new System.Collections.Generic.List<string>();
+        foreach (var lang in _languagesList)
+        {
+            names.Add(lang.displayName);
+        }
+        ShowDropdownList(
+            GameLocalization.GetUiString(UiStringKeys.SettingsLanguage, "Language"),
+            names,
+            _currentLanguageIndex,
+            index => {
+                _currentLanguageIndex = index;
+                ApplyLanguageSettings();
+            }
+        );
+    }
+
+    private void OpenResolutionDropdown()
+    {
+        var names = new System.Collections.Generic.List<string>();
+        foreach (var res in _resolutionsList)
+        {
+            names.Add($"{res.width} x {res.height}");
+        }
+        ShowDropdownList(
+            GameLocalization.GetUiString(UiStringKeys.SettingsResolution, "Resolution"),
+            names,
+            _currentResolutionIndex,
+            index => {
+                _currentResolutionIndex = index;
+                ApplyDisplaySettings();
+            }
+        );
+    }
+
+    private void OpenScreenModeDropdown()
+    {
+        var names = new System.Collections.Generic.List<string>();
+        foreach (var mode in _screenModes)
+        {
+            names.Add(GetLocalizedScreenModeName(mode));
+        }
+        ShowDropdownList(
+            GameLocalization.GetUiString(UiStringKeys.SettingsScreenMode, "Screen Mode"),
+            names,
+            _currentScreenModeIndex,
+            index => {
+                _currentScreenModeIndex = index;
+                ApplyDisplaySettings();
+            }
+        );
+    }
+
+    private void ShowDropdownList(string title, System.Collections.Generic.IReadOnlyList<string> options, int currentIndex, UnityAction<int> onSelect)
+    {
+        CloseActiveDropdown();
+
+        if (_root == null) return;
+
+        // 1. Root Container (stretches full screen)
+        var dropdownGo = new GameObject("FloatingDropdown", typeof(RectTransform));
+        dropdownGo.transform.SetParent(_root.transform, false);
+        var rt = dropdownGo.GetComponent<RectTransform>();
+        StretchFull(rt);
+
+        // Sorting over the settings overlay (32000 -> 32100)
+        var canvas = dropdownGo.AddComponent<Canvas>();
+        canvas.overrideSorting = true;
+        canvas.sortingOrder = 32100;
+        dropdownGo.AddComponent<GraphicRaycaster>();
+
+        _activeDropdown = dropdownGo;
+
+        // 2. Click Scrim (blocks raycasts and detects clicks to close)
+        var scrimGo = new GameObject("Scrim", typeof(RectTransform));
+        scrimGo.transform.SetParent(dropdownGo.transform, false);
+        StretchFull(scrimGo.GetComponent<RectTransform>());
+        var scrimImg = scrimGo.AddComponent<Image>();
+        scrimImg.color = new Color(0f, 0f, 0f, 0.45f); // Beautiful dark glass overlay dimming!
+        scrimImg.raycastTarget = true;
+        var scrimBtn = scrimGo.AddComponent<Button>();
+        scrimBtn.targetGraphic = scrimImg;
+        scrimBtn.onClick.AddListener(CloseActiveDropdown);
+
+        // 3. Dropdown Panel Box (centered)
+        var box = new GameObject("Box", typeof(RectTransform));
+        box.transform.SetParent(dropdownGo.transform, false);
+        var boxRt = box.GetComponent<RectTransform>();
+        boxRt.anchorMin = new Vector2(0.5f, 0.5f);
+        boxRt.anchorMax = new Vector2(0.5f, 0.5f);
+        boxRt.pivot = new Vector2(0.5f, 0.5f);
+        
+        // Responsive height: capped at 480px or based on item count
+        float preferredHeight = Mathf.Min(80f + options.Count * 46f, 480f);
+        boxRt.sizeDelta = new Vector2(380f, preferredHeight);
+        boxRt.anchoredPosition = Vector2.zero;
+
+        var boxImg = box.AddComponent<Image>();
+        boxImg.color = GsiUiAppearance.Panel;
+        GsiArcaneUi.ApplyPanel(boxImg);
+        boxImg.raycastTarget = true;
+
+        var boxV = box.AddComponent<VerticalLayoutGroup>();
+        boxV.padding = new RectOffset(18, 18, 16, 16);
+        boxV.spacing = 12f;
+        boxV.childAlignment = TextAnchor.UpperCenter;
+        boxV.childControlWidth = true;
+        boxV.childControlHeight = true;
+        boxV.childForceExpandWidth = true;
+        boxV.childForceExpandHeight = false;
+
+        // Title
+        var titleGo = new GameObject("Title", typeof(RectTransform));
+        titleGo.transform.SetParent(box.transform, false);
+        var titleTmp = titleGo.AddComponent<TextMeshProUGUI>();
+        titleTmp.text = title;
+        titleTmp.fontSize = 20f;
+        titleTmp.fontStyle = FontStyles.Bold;
+        titleTmp.alignment = TextAlignmentOptions.Center;
+        titleTmp.color = GsiUiAppearance.TextSecondary;
+        if (TmpFontCache.LiberationSansSdf != null)
+        {
+            titleTmp.font = TmpFontCache.LiberationSansSdf;
+        }
+        var titleLe = titleGo.AddComponent<LayoutElement>();
+        titleLe.preferredHeight = 30f;
+        titleLe.flexibleHeight = 0f;
+
+        // Scroll Area Container
+        var scrollGo = new GameObject("ScrollArea", typeof(RectTransform));
+        scrollGo.transform.SetParent(box.transform, false);
+        var scrollLe = scrollGo.AddComponent<LayoutElement>();
+        scrollLe.flexibleWidth = 1f;
+        scrollLe.flexibleHeight = 1f;
+        scrollLe.minHeight = 100f;
+
+        var scroll = scrollGo.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 35f;
+
+        // Viewport
+        var viewport = new GameObject("Viewport", typeof(RectTransform));
+        viewport.transform.SetParent(scrollGo.transform, false);
+        var vpRt = viewport.GetComponent<RectTransform>();
+        StretchFull(vpRt);
+        viewport.AddComponent<RectMask2D>();
+        var vpImg = viewport.AddComponent<Image>();
+        vpImg.color = new Color(0f, 0f, 0f, 0f);
+        vpImg.raycastTarget = true;
+
+        // Content List
+        var content = new GameObject("Content", typeof(RectTransform));
+        content.transform.SetParent(viewport.transform, false);
+        var contentRt = content.GetComponent<RectTransform>();
+        contentRt.anchorMin = new Vector2(0f, 1f);
+        contentRt.anchorMax = new Vector2(1f, 1f);
+        contentRt.pivot = new Vector2(0.5f, 1f);
+        contentRt.anchoredPosition = Vector2.zero;
+        contentRt.sizeDelta = new Vector2(0f, 0f);
+
+        var contentV = content.AddComponent<VerticalLayoutGroup>();
+        contentV.spacing = 6f;
+        contentV.childAlignment = TextAnchor.UpperCenter;
+        contentV.childControlWidth = true;
+        contentV.childControlHeight = true;
+        contentV.childForceExpandWidth = true;
+        contentV.childForceExpandHeight = false;
+
+        var contentCsf = content.AddComponent<ContentSizeFitter>();
+        contentCsf.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        contentCsf.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        scroll.viewport = vpRt;
+        scroll.content = contentRt;
+
+        // Populate items
+        for (int i = 0; i < options.Count; i++)
+        {
+            int index = i;
+            bool isCurrent = i == currentIndex;
+            string optionText = options[i];
+
+            var itemGo = new GameObject("Item_" + index, typeof(RectTransform));
+            itemGo.transform.SetParent(content.transform, false);
+            var itemLe = itemGo.AddComponent<LayoutElement>();
+            itemLe.minHeight = 40f;
+            itemLe.preferredHeight = 40f;
+
+            var itemImg = itemGo.AddComponent<Image>();
+            itemImg.color = isCurrent ? GsiUiAppearance.SecondaryButton : new Color(0f, 0f, 0f, 0f);
+            GsiUiRuntimeWidgets.EnsureUiSlicedBackgroundSprite(itemImg);
+
+            var itemBtn = itemGo.AddComponent<Button>();
+            itemBtn.targetGraphic = itemImg;
+            itemBtn.onClick.AddListener(() =>
+            {
+                onSelect(index);
+                CloseActiveDropdown();
+            });
+
+            GsiArcaneUi.ApplyButton(itemBtn, primary: isCurrent);
+
+            var labelGo = new GameObject("Label", typeof(RectTransform));
+            labelGo.transform.SetParent(itemGo.transform, false);
+            StretchFull(labelGo.GetComponent<RectTransform>());
+            
+            var labelTmp = labelGo.AddComponent<TextMeshProUGUI>();
+            labelTmp.text = isCurrent ? optionText + "  ✓" : optionText;
+            labelTmp.fontSize = 18f;
+            labelTmp.fontStyle = isCurrent ? FontStyles.Bold : FontStyles.Normal;
+            labelTmp.alignment = TextAlignmentOptions.Center;
+            labelTmp.color = isCurrent ? CosmeticTheme.UiAccent : GsiUiAppearance.TextPrimary;
+            if (TmpFontCache.LiberationSansSdf != null)
+            {
+                labelTmp.font = TmpFontCache.LiberationSansSdf;
+            }
+        }
     }
 }
