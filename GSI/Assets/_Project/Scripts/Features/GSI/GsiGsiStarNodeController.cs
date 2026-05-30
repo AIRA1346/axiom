@@ -57,7 +57,7 @@ public sealed class GsiGsiStarNodeController : StarNodeControllerBase
         base.BuildStarVisuals(); // Creates _starVisualRoot
 
         // Layer 1: Aura Outer Glow (은은한 백그라운드 오라)
-        CreateStarLayer("OuterGlow", 18f, 18f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.3f));
+        CreateStarLayer("OuterGlow", 13f, 13f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.3f));
 
         // Layer 2: Spike Vertical (세로 나선 불꽃)
         CreateStarLayer("SpikeV", 1.5f, 26f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.92f));

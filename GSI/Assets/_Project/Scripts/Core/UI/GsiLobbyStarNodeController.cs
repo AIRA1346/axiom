@@ -45,10 +45,10 @@ public sealed class GsiLobbyStarNodeController : StarNodeControllerBase
         base.BuildStarVisuals(); // Creates _starVisualRoot
 
         // Layer 1: Aura Outer Glow (Vibrant background bloom)
-        CreateStarLayer("AuraGlow", 20f, 20f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.35f));
+        CreateStarLayer("AuraGlow", 15f, 15f, 45f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.35f));
 
         // Layer 2: Secondary soft ring glow (Lobby exclusive)
-        CreateStarLayer("InnerRingGlow", 12f, 12f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.15f));
+        CreateStarLayer("InnerRingGlow", 9f, 9f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.15f));
 
         // Layer 3: Vertical Flare Spike
         CreateStarLayer("SpikeV", 1.8f, 28f, 0f, new Color(StarColor.r, StarColor.g, StarColor.b, 0.95f));
