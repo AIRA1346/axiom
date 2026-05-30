@@ -48,6 +48,19 @@ public sealed class EconomyManager : MonoBehaviour
         }
     }
 
+    private float _stardustFarmingTimer = 0f;
+    private const float StardustFarmingInterval = 10f;
+
+    private void Update()
+    {
+        _stardustFarmingTimer += Time.unscaledDeltaTime;
+        if (_stardustFarmingTimer >= StardustFarmingInterval)
+        {
+            _stardustFarmingTimer -= StardustFarmingInterval;
+            AddStardust(1);
+        }
+    }
+
     // 1. 별가루 (Stardust) 관련 메서드
     public void AddStardust(int amount)
     {
