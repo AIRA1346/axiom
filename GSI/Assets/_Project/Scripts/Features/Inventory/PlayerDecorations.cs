@@ -183,6 +183,11 @@ public static class PlayerDecorations
                 string id = tokens[0];
                 if (float.TryParse(tokens[1], out float x) && float.TryParse(tokens[2], out float y))
                 {
+                    if (float.IsNaN(x) || float.IsInfinity(x) || float.IsNaN(y) || float.IsInfinity(y))
+                    {
+                        x = 0.5f;
+                        y = 0.5f;
+                    }
                     list.Add(new PlacedDecoData(id, new Vector2(x, y)));
                 }
             }
@@ -195,7 +200,11 @@ public static class PlayerDecorations
         var parts = new List<string>();
         for (int i = 0; i < decos.Count; i++)
         {
-            parts.Add($"{decos[i].ItemId}:{decos[i].NormalizedPos.x:F4}:{decos[i].NormalizedPos.y:F4}");
+            float x = decos[i].NormalizedPos.x;
+            float y = decos[i].NormalizedPos.y;
+            if (float.IsNaN(x) || float.IsInfinity(x)) x = 0.5f;
+            if (float.IsNaN(y) || float.IsInfinity(y)) y = 0.5f;
+            parts.Add($"{decos[i].ItemId}:{x:F4}:{y:F4}");
         }
         string raw = string.Join(";", parts);
         GsiSaveSystem.SetString(PlacedPrefix + sceneName, raw);

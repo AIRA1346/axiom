@@ -272,6 +272,9 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         var parentRt = (RectTransform)transform.parent;
         Rect parentRect = parentRt.rect;
 
+        // 최초 1프레임 부모 Canvas 앵커 정렬 지연(크기 미정) 시 물리 이탈 방지
+        if (parentRect.width < 100f || parentRect.height < 100f) return;
+
         float marginX = 40f;
         float marginY_min = 180f + 16f; // 하단 패널 높이만큼 충돌 반사 가로막 지정
         float marginY_max = 64f;
