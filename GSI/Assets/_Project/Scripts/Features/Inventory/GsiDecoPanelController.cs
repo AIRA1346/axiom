@@ -336,20 +336,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             };
             _cards.Add(cardUi);
 
-            // 5. 카드 드래그 앤 드롭 트리거 바인딩
-            var trigger = cardGo.AddComponent<EventTrigger>();
-            
-            var beginEntry = new EventTrigger.Entry { eventID = EventTriggerType.BeginDrag };
-            beginEntry.callback.AddListener((data) => OnCardBeginDrag((PointerEventData)data, def.Id));
-            trigger.triggers.Add(beginEntry);
-
-            var dragEntry = new EventTrigger.Entry { eventID = EventTriggerType.Drag };
-            dragEntry.callback.AddListener((data) => OnCardDrag((PointerEventData)data));
-            trigger.triggers.Add(dragEntry);
-
-            var endEntry = new EventTrigger.Entry { eventID = EventTriggerType.EndDrag };
-            endEntry.callback.AddListener((data) => OnCardEndDrag((PointerEventData)data));
-            trigger.triggers.Add(endEntry);
+            // 5. 카드 드래그 앤 드롭 컴포넌트 바인딩
+            var cardComponent = cardGo.AddComponent<GsiDecoCard>();
+            cardComponent.ItemId = def.Id;
+            cardComponent.PanelController = this;
         }
         RefreshAllCards();
     }
@@ -415,10 +405,15 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     // ─── 인벤토리 카드 드래그 제어 (신규 아이템 생성) ──────────────────────────
 
-    private void OnCardBeginDrag(PointerEventData eventData, string itemId)
+    public void OnCardBeginDrag(PointerEventData eventData, string itemId)
     {
-        if (PlayerDecorations.GetAvailableCount(itemId) <= 0)
+        int total = PlayerDecorations.GetTotalOwned(itemId);
+        int available = PlayerDecorations.GetAvailableCount(itemId);
+        Debug.Log($"[GsiDecoPanelController] OnCardBeginDrag: ItemId={itemId}, TotalOwned={total}, Available={available}");
+
+        if (available <= 0)
         {
+            Debug.LogWarning($"[GsiDecoPanelController] Cancel drag: No available count for {itemId}");
             eventData.pointerDrag = null; // 드래그 취소
             return;
         }
@@ -444,16 +439,18 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         GsiUiSound.PlayClick();
     }
 
-    private void OnCardDrag(PointerEventData eventData)
+    public void OnCardDrag(PointerEventData eventData)
     {
+        Debug.Log($"[GsiDecoPanelController] OnCardDrag: position={eventData.position}");
         if (_dragPreviewGo != null)
         {
             UpdateDragPreviewPos(eventData.position);
         }
     }
 
-    private void OnCardEndDrag(PointerEventData eventData)
+    public void OnCardEndDrag(PointerEventData eventData)
     {
+        Debug.Log($"[GsiDecoPanelController] OnCardEndDrag: position={eventData.position}");
         if (_dragPreviewGo == null) return;
 
         Destroy(_dragPreviewGo);
@@ -461,6 +458,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
         // 드롭된 마우스 포인터의 위치가 하단 드로어 패널 내부인지 외부인지 체크
         bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, eventData.position, eventData.pressEventCamera);
+        Debug.Log($"[GsiDecoPanelController] dropInPanel={dropInPanel}");
 
         if (!dropInPanel)
         {
@@ -469,6 +467,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_decoContainer, eventData.position, eventData.pressEventCamera, out localPoint))
             {
                 Vector2 parentSize = _decoContainer.rect.size;
+                Debug.Log($"[GsiDecoPanelController] localPoint={localPoint}, parentSize={parentSize}");
                 if (parentSize.x > 0 && parentSize.y > 0)
                 {
                     float nx = localPoint.x / parentSize.x + 0.5f;
@@ -568,6 +567,48 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         if (Instance == this)
         {
             Instance = null;
+        }
+    }
+}
+
+/// <summary>
+/// 인벤토리 데코 카드의 드래그 앤 드롭 입력을 직접 수신하여 EventSystem의 ScrollRect 간섭을 차단하고 
+/// 드래그 타겟 지정을 강제하는 UI 드래그 바인딩 컴포넌트
+/// </summary>
+public sealed class GsiDecoCard : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+{
+    public string ItemId;
+    public GsiDecoPanelController PanelController;
+
+    public void OnPointerDown(PointerEventData eventData)
+    {
+        // EventSystem에 이 오브젝트가 클릭되었음을 알려 드래그 주도권을 선점하도록 만듦
+        Debug.Log($"[GsiDecoCard] OnPointerDown: ItemId={ItemId}");
+    }
+
+    public void OnBeginDrag(PointerEventData eventData)
+    {
+        Debug.Log($"[GsiDecoCard] OnBeginDrag: ItemId={ItemId}");
+        if (PanelController != null)
+        {
+            PanelController.OnCardBeginDrag(eventData, ItemId);
+        }
+    }
+
+    public void OnDrag(PointerEventData eventData)
+    {
+        if (PanelController != null)
+        {
+            PanelController.OnCardDrag(eventData);
+        }
+    }
+
+    public void OnEndDrag(PointerEventData eventData)
+    {
+        Debug.Log($"[GsiDecoCard] OnEndDrag: ItemId={ItemId}");
+        if (PanelController != null)
+        {
+            PanelController.OnCardEndDrag(eventData);
         }
     }
 }
