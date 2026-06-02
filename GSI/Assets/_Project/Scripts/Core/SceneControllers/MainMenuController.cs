@@ -315,6 +315,11 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         TryPlayLobbyBgm();
+
+        if (Application.isPlaying)
+        {
+            GsiDecoPanelController.EnsureCreated();
+        }
     }
 
     private void OnDestroy()

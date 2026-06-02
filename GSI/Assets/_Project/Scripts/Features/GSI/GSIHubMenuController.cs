@@ -65,6 +65,11 @@ public sealed class GSIHubMenuController : MonoBehaviour
         {
             EconomyManager.Instance.OnEconomyChanged += HandleEconomyChanged;
         }
+
+        if (Application.isPlaying)
+        {
+            GsiDecoPanelController.EnsureCreated();
+        }
     }
 
 #if UNITY_EDITOR

@@ -16,6 +16,9 @@ public static class GsiShopLikeOfferDisplayNames
             UiStringKeys.ShopOfferSkinAmber => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinAmber, "UI skin: Amber"),
             UiStringKeys.ShopOfferSkinViolet => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinViolet, "UI skin: Violet"),
             UiStringKeys.ShopOfferSkinAstralVoid => GameLocalization.GetUiString(UiStringKeys.ShopOfferSkinAstralVoid, "UI Skin: Astral Void"),
+            UiStringKeys.ShopOfferDecoYellowStar => GameLocalization.GetUiString(UiStringKeys.ShopOfferDecoYellowStar, "Deco: Yellow Star"),
+            UiStringKeys.ShopOfferDecoPurpleCrystal => GameLocalization.GetUiString(UiStringKeys.ShopOfferDecoPurpleCrystal, "Deco: Purple Crystal"),
+            UiStringKeys.ShopOfferDecoNeonRing => GameLocalization.GetUiString(UiStringKeys.ShopOfferDecoNeonRing, "Deco: Neon Ring"),
             _ => offer.Id
         };
     }

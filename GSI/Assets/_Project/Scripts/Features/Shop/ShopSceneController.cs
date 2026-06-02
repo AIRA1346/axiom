@@ -457,6 +457,49 @@ public sealed class ShopSceneController : MonoBehaviour
             buyLe.preferredWidth = 148f;
             GsiUiRuntimeWidgets.ApplyAccentTintedActionButton(buyBtn);
         }
+        else if (offer.Kind == ShopCatalog.OfferKind.DecoItem)
+        {
+            Color rarityColor = Color.white;
+            string rarityName = "일반";
+            if (PlayerDecorations.TryGetItemDef(offer.Id, out var def))
+            {
+                rarityColor = PlayerDecorations.GetRarityColor(def.Rarity);
+                bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                             UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+                rarityName = PlayerDecorations.GetRarityName(def.Rarity, isKo);
+            }
+
+            var rarityTmp = GsiUiRuntimeWidgets.CreateTmp(row.transform, $"[{rarityName}]", 20f, FontStyles.Bold);
+            rarityTmp.color = rarityColor;
+            GsiUiRuntimeWidgets.ApplyListRowSecondaryLabel(rarityTmp);
+            var rarityLe = rarityTmp.gameObject.AddComponent<LayoutElement>();
+            rarityLe.preferredWidth = 100f;
+
+            var priceTmp = GsiUiRuntimeWidgets.CreateTmp(row.transform,
+                GameLocalization.FormatUiString(UiStringKeys.ShopPriceStardustFmt, "{0} stardust", offer.PriceStardust), 20f, FontStyles.Normal);
+            priceTmp.color = GsiUiAppearance.TextSecondary;
+            GsiUiRuntimeWidgets.ApplyListRowSecondaryLabel(priceTmp);
+            var priceLe = priceTmp.gameObject.AddComponent<LayoutElement>();
+            priceLe.preferredWidth = 140f;
+
+            int ownedCount = PlayerDecorations.GetTotalOwned(offer.Id);
+            bool isKoMsg = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                           UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+            string ownedText = isKoMsg ? $"보유: {ownedCount}개" : $"Owned: {ownedCount}";
+            var ownedTmp = GsiUiRuntimeWidgets.CreateTmp(row.transform, ownedText, 20f, FontStyles.Normal);
+            ownedTmp.color = GsiUiAppearance.TextSecondary;
+            GsiUiRuntimeWidgets.ApplyListRowSecondaryLabel(ownedTmp);
+            var ownedLe = ownedTmp.gameObject.AddComponent<LayoutElement>();
+            ownedLe.preferredWidth = 110f;
+
+            bool canBuy = stardust >= offer.PriceStardust;
+            var buyBtn = GsiUiRuntimeWidgets.CreateButton(row.transform,
+                GameLocalization.GetUiString(UiStringKeys.ShopBuy, "Buy"), () => TryBuyDecoItem(offer));
+            buyBtn.interactable = canBuy;
+            var buyLe = buyBtn.gameObject.AddComponent<LayoutElement>();
+            buyLe.preferredWidth = 148f;
+            GsiUiRuntimeWidgets.ApplyAccentTintedActionButton(buyBtn);
+        }
         else
         {
             bool owned = PlayerCosmetics.IsSkinOwned(offer.Id);
@@ -535,6 +578,26 @@ public sealed class ShopSceneController : MonoBehaviour
                 }
             }
         }
+    }
+
+    private void TryBuyDecoItem(ShopCatalog.Offer offer)
+    {
+        if (EconomyManager.Instance == null || offer.Kind != ShopCatalog.OfferKind.DecoItem)
+        {
+            return;
+        }
+
+        if (!EconomyManager.Instance.SpendStardust(offer.PriceStardust))
+        {
+            return;
+        }
+
+        int current = PlayerDecorations.GetTotalOwned(offer.Id);
+        PlayerDecorations.SetTotalOwned(offer.Id, current + 1);
+
+        GsiUiSound.PlayClick();
+        RefreshHeader();
+        RebuildRows(scrollListToTop: false);
     }
 
     private void TryBuyTickets(ShopCatalog.Offer offer)
