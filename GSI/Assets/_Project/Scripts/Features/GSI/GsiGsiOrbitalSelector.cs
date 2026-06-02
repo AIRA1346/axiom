@@ -30,22 +30,9 @@ public sealed class GsiGsiOrbitalSelector : MonoBehaviour
 
     private void Start()
     {
-        // 1. 얇고 세련된 반투명 궤도 링(Glow Ring) 가이드 생성
-        _orbitRingGo = new GameObject("OrbitRing", typeof(RectTransform), typeof(Image));
-        var ringRt = _orbitRingGo.GetComponent<RectTransform>();
-        ringRt.SetParent(transform, false);
-        ringRt.anchorMin = new Vector2(0.5f, 0.5f);
-        ringRt.anchorMax = new Vector2(0.5f, 0.5f);
-        ringRt.pivot = new Vector2(0.5f, 0.5f);
-        ringRt.anchoredPosition = Vector2.zero;
-        ringRt.sizeDelta = new Vector2(OrbitRadius * 2f, OrbitRadius * 2f);
-
-        _orbitRingImg = _orbitRingGo.GetComponent<Image>();
-        _orbitRingImg.sprite = null;
-        // 동적 원형 링 텍스처를 그리거나, 얇은 아웃라인 효과를 줍니다.
-        // 여기선 얇은 원을 흉내 내기 위해 투명 배경에 네온 테두리 느낌을 주는 머티리얼 또는 단순 컬러로 세련되게 처리합니다.
-        _orbitRingImg.color = new Color(ThemeColor.r, ThemeColor.g, ThemeColor.b, 0.08f); // 옅은 네온 서클 면
-        _orbitRingImg.raycastTarget = false;
+        // 1. 얇고 세련된 반투명 궤도 링(Glow Ring) 가이드 생성 (네모 배경 제거를 위해 생성하지 않음)
+        _orbitRingGo = null;
+        _orbitRingImg = null;
 
         // 2. 피드백 가이드 텍스트 (호버한 단계 정보 브랜딩 툴팁)
         var textGo = new GameObject("OrbitalFeedbackText", typeof(RectTransform), typeof(TextMeshProUGUI), typeof(CanvasGroup));
