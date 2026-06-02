@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using ArchE.Game;
 
 /// <summary>
 /// 배경에 배치된 개별 데코 아이템의 관성 유영, 탄성 충돌, 경계면 반사 및 비주얼 제어를 담당하는 물리 천체 컴포넌트
