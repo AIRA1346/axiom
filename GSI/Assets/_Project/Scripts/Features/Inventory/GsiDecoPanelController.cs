@@ -253,6 +253,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             var outImg = outlineGo.GetComponent<Image>();
             outImg.sprite = null;
             outImg.color = PlayerDecorations.GetRarityColor(def.Rarity);
+            outImg.raycastTarget = false;
             var outLe = outlineGo.AddComponent<Outline>();
             outLe.effectColor = PlayerDecorations.GetRarityColor(def.Rarity);
             outLe.effectDistance = new Vector2(1f, 1f);
@@ -459,7 +460,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         _dragPreviewGo = null;
 
         // 드롭된 마우스 포인터의 위치가 하단 드로어 패널 내부인지 외부인지 체크
-        bool dropInPanel = eventData.position.y / _canvas.scaleFactor <= PanelHeight;
+        bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, eventData.position, eventData.pressEventCamera);
 
         if (!dropInPanel)
         {
@@ -491,7 +492,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private void UpdateDragPreviewPos(Vector2 screenPos)
     {
         Vector2 localPoint;
-        if (RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)_canvas.transform, screenPos, _canvas.worldCamera, out localPoint))
+        Camera cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
+        if (RectTransformUtility.ScreenPointToLocalPointInRectangle((RectTransform)_canvas.transform, screenPos, cam, out localPoint))
         {
             _dragPreviewGo.GetComponent<RectTransform>().anchoredPosition = localPoint;
         }
@@ -513,8 +515,9 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         if (cg != null) cg.alpha = 1f;
 
         // 드롭 좌표가 하단 패널 내부인지 체크 (패널 회수)
-        Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(_canvas.worldCamera, deco.transform.position);
-        bool dropInPanel = screenPos.y / _canvas.scaleFactor <= PanelHeight;
+        Camera cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
+        Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, deco.transform.position);
+        bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPos, cam);
 
         if (dropInPanel)
         {
@@ -527,7 +530,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         {
             // 위치 업데이트 및 좌표 재정규화
             Vector2 localPoint;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_decoContainer, screenPos, _canvas.worldCamera, out localPoint))
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_decoContainer, screenPos, cam, out localPoint))
             {
                 Vector2 parentSize = _decoContainer.rect.size;
                 if (parentSize.x > 0 && parentSize.y > 0)
