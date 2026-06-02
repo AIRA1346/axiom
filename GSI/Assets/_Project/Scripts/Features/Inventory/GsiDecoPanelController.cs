@@ -18,6 +18,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private const string SaveKeyPrefix = "GSI_Deco_Placed_";
 
     private Canvas _canvas;
+    private Canvas _targetCanvas;        // 데코 배치용 메인 캔버스
     private RectTransform _decoContainer; // 배치된 데코들이 들어갈 레이어
     private RectTransform _panelRt;       // 슬라이드업 드로어 패널
     private RectTransform _contentRt;      // ScrollRect의 콘텐츠
@@ -97,8 +98,34 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         Debug.Log($"[GsiDecoPanelController] EnsureCreated: Parent canvas selected -> {targetCanvas.name} (sortingOrder={targetCanvas.sortingOrder})");
 
         var go = new GameObject("GsiDecoPanelManager");
-        go.transform.SetParent(targetCanvas.transform, false);
-        Instance = go.AddComponent<GsiDecoPanelController>();
+        var controller = go.AddComponent<GsiDecoPanelController>();
+        controller.InitCanvas(targetCanvas);
+        Instance = controller;
+    }
+
+    /// <summary>
+    /// 자체 독립 Canvas 및 데코 배치 대상 Canvas 설정
+    /// </summary>
+    public void InitCanvas(Canvas targetCanvas)
+    {
+        _targetCanvas = targetCanvas;
+        
+        _canvas = gameObject.GetComponent<Canvas>();
+        if (_canvas == null) _canvas = gameObject.AddComponent<Canvas>();
+        _canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+        _canvas.sortingOrder = 90; // 일반 게임 UI들보다 위에 배치하여 완벽한 터치 우선권 획득
+        
+        var scaler = gameObject.GetComponent<CanvasScaler>();
+        if (scaler == null) scaler = gameObject.AddComponent<CanvasScaler>();
+        scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+        scaler.referenceResolution = new Vector2(1920, 1080);
+        scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
+        scaler.matchWidthOrHeight = 0.5f;
+
+        if (gameObject.GetComponent<GraphicRaycaster>() == null)
+        {
+            gameObject.AddComponent<GraphicRaycaster>();
+        }
     }
 
     private void Awake()
@@ -110,7 +137,20 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         }
         Instance = this;
 
-        _canvas = GetComponentInParent<Canvas>();
+        // EnsureCreated를 통하지 않고 에디터상 수동 배치 등으로 깨질 수 있으므로 대비책 마련
+        if (_canvas == null)
+        {
+            _canvas = GetComponent<Canvas>();
+            if (_canvas == null)
+            {
+                var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+                if (canvases.Length > 0)
+                {
+                    InitCanvas(canvases[0]);
+                }
+            }
+        }
+
         _sceneKey = SceneManager.GetActiveScene().name == SceneNames.GSI ? "GSI" : "Lobby";
 
         BuildUi();
@@ -174,9 +214,32 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         // 1. 배치 영역 컨테이너 생성 (배경 이미지 위, UI 아래 정렬)
         var containerGo = new GameObject("DecoPlacementContainer", typeof(RectTransform));
         _decoContainer = containerGo.GetComponent<RectTransform>();
-        _decoContainer.SetParent(_canvas.transform, false);
+        
+        // _targetCanvas가 Null일 경우 안전하게 씬 메인 캔버스 탐색
+        if (_targetCanvas == null)
+        {
+            var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                if (canvases[i].isActiveAndEnabled && canvases[i] != _canvas)
+                {
+                    _targetCanvas = canvases[i];
+                    break;
+                }
+            }
+        }
+
+        if (_targetCanvas != null)
+        {
+            _decoContainer.SetParent(_targetCanvas.transform, false);
+            _decoContainer.SetSiblingIndex(1); // 0번째가 배경, 1번째가 데코, 그 위에 노드와 허브 UI
+        }
+        else
+        {
+            _decoContainer.SetParent(_canvas.transform, false);
+            _decoContainer.SetSiblingIndex(0);
+        }
         GsiUiRuntimeWidgets.StretchFull(_decoContainer);
-        _decoContainer.SetSiblingIndex(1); // 0번째가 배경, 1번째가 데코, 그 위에 노드와 허브 UI
 
         // 3. 메인 데코 슬라이딩 패널 (하단 전체 꽉 채움)
         var panelGo = new GameObject("GsiDecoPanel", typeof(RectTransform), typeof(Image));
@@ -234,17 +297,26 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var scrollImg = scrollGo.GetComponent<Image>();
         scrollImg.sprite = null;
         scrollImg.color = Color.clear;
-        scrollImg.raycastTarget = true;
+        scrollImg.raycastTarget = false; // 부모 ScrollRect가 하위 카드들의 레이캐스트를 뺏지 못하도록 비활성화
 
         var scroll = scrollGo.GetComponent<ScrollRect>();
         scroll.vertical = false;
         scroll.horizontal = true;
 
-        // Viewport
-        var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
+        // Viewport (Unity 6 LTS 내 RectMask2D의 레이캐스트 정렬 오판을 회피하기 위해 표준 Mask 사용)
+        var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Image), typeof(Mask));
         var viewportRt = viewportGo.GetComponent<RectTransform>();
         viewportRt.SetParent(scrollRt, false);
         GsiUiRuntimeWidgets.StretchFull(viewportRt);
+        
+        var viewportImg = viewportGo.GetComponent<Image>();
+        viewportImg.sprite = null;
+        viewportImg.color = new Color(1f, 1f, 1f, 0.005f); // 투명에 가까운 픽셀 설정 (Mask를 위해 그래픽 활성화)
+        viewportImg.raycastTarget = false; // 마스크 뷰포트 자체가 터치를 뺏지 않도록 차단
+        
+        var mask = viewportGo.GetComponent<Mask>();
+        mask.showMaskGraphic = false;
+
         scroll.viewport = viewportRt;
 
         // Content
@@ -280,6 +352,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             var cardGo = new GameObject($"Card_{def.Id}", typeof(RectTransform), typeof(Image), typeof(LayoutElement));
             var cardRt = cardGo.GetComponent<RectTransform>();
             cardRt.SetParent(_contentRt, false);
+            cardRt.localPosition = new Vector3(cardRt.localPosition.x, cardRt.localPosition.y, 0f);
+            cardRt.localScale = Vector3.one;
 
             var le = cardGo.GetComponent<LayoutElement>();
             le.preferredWidth = 110f;
@@ -472,6 +546,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         rt.SetParent(_canvas.transform, false);
         rt.sizeDelta = new Vector2(28f, 28f);
         rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.localPosition = new Vector3(rt.localPosition.x, rt.localPosition.y, 0f);
+        rt.localScale = Vector3.one;
 
         var img = _dragPreviewGo.GetComponent<Image>();
         img.sprite = null;
@@ -621,7 +697,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 /// 인벤토리 데코 카드의 드래그 앤 드롭 입력을 직접 수신하여 EventSystem의 ScrollRect 간섭을 차단하고 
 /// 드래그 타겟 지정을 강제하는 UI 드래그 바인딩 컴포넌트
 /// </summary>
-public sealed class GsiDecoCard : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public sealed class GsiDecoCard : MonoBehaviour, 
+    IPointerDownHandler, IPointerUpHandler, 
+    IBeginDragHandler, IDragHandler, IEndDragHandler,
+    IPointerEnterHandler, IPointerExitHandler, IPointerClickHandler
 {
     public string ItemId;
     public GsiDecoPanelController PanelController;
@@ -630,6 +709,21 @@ public sealed class GsiDecoCard : MonoBehaviour, IPointerDownHandler, IPointerUp
     private void Awake()
     {
         _parentScroll = GetComponentInParent<ScrollRect>();
+    }
+
+    public void OnPointerEnter(PointerEventData eventData)
+    {
+        Debug.Log($"[GsiDecoCard] OnPointerEnter: ItemId={ItemId}");
+    }
+
+    public void OnPointerExit(PointerEventData eventData)
+    {
+        Debug.Log($"[GsiDecoCard] OnPointerExit: ItemId={ItemId}");
+    }
+
+    public void OnPointerClick(PointerEventData eventData)
+    {
+        Debug.Log($"[GsiDecoCard] OnPointerClick: ItemId={ItemId}");
     }
 
     public void OnPointerDown(PointerEventData eventData)
