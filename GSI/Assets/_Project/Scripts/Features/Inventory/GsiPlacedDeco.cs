@@ -1,10 +1,11 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 using ArchE.Game;
 
 /// <summary>
-/// 배경에 배치된 개별 데코 아이템의 관성 유영, 탄성 충돌, 경계면 반사 및 비주얼 제어를 담당하는 물리 천체 컴포넌트
+/// 배경에 배치된 개별 데코 아이템의 관성 유영, 탄성 충돌, 경계면 반사 및 마우스 호버 반응 툴팁/스케일 연출을 제어하는 물리 컴포넌트
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
 public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
@@ -17,12 +18,16 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
     private bool _isDragging = false;
     private Vector2 _velocity;
 
-    // 애니메이션 제어용 프라이빗 캐시
+    // 애니메이션 및 마우스 호버 피드백 캐시
     private Transform _visualRoot;
     private Transform _glowLayer;
     private Transform _spikeV;
     private Transform _spikeH;
     private float _randomPhaseOffset;
+
+    private CanvasGroup _labelCanvasGroup;
+    private TextMeshProUGUI _labelTmp;
+    private float _currentScale = 1f;
 
     // ─── ICosmicKineticObject 인터페이스 구현부 ───────────────────
     public RectTransform rectTransform => _rectTransform;
@@ -66,6 +71,9 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         {
             BuildProceduralVisuals(def);
         }
+
+        // 4. 툴팁 가이드 라벨 생성
+        BuildTooltipLabel();
     }
 
     private void Start()
@@ -80,6 +88,51 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
 
         // 초기 자율 표류를 위한 느린 속도 인가
         _velocity = new Vector2(UnityEngine.Random.Range(-40f, 40f), UnityEngine.Random.Range(-40f, 40f));
+    }
+
+    private void BuildTooltipLabel()
+    {
+        var labelGo = new GameObject("TooltipLabel", typeof(RectTransform), typeof(CanvasGroup));
+        labelGo.transform.SetParent(transform, false);
+
+        var rt = labelGo.GetComponent<RectTransform>();
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = new Vector2(0f, 32f); // 데코 바로 위에 플로팅 노출
+        rt.sizeDelta = new Vector2(200f, 30f);
+
+        _labelTmp = labelGo.AddComponent<TextMeshProUGUI>();
+        if (TmpFontCache.LiberationSansSdf != null)
+        {
+            _labelTmp.font = TmpFontCache.LiberationSansSdf;
+        }
+
+        // 아이템 정보 로드 및 로컬라이징 텍스트 적용
+        if (PlayerDecorations.TryGetItemDef(ItemId, out var def))
+        {
+            bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                        UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+            
+            string rarityName = PlayerDecorations.GetRarityName(def.Rarity, isKo);
+            string displayName = GameLocalization.GetUiString(def.DisplayNameKey, def.EnglishName);
+            _labelTmp.text = $"[{rarityName}] {displayName}";
+        }
+        else
+        {
+            _labelTmp.text = ItemId;
+        }
+
+        _labelTmp.fontSize = 11f;
+        _labelTmp.fontStyle = FontStyles.Bold;
+        _labelTmp.alignment = TextAlignmentOptions.Center;
+        _labelTmp.color = Color.white;
+        _labelTmp.raycastTarget = false;
+
+        _labelCanvasGroup = labelGo.GetComponent<CanvasGroup>();
+        _labelCanvasGroup.alpha = 0f;
+        _labelCanvasGroup.interactable = false;
+        _labelCanvasGroup.blocksRaycasts = false;
     }
 
     private void BuildProceduralVisuals(PlayerDecorations.DecoItemDef def)
@@ -140,12 +193,49 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
     {
         float time = Time.unscaledTime + _randomPhaseOffset;
 
-        // 아이템별 고유 로컬 연출 애니메이션 (물리 이동 루프와 간섭되지 않도록 비주얼 루트에만 한정 적용)
+        // 1. 마우스 호버(오버) 수동 감지 (uGUI Sibling 차단 우회)
+        bool isHovered = false;
+        var mouse = UnityEngine.InputSystem.Mouse.current;
+        if (mouse != null)
+        {
+            Vector2 mousePos = mouse.position.ReadValue();
+            Camera cam = _parentCanvas != null && _parentCanvas.renderMode != RenderMode.ScreenSpaceOverlay ? _parentCanvas.worldCamera : null;
+            
+            // 드래그 중인 상태도 강제로 호버 피드백 활성 상태로 유지
+            isHovered = _isDragging || RectTransformUtility.RectangleContainsScreenPoint(_rectTransform, mousePos, cam);
+        }
+
+        // 2. 툴팁 가시성 부드러운 페이드인/아웃
+        float targetAlpha = isHovered ? 1f : 0f;
+        if (_labelCanvasGroup != null)
+        {
+            _labelCanvasGroup.alpha = Mathf.MoveTowards(_labelCanvasGroup.alpha, targetAlpha, 6f * Time.unscaledDeltaTime);
+        }
+
+        // 3. 스케일 및 찌그러짐(스쿼시) 반응 보간
+        float targetScale = 1.0f;
+        if (_isDragging)
+        {
+            targetScale = 0.85f; // 드래그 조작 시 찌그러지는 연출
+        }
+        else if (isHovered)
+        {
+            targetScale = 1.35f; // 호버 시 별 노드와 동일 스펙의 팝스케일
+        }
+
+        _currentScale = Mathf.Lerp(_currentScale, targetScale, 16f * Time.unscaledDeltaTime);
+        if (_visualRoot != null)
+        {
+            _visualRoot.localScale = new Vector3(_currentScale, _currentScale, 1f);
+        }
+
+        // 4. 아이템별 고유 연출 애니메이션 (호버 시 속도 가속 연동)
         if (ItemId == "deco_yellow_star")
         {
             if (_visualRoot != null)
             {
-                _visualRoot.localRotation = Quaternion.Euler(0f, 0f, time * 10f);
+                float rotSpeed = isHovered ? 45f : 10f;
+                _visualRoot.localRotation = Quaternion.Euler(0f, 0f, time * rotSpeed);
             }
             if (_glowLayer != null)
             {
@@ -161,10 +251,11 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         }
         else if (ItemId == "deco_purple_crystal")
         {
-            // 부유 물리 운동을 자식 비주얼 루트에 국한하여 물리 충돌 궤적 왜곡 방지
             if (_visualRoot != null)
             {
                 float floatOffset = Mathf.Sin(time * 1.8f) * 6f;
+                // 호버 시 부유 폭 강화
+                if (isHovered && !_isDragging) floatOffset *= 1.4f;
                 _visualRoot.localPosition = new Vector3(0f, floatOffset, 0f);
             }
             if (_glowLayer != null)
@@ -177,7 +268,8 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         {
             if (_glowLayer != null)
             {
-                _glowLayer.Rotate(0f, 0f, -40f * Time.unscaledDeltaTime);
+                float rotSpeed = isHovered ? -120f : -40f;
+                _glowLayer.Rotate(0f, 0f, rotSpeed * Time.unscaledDeltaTime);
             }
         }
     }
