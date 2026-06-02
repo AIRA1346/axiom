@@ -1497,9 +1497,18 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
     private void SpawnOrbitalSelector(RectTransform anchorRt, Color themeColor, Action<int> onGradeSelected)
     {
+        bool isSameAnchor = _activeSelector != null && _activeSelector.transform.parent == anchorRt;
+
         if (_activeSelector != null)
         {
             _activeSelector.Close();
+            _activeSelector = null;
+        }
+
+        if (isSameAnchor)
+        {
+            GsiUiSound.PlayClick();
+            return;
         }
 
         var go = new GameObject("GsiOrbitalSelector", typeof(RectTransform));
