@@ -34,6 +34,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private GameObject _dragPreviewGo;
     private string _dragPreviewId;
 
+    // 수동 드래그 조작용 변수 (uGUI 터치 가로막힘 우회)
+    private GsiPlacedDeco _manuallyDraggedDeco;
+    private Vector2 _lastMousePos;
+
     private class DecoCardUI
     {
         public string ItemId;
@@ -161,6 +165,14 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     {
         // 씬 시작 시 패널은 숨김 상태로 대기
         if (_panelRt != null) _panelRt.anchoredPosition = new Vector2(0f, -PanelHeight - 20f);
+
+        // InputManager 전역 마우스/터치 입력 바인딩
+        if (InputManager.Instance != null)
+        {
+            InputManager.Instance.OnInputDown += HandleGlobalInputDown;
+            InputManager.Instance.OnInputHold += HandleGlobalInputHold;
+            InputManager.Instance.OnInputUp += HandleGlobalInputUp;
+        }
     }
 
     private void Update()
@@ -630,19 +642,68 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         cg.alpha = 0.6f;
     }
 
-    public void NotifyDragEnd(GsiPlacedDeco deco)
+    // ─── 직접 터치 바이패스 조작 감지 (uGUI Sibling 가로막힘 우회) ───────────
+
+    private void HandleGlobalInputDown(Vector2 screenPosition)
     {
+        if (_manuallyDraggedDeco != null) return;
+
+        // 1. 하단 서랍 패널 내부 클릭 시 무시 (패널 안은 독립 캔버스에서 uGUI 카드가 터치를 직접 처리)
+        bool clickInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPosition, _canvas.worldCamera);
+        if (clickInPanel) return;
+
+        // 2. 배치된 데코들 중 터치 위치에 충돌하는 것이 있는지 역순(최상단에 렌더링된 요소 우선) 검사
+        Camera cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
+        for (int i = _placedDecos.Count - 1; i >= 0; i--)
+        {
+            var deco = _placedDecos[i];
+            if (deco == null) continue;
+
+            if (RectTransformUtility.RectangleContainsScreenPoint(deco.rectTransform, screenPosition, cam))
+            {
+                // 충돌 감지 -> 수동 드래그 상태로 전환
+                _manuallyDraggedDeco = deco;
+                _manuallyDraggedDeco.SetDragging(true);
+                _lastMousePos = screenPosition;
+                
+                // 반투명 비주얼 피드백 적용
+                NotifyDragBegin(_manuallyDraggedDeco);
+                break;
+            }
+        }
+    }
+
+    private void HandleGlobalInputHold(Vector2 screenPosition)
+    {
+        if (_manuallyDraggedDeco == null) return;
+
+        // 3. 드래그 이동 갱신
+        Vector2 delta = screenPosition - _lastMousePos;
+        float scaleFactor = _canvas != null ? _canvas.scaleFactor : 1f;
+        _manuallyDraggedDeco.rectTransform.anchoredPosition += delta / scaleFactor;
+        _lastMousePos = screenPosition;
+    }
+
+    private void HandleGlobalInputUp()
+    {
+        if (_manuallyDraggedDeco == null) return;
+
+        var deco = _manuallyDraggedDeco;
+        _manuallyDraggedDeco = null;
+        
+        // 4. 드래그 종료 처리
+        deco.SetDragging(false);
         var cg = deco.GetComponent<CanvasGroup>();
         if (cg != null) cg.alpha = 1f;
 
-        // 드롭 좌표가 하단 패널 내부인지 체크 (패널 회수)
         Camera cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
         Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, deco.transform.position);
+
+        // 드롭 좌표가 하단 패널 내부인지 체크 (패널 회수)
         bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPos, cam);
 
         if (dropInPanel)
         {
-            // 인스턴스 파괴 및 목록 제거
             _placedDecos.Remove(deco);
             Destroy(deco.gameObject);
             GsiUiSound.PlayClick(); // 회수 틱 사운드
@@ -661,6 +722,9 @@ public sealed class GsiDecoPanelController : MonoBehaviour
                     deco.NormalizedPos = new Vector2(nx, ny);
                 }
             }
+            
+            // 마우스를 놓는 순간 약간의 관성 관유 속도를 튕겨주듯 인가
+            deco.velocity = new Vector2(UnityEngine.Random.Range(-50f, 50f), UnityEngine.Random.Range(-50f, 50f));
         }
 
         // 저장 상태 동기화 및 패널 수량 갱신
@@ -686,6 +750,13 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void OnDestroy()
     {
+        if (InputManager.Instance != null)
+        {
+            InputManager.Instance.OnInputDown -= HandleGlobalInputDown;
+            InputManager.Instance.OnInputHold -= HandleGlobalInputHold;
+            InputManager.Instance.OnInputUp -= HandleGlobalInputUp;
+        }
+
         if (Instance == this)
         {
             Instance = null;

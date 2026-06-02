@@ -1,13 +1,12 @@
 using System;
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.EventSystems;
 
 /// <summary>
-/// 배경에 배치된 개별 데코 아이템의 비주얼 생성, 드래그 이동 및 고유 애니메이션 담당
+/// 배경에 배치된 개별 데코 아이템의 관성 유영, 탄성 충돌, 경계면 반사 및 비주얼 제어를 담당하는 물리 천체 컴포넌트
 /// </summary>
 [RequireComponent(typeof(RectTransform))]
-public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandler, IEndDragHandler
+public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
 {
     public string ItemId { get; private set; }
     public Vector2 NormalizedPos { get; set; }
@@ -15,14 +14,20 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
     private RectTransform _rectTransform;
     private Canvas _parentCanvas;
     private bool _isDragging = false;
+    private Vector2 _velocity;
 
     // 애니메이션 제어용 프라이빗 캐시
     private Transform _visualRoot;
     private Transform _glowLayer;
     private Transform _spikeV;
     private Transform _spikeH;
-    private float _startFloatY;
     private float _randomPhaseOffset;
+
+    // ─── ICosmicKineticObject 인터페이스 구현부 ───────────────────
+    public RectTransform rectTransform => _rectTransform;
+    public Vector2 velocity { get { return _velocity; } set { _velocity = value; } }
+    public float collisionRadius => 14f; // 배치 아이템 충돌 반경
+    public bool isDragging => _isDragging;
 
     public void Initialize(string itemId, Vector2 normalizedPos, Canvas canvas)
     {
@@ -32,12 +37,12 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         _rectTransform = GetComponent<RectTransform>();
         _randomPhaseOffset = UnityEngine.Random.Range(0f, 100f);
 
-        // 1. 클릭 히트박스 영역(Image) 설정
+        // 1. 히트박스 영역 비활성화 (Bypass 터치를 타므로 uGUI 레이캐스트는 차단)
         var hitImg = GetComponent<Image>();
         if (hitImg == null) hitImg = gameObject.AddComponent<Image>();
         hitImg.sprite = null;
-        hitImg.color = Color.clear; // 클릭 충돌용 투명 영역
-        hitImg.raycastTarget = true;
+        hitImg.color = Color.clear;
+        hitImg.raycastTarget = false;
         _rectTransform.sizeDelta = new Vector2(40f, 40f);
 
         // 2. 비주얼 루트 콘테이너 생성
@@ -51,7 +56,11 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         visualRt.anchoredPosition = Vector2.zero;
         visualRt.sizeDelta = new Vector2(24f, 24f);
 
-        // 3. 등급 정의 로드 및 절차적 비주얼 그리기
+        // Z-position 및 스케일 초기화
+        _rectTransform.localPosition = new Vector3(_rectTransform.localPosition.x, _rectTransform.localPosition.y, 0f);
+        _rectTransform.localScale = Vector3.one;
+
+        // 3. 등급 정의 로드 및 비주얼 그리기
         if (PlayerDecorations.TryGetItemDef(ItemId, out var def))
         {
             BuildProceduralVisuals(def);
@@ -61,7 +70,15 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
     private void Start()
     {
         _rectTransform = GetComponent<RectTransform>();
-        _startFloatY = _rectTransform.anchoredPosition.y;
+        
+        // Orrery System에 등록
+        if (GsiCosmicOrrerySystem.Instance != null)
+        {
+            GsiCosmicOrrerySystem.Instance.RegisterStarNode(this);
+        }
+
+        // 초기 자율 표류를 위한 느린 속도 인가
+        _velocity = new Vector2(UnityEngine.Random.Range(-40f, 40f), UnityEngine.Random.Range(-40f, 40f));
     }
 
     private void BuildProceduralVisuals(PlayerDecorations.DecoItemDef def)
@@ -70,7 +87,6 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
 
         if (def.ProceduralShape == "star")
         {
-            // 노란 별: 글로우 마름모 + 십자 플레어 + 중앙 흰색 핵
             var glow = CreateLayer("AuraGlow", 15f, 15f, 45f, new Color(color.r, color.g, color.b, 0.35f));
             _glowLayer = glow.transform;
 
@@ -84,7 +100,6 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         }
         else if (def.ProceduralShape == "crystal")
         {
-            // 보라 크리스탈: 보랏빛 글로우 마름모 + 세로형 투명 마름모 코어 + 중앙 백색 코어
             var glow = CreateLayer("AuraGlow", 13f, 13f, 45f, new Color(color.r, color.g, color.b, 0.3f));
             _glowLayer = glow.transform;
 
@@ -93,14 +108,10 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         }
         else if (def.ProceduralShape == "ring")
         {
-            // 사이언 링: 사이언 원형 아웃라인 + 마킹 도트 ( hollowing 효과를 위해 3겹 구조 )
             var ringOuter = CreateLayer("RingOuter", 22f, 22f, 0f, new Color(color.r, color.g, color.b, 0.85f));
-            _glowLayer = ringOuter.transform; // 회전을 줄 수 있도록 캐싱
+            _glowLayer = ringOuter.transform;
             
-            // 홀링을 위해 배경색과 유사한 다크 그레이 원을 주입하여 가짜 링 구현
             CreateLayer("RingHole", 16f, 16f, 0f, new Color(0.04f, 0.04f, 0.06f, 1f));
-
-            // 중앙 코어
             CreateLayer("CoreDot", 5f, 5f, 0f, Color.white);
         }
     }
@@ -126,25 +137,20 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
 
     private void Update()
     {
-        if (_isDragging) return;
-
         float time = Time.unscaledTime + _randomPhaseOffset;
 
-        // 아이템 아이디별 고유 특화 애니메이션 작동
+        // 아이템별 고유 로컬 연출 애니메이션 (물리 이동 루프와 간섭되지 않도록 비주얼 루트에만 한정 적용)
         if (ItemId == "deco_yellow_star")
         {
-            // 1. 별 자전
             if (_visualRoot != null)
             {
                 _visualRoot.localRotation = Quaternion.Euler(0f, 0f, time * 10f);
             }
-            // 2. 글로우 호흡
             if (_glowLayer != null)
             {
                 float pulse = 0.8f + Mathf.PingPong(time * 0.4f, 0.3f);
                 _glowLayer.localScale = new Vector3(pulse, pulse, 1f);
             }
-            // 3. 플레어 스파이크 교차 깜빡임
             if (_spikeV != null && _spikeH != null)
             {
                 float spPulse = 0.85f + Mathf.PingPong(time * 1.5f, 0.25f);
@@ -154,14 +160,12 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         }
         else if (ItemId == "deco_purple_crystal")
         {
-            // 1. 크리스탈 공중 부유 (Floating)
-            Vector2 pos = _rectTransform.anchoredPosition;
-            float floatOffset = Mathf.Sin(time * 1.8f) * 6f; // Y축 오프셋
-            
-            // 드래그 중이 아닐 때만 적용
-            _rectTransform.anchoredPosition = new Vector2(pos.x, _startFloatY + floatOffset);
-
-            // 2. 보랏빛 오라 호흡
+            // 부유 물리 운동을 자식 비주얼 루트에 국한하여 물리 충돌 궤적 왜곡 방지
+            if (_visualRoot != null)
+            {
+                float floatOffset = Mathf.Sin(time * 1.8f) * 6f;
+                _visualRoot.localPosition = new Vector3(0f, floatOffset, 0f);
+            }
             if (_glowLayer != null)
             {
                 float pulse = 0.85f + Mathf.Sin(time * 2.2f) * 0.15f;
@@ -170,7 +174,6 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         }
         else if (ItemId == "deco_neon_ring")
         {
-            // 1. 서클 링 자전 (Ring Rotation)
             if (_glowLayer != null)
             {
                 _glowLayer.Rotate(0f, 0f, -40f * Time.unscaledDeltaTime);
@@ -178,28 +181,156 @@ public sealed class GsiPlacedDeco : MonoBehaviour, IBeginDragHandler, IDragHandl
         }
     }
 
-    // ─── Drag & Drop Event System 구현 ──────────────────────────────
+    // ─── ICosmicKineticObject 물리 연산 처리부 ───────────────────────
 
-    public void OnBeginDrag(PointerEventData eventData)
+    public void UpdatePhysicsTick(float deltaTime)
     {
-        _isDragging = true;
-        GsiDecoPanelController.Instance?.NotifyDragBegin(this);
+        if (_isDragging) return;
+
+        float currentSpeed = _velocity.magnitude;
+        float maxVelocity = 1100f; // 데코 전용 속도 제약
+        float minDriftSpeed = 20f;
+        float friction = 0.35f;
+
+        if (currentSpeed > maxVelocity)
+        {
+            _velocity = _velocity.normalized * maxVelocity;
+            currentSpeed = maxVelocity;
+        }
+
+        // 마찰력 적용
+        if (currentSpeed > minDriftSpeed)
+        {
+            float newSpeed = currentSpeed * Mathf.Exp(-friction * deltaTime);
+            newSpeed = Mathf.Max(newSpeed, minDriftSpeed);
+            _velocity = _velocity.normalized * newSpeed;
+        }
+
+        // 좌표 갱신
+        _rectTransform.anchoredPosition += _velocity * deltaTime;
+
+        // 경계면 충돌 반사
+        HandleScreenBoundaries();
     }
 
-    public void OnDrag(PointerEventData eventData)
+    public void ResolveCollisionWith(ICosmicKineticObject other)
     {
-        float scaleFactor = _parentCanvas != null ? _parentCanvas.scaleFactor : 1f;
-        _rectTransform.anchoredPosition += eventData.delta / scaleFactor;
+        if (other == null || other == this) return;
+
+        RectTransform otherRt = other.rectTransform;
+        if (otherRt == null || _rectTransform == null) return;
+
+        float minDistance = collisionRadius + other.collisionRadius;
+        Vector2 diff = otherRt.anchoredPosition - _rectTransform.anchoredPosition;
+        float distance = diff.magnitude;
+
+        if (distance < 0.01f)
+        {
+            _rectTransform.anchoredPosition += new Vector2(UnityEngine.Random.Range(-5f, 5f), UnityEngine.Random.Range(-5f, 5f));
+            return;
+        }
+
+        if (distance < minDistance)
+        {
+            Vector2 normal = diff / distance;
+            float overlap = minDistance - distance;
+
+            // 1. 밀어내기 (겹침 강제 분리)
+            float pushSelf = _isDragging ? 0f : (other.isDragging ? 1f : 0.5f);
+            float pushOther = other.isDragging ? 0f : (_isDragging ? 1f : 0.5f);
+
+            _rectTransform.anchoredPosition -= normal * overlap * pushSelf;
+            otherRt.anchoredPosition += normal * overlap * pushOther;
+
+            // 2. 탄성 튕김 속도 전달
+            Vector2 rv = other.velocity - _velocity;
+            float velAlongNormal = Vector2.Dot(rv, normal);
+
+            if (velAlongNormal < 0f)
+            {
+                float restitution = 0.95f;
+                float impulseScalar = -(1f + restitution) * velAlongNormal / 2f;
+                Vector2 impulse = normal * impulseScalar;
+
+                if (!_isDragging)
+                {
+                    _velocity -= impulse;
+                }
+                if (!other.isDragging)
+                {
+                    other.velocity += impulse;
+                }
+            }
+        }
     }
 
-    public void OnEndDrag(PointerEventData eventData)
+    private void HandleScreenBoundaries()
     {
-        _isDragging = false;
-        
-        // 드래그를 멈추고 부유 시작 Y점 재조정
-        _startFloatY = _rectTransform.anchoredPosition.y;
+        if (transform.parent == null) return;
 
-        // 매니저에 배치가 끝났음을 알려 좌표를 갱신하거나 소멸/회수시킵니다.
-        GsiDecoPanelController.Instance?.NotifyDragEnd(this);
+        var parentRt = (RectTransform)transform.parent;
+        Rect parentRect = parentRt.rect;
+
+        float marginX = 40f;
+        float marginY_min = 180f + 16f; // 하단 패널 높이만큼 충돌 반사 가로막 지정
+        float marginY_max = 64f;
+
+        float minX = parentRect.xMin + marginX;
+        float maxX = parentRect.xMax - marginX;
+        float minY = parentRect.yMin + marginY_min;
+        float maxY = parentRect.yMax - marginY_max;
+
+        Vector2 pos = _rectTransform.anchoredPosition;
+        float bounceFactor = 0.9f;
+        bool bounced = false;
+
+        if (pos.x < minX)
+        {
+            pos.x = minX;
+            _velocity.x = -_velocity.x * bounceFactor;
+            bounced = true;
+        }
+        else if (pos.x > maxX)
+        {
+            pos.x = maxX;
+            _velocity.x = -_velocity.x * bounceFactor;
+            bounced = true;
+        }
+
+        if (pos.y < minY)
+        {
+            pos.y = minY;
+            _velocity.y = -_velocity.y * bounceFactor;
+            bounced = true;
+        }
+        else if (pos.y > maxY)
+        {
+            pos.y = maxY;
+            _velocity.y = -_velocity.y * bounceFactor;
+            bounced = true;
+        }
+
+        if (bounced)
+        {
+            _rectTransform.anchoredPosition = pos;
+            _velocity += new Vector2(UnityEngine.Random.Range(-10f, 10f), UnityEngine.Random.Range(-10f, 10f));
+        }
+    }
+
+    public void SetDragging(bool dragging)
+    {
+        _isDragging = dragging;
+        if (dragging)
+        {
+            _velocity = Vector2.zero;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        if (GsiCosmicOrrerySystem.Instance != null)
+        {
+            GsiCosmicOrrerySystem.Instance.UnregisterStarNode(this);
+        }
     }
 }

@@ -27,7 +27,8 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     IPointerUpHandler,
     IBeginDragHandler,
     IDragHandler,
-    IEndDragHandler
+    IEndDragHandler,
+    ICosmicKineticObject
 {
     // ─── Visual Config ──────────────────────────────────────────────
     [Header("Visual Config")]
@@ -242,17 +243,23 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     // Star Collision System
     // ═══════════════════════════════════════════════════════════════
 
+    // ─── ICosmicKineticObject 인터페이스 구현부 ───────────────────
+    public RectTransform rectTransform => _rectTransform;
+    public Vector2 velocity { get { return _velocity; } set { _velocity = value; } }
+    public float collisionRadius => CollisionRadius;
+    public bool isDragging => _isDragging;
+
     /// <summary>
-    /// GsiCosmicOrrerySystem에 의해 호출되며 두 별 간의 탄성 구체 충돌을 해결합니다.
+    /// GsiCosmicOrrerySystem에 의해 호출되며 두 물리 객체 간의 탄성 구체 충돌을 해결합니다.
     /// </summary>
-    public void ResolveCollisionWith(StarNodeControllerBase other)
+    public void ResolveCollisionWith(ICosmicKineticObject other)
     {
         if (other == null || other == this) return;
 
-        RectTransform otherRt = other._rectTransform;
+        RectTransform otherRt = other.rectTransform;
         if (otherRt == null || _rectTransform == null) return;
 
-        float minDistance = CollisionRadius + other.CollisionRadius;
+        float minDistance = CollisionRadius + other.collisionRadius;
         Vector2 diff = otherRt.anchoredPosition - _rectTransform.anchoredPosition;
         float distance = diff.magnitude;
 
@@ -269,14 +276,14 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
             float overlap = minDistance - distance;
 
             // 1. Resolve overlap (push apart based on dragging state)
-            float pushSelf = _isDragging ? 0f : (other._isDragging ? 1f : 0.5f);
-            float pushOther = other._isDragging ? 0f : (_isDragging ? 1f : 0.5f);
+            float pushSelf = _isDragging ? 0f : (other.isDragging ? 1f : 0.5f);
+            float pushOther = other.isDragging ? 0f : (_isDragging ? 1f : 0.5f);
 
             _rectTransform.anchoredPosition -= normal * overlap * pushSelf;
             otherRt.anchoredPosition += normal * overlap * pushOther;
 
             // 2. Resolve elastic impulse bounce
-            Vector2 rv = other._velocity - _velocity;
+            Vector2 rv = other.velocity - _velocity;
             float velAlongNormal = Vector2.Dot(rv, normal);
 
             // Only resolve if they are moving towards each other
@@ -291,9 +298,9 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
                 {
                     _velocity -= impulse;
                 }
-                if (!other._isDragging)
+                if (!other.isDragging)
                 {
-                    other._velocity += impulse;
+                    other.velocity += impulse;
                 }
 
                 // Play premium tactile collision sound based on relative velocity with cooldown
@@ -301,7 +308,11 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
                 if (relativeSpeed > 30f && Time.unscaledTime - _lastCollisionSoundTime > 0.15f)
                 {
                     _lastCollisionSoundTime = Time.unscaledTime;
-                    other._lastCollisionSoundTime = Time.unscaledTime;
+                    
+                    if (other is StarNodeControllerBase otherStar)
+                    {
+                        otherStar._lastCollisionSoundTime = Time.unscaledTime;
+                    }
 
                     float volumeScale = Mathf.Clamp(relativeSpeed / 500f, 0.15f, 0.75f);
                     if (CollisionSfx != null)

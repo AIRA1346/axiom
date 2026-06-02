@@ -24,7 +24,7 @@ namespace ArchE.Game
             }
         }
 
-        private readonly List<StarNodeControllerBase> _registeredStars = new List<StarNodeControllerBase>();
+        private readonly List<ICosmicKineticObject> _registeredObjects = new List<ICosmicKineticObject>();
 
         [Header("White Hole Singularity Settings")]
         private RectTransform _whiteHoleRect;
@@ -50,61 +50,73 @@ namespace ArchE.Game
         }
 
         /// <summary>
-        /// 중앙에서 등록된 모든 별들의 우주 물리 시뮬레이션을 프레임 독립적으로 일괄 실행합니다.
+        /// 중앙에서 등록된 모든 물리 객체들의 우주 물리 시뮬레이션을 프레임 독립적으로 일괄 실행합니다.
         /// </summary>
         public void UpdatePhysics()
         {
             if (!Application.isPlaying) return;
 
             float deltaTime = Time.unscaledDeltaTime;
-            int count = _registeredStars.Count;
+            int count = _registeredObjects.Count;
 
-            // 1. 개별 별들의 속도 댐핑, 마찰력, 화이트홀 척력장 적용 및 위치 업데이트
+            // 1. 개별 객체들의 물리 업데이트 (자율 유영 및 댐핑 처리)
             for (int i = 0; i < count; i++)
             {
-                var star = _registeredStars[i];
-                if (star == null || !star.gameObject.activeInHierarchy) continue;
+                var obj = _registeredObjects[i];
+                // Monobehaviour 컴포넌트인 경우 캐스팅 검사
+                var mono = obj as MonoBehaviour;
+                if (mono == null || !mono.gameObject.activeInHierarchy) continue;
 
-                // 물리 업데이트 (드래그하지 않는 상태일 때 마찰 및 자율 유영 처리)
-                star.UpdatePhysicsTick(deltaTime);
+                obj.UpdatePhysicsTick(deltaTime);
             }
 
             // 2. 일괄 충돌 처리 (동일 프레임 내 상호 탄성 충돌 연산 보정)
             for (int i = 0; i < count; i++)
             {
-                var starA = _registeredStars[i];
-                if (starA == null || !starA.gameObject.activeInHierarchy) continue;
+                var objA = _registeredObjects[i];
+                var monoA = objA as MonoBehaviour;
+                if (monoA == null || !monoA.gameObject.activeInHierarchy) continue;
+
+                // 최적화: objA의 속도가 거의 없고 드래그 중이 아니라면 충돌 검출 주체를 생략 (Cosmic Sleep)
+                // 단, 다른 움직이는 물체가 다가와 부딪힐 수도 있으므로, 상대가 충돌 검사를 주도하도록 검사 루프를 이원화합니다.
+                bool sleepA = !objA.isDragging && objA.velocity.sqrMagnitude < 0.1f;
 
                 for (int j = i + 1; j < count; j++)
                 {
-                    var starB = _registeredStars[j];
-                    if (starB == null || !starB.gameObject.activeInHierarchy) continue;
+                    var objB = _registeredObjects[j];
+                    var monoB = objB as MonoBehaviour;
+                    if (monoB == null || !monoB.gameObject.activeInHierarchy) continue;
 
-                    starA.ResolveCollisionWith(starB);
+                    bool sleepB = !objB.isDragging && objB.velocity.sqrMagnitude < 0.1f;
+                    
+                    // 둘 다 멈춰있고 평화로운 상태라면 상호 충돌 검사를 완벽히 스킵! (CPU 점유율 극적 절감)
+                    if (sleepA && sleepB) continue;
+
+                    objA.ResolveCollisionWith(objB);
                 }
             }
         }
 
         /// <summary>
-        /// 시스템에 새로운 별 노드를 등록합니다.
+        /// 시스템에 새로운 물리 객체를 등록합니다.
         /// </summary>
-        public void RegisterStarNode(StarNodeControllerBase node)
+        public void RegisterStarNode(ICosmicKineticObject node)
         {
             if (node == null) return;
-            if (!_registeredStars.Contains(node))
+            if (!_registeredObjects.Contains(node))
             {
-                _registeredStars.Add(node);
+                _registeredObjects.Add(node);
             }
         }
 
         /// <summary>
-        /// 시스템에서 별 노드 등록을 해제합니다.
+        /// 시스템에서 물리 객체 등록을 해제합니다.
         /// </summary>
-        public void UnregisterStarNode(StarNodeControllerBase node)
+        public void UnregisterStarNode(ICosmicKineticObject node)
         {
-            if (node != null && _registeredStars.Contains(node))
+            if (node != null && _registeredObjects.Contains(node))
             {
-                _registeredStars.Remove(node);
+                _registeredObjects.Remove(node);
             }
         }
 
