@@ -20,7 +20,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private Canvas _canvas;
     private RectTransform _decoContainer; // 배치된 데코들이 들어갈 레이어
     private RectTransform _panelRt;       // 슬라이드업 드로어 패널
-    private RectTransform _tabIndicatorRt;// 닫혔을 때 노출되는 TAB 안내 가이드
     private RectTransform _contentRt;      // ScrollRect의 콘텐츠
 
     private bool _isOpen = false;
@@ -74,9 +73,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void Start()
     {
-        // 씬 시작 시 Tab 가이드는 켜고 패널은 숨김 상태로 대기
+        // 씬 시작 시 패널은 숨김 상태로 대기
         if (_panelRt != null) _panelRt.anchoredPosition = new Vector2(0f, -PanelHeight - 20f);
-        if (_tabIndicatorRt != null) _tabIndicatorRt.gameObject.SetActive(true);
     }
 
     private void Update()
@@ -106,7 +104,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         // 닫히기 시작할 때 텍스트 가이드 작동
         if (open)
         {
-            _tabIndicatorRt.gameObject.SetActive(false);
             RefreshAllCards();
         }
 
@@ -120,11 +117,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         }
 
         _panelRt.anchoredPosition = targetPos;
-
-        if (!open)
-        {
-            _tabIndicatorRt.gameObject.SetActive(true);
-        }
     }
 
     // ─── UI 생성 로직 ──────────────────────────────────────────────────
@@ -139,25 +131,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         _decoContainer.SetParent(_canvas.transform, false);
         GsiUiRuntimeWidgets.StretchFull(_decoContainer);
         _decoContainer.SetSiblingIndex(1); // 0번째가 배경, 1번째가 데코, 그 위에 노드와 허브 UI
-
-        // 2. TAB 안내 가이드 텍스트 (화면 최하단 중앙)
-        var tabGo = new GameObject("TabGuideText", typeof(RectTransform), typeof(TextMeshProUGUI));
-        _tabIndicatorRt = tabGo.GetComponent<RectTransform>();
-        _tabIndicatorRt.SetParent(_canvas.transform, false);
-        _tabIndicatorRt.anchorMin = new Vector2(0.5f, 0f);
-        _tabIndicatorRt.anchorMax = new Vector2(0.5f, 0f);
-        _tabIndicatorRt.pivot = new Vector2(0.5f, 0f);
-        _tabIndicatorRt.anchoredPosition = new Vector2(0f, 16f);
-        _tabIndicatorRt.sizeDelta = new Vector2(400f, 30f);
-
-        var tabTmp = tabGo.GetComponent<TextMeshProUGUI>();
-        if (font != null) tabTmp.font = font;
-        tabTmp.text = GameLocalization.GetUiString("deco.tab_hint", "Press TAB to decorate background");
-        tabTmp.fontSize = 15f;
-        tabTmp.alignment = TextAlignmentOptions.Center;
-        tabTmp.fontStyle = FontStyles.Bold;
-        tabTmp.color = new Color(0.9f, 0.9f, 0.95f, 0.7f);
-        tabTmp.raycastTarget = false;
 
         // 3. 메인 데코 슬라이딩 패널 (하단 전체 꽉 채움)
         var panelGo = new GameObject("GsiDecoPanel", typeof(RectTransform), typeof(Image));
@@ -206,8 +179,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var scrollGo = new GameObject("ItemScrollView", typeof(RectTransform), typeof(ScrollRect), typeof(Image));
         var scrollRt = scrollGo.GetComponent<RectTransform>();
         scrollRt.SetParent(_panelRt, false);
-        scrollRt.anchorMin = new Vector2(0f, 0.5f);
-        scrollRt.anchorMax = new Vector2(1f, 0.5f);
+        scrollRt.anchorMin = new Vector2(0f, 0f);
+        scrollRt.anchorMax = new Vector2(1f, 1f);
         scrollRt.pivot = new Vector2(0f, 0.5f);
         scrollRt.offsetMin = new Vector2(150f, 16f);
         scrollRt.offsetMax = new Vector2(-16f, -16f);
@@ -222,15 +195,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         scroll.horizontal = true;
 
         // Viewport
-        var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(Mask), typeof(Image));
+        var viewportGo = new GameObject("Viewport", typeof(RectTransform), typeof(RectMask2D));
         var viewportRt = viewportGo.GetComponent<RectTransform>();
         viewportRt.SetParent(scrollRt, false);
         GsiUiRuntimeWidgets.StretchFull(viewportRt);
-        viewportGo.GetComponent<Mask>().showMaskGraphic = false;
-        var viewportImg = viewportGo.GetComponent<Image>();
-        viewportImg.sprite = null;
-        viewportImg.color = Color.clear;
-        viewportImg.raycastTarget = true;
         scroll.viewport = viewportRt;
 
         // Content
