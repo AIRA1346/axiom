@@ -47,11 +47,57 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     {
         if (Instance != null) return;
 
-        var canvas = FindFirstObjectByType<Canvas>();
-        if (canvas == null) return;
+        Canvas targetCanvas = null;
+        var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+        
+        // 1. GraphicRaycaster가 존재하고 활성화된 메인 UI 캔버스를 우선 탐색
+        for (int i = 0; i < canvases.Length; i++)
+        {
+            var c = canvases[i];
+            if (c.isActiveAndEnabled && c.GetComponent<GraphicRaycaster>() != null)
+            {
+                if (c.name.Contains("Transition") || c.name.Contains("Intro"))
+                    continue;
+
+                targetCanvas = c;
+                break;
+            }
+        }
+
+        // 2. 적절한 캔버스를 찾지 못했다면 활성화된 첫 번째 캔버스를 선택
+        if (targetCanvas == null)
+        {
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                if (canvases[i].isActiveAndEnabled)
+                {
+                    targetCanvas = canvases[i];
+                    break;
+                }
+            }
+        }
+
+        if (targetCanvas == null && canvases.Length > 0)
+        {
+            targetCanvas = canvases[0];
+        }
+
+        if (targetCanvas == null)
+        {
+            Debug.LogError("[GsiDecoPanelController] EnsureCreated failed: No Canvas found in the scene.");
+            return;
+        }
+
+        if (targetCanvas.GetComponent<GraphicRaycaster>() == null)
+        {
+            targetCanvas.gameObject.AddComponent<GraphicRaycaster>();
+            Debug.LogWarning($"[GsiDecoPanelController] Added missing GraphicRaycaster to Canvas: {targetCanvas.name}");
+        }
+
+        Debug.Log($"[GsiDecoPanelController] EnsureCreated: Parent canvas selected -> {targetCanvas.name} (sortingOrder={targetCanvas.sortingOrder})");
 
         var go = new GameObject("GsiDecoPanelManager");
-        go.transform.SetParent(canvas.transform, false);
+        go.transform.SetParent(targetCanvas.transform, false);
         Instance = go.AddComponent<GsiDecoPanelController>();
     }
 
@@ -575,15 +621,36 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 /// 인벤토리 데코 카드의 드래그 앤 드롭 입력을 직접 수신하여 EventSystem의 ScrollRect 간섭을 차단하고 
 /// 드래그 타겟 지정을 강제하는 UI 드래그 바인딩 컴포넌트
 /// </summary>
-public sealed class GsiDecoCard : MonoBehaviour, IPointerDownHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
+public sealed class GsiDecoCard : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     public string ItemId;
     public GsiDecoPanelController PanelController;
+    private ScrollRect _parentScroll;
+
+    private void Awake()
+    {
+        _parentScroll = GetComponentInParent<ScrollRect>();
+    }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         // EventSystem에 이 오브젝트가 클릭되었음을 알려 드래그 주도권을 선점하도록 만듦
         Debug.Log($"[GsiDecoCard] OnPointerDown: ItemId={ItemId}");
+        if (_parentScroll != null)
+        {
+            _parentScroll.enabled = false; // 스크롤 일시 정지 (드래그 탈취 방지)
+            Debug.Log("[GsiDecoCard] Temporarily disabled parent ScrollRect to prevent drag hijacking.");
+        }
+    }
+
+    public void OnPointerUp(PointerEventData eventData)
+    {
+        Debug.Log($"[GsiDecoCard] OnPointerUp: ItemId={ItemId}");
+        if (_parentScroll != null)
+        {
+            _parentScroll.enabled = true; // 스크롤 원래대로 복구
+            Debug.Log("[GsiDecoCard] Restored parent ScrollRect.");
+        }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
@@ -609,6 +676,10 @@ public sealed class GsiDecoCard : MonoBehaviour, IPointerDownHandler, IBeginDrag
         if (PanelController != null)
         {
             PanelController.OnCardEndDrag(eventData);
+        }
+        if (_parentScroll != null)
+        {
+            _parentScroll.enabled = true; // 안전 장치로 복구
         }
     }
 }
