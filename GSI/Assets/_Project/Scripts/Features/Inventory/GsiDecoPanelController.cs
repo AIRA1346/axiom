@@ -244,13 +244,43 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         if (_targetCanvas != null)
         {
             _decoContainer.SetParent(_targetCanvas.transform, false);
-            _decoContainer.SetSiblingIndex(1); // 0번째가 배경, 1번째가 데코, 그 위에 노드와 허브 UI
+            
+            // 캔버스 내 메인 배경(Bg/Background/Space) 직계 자식의 Sibling Index 자동 추적
+            int bgIndex = -1;
+            int childCount = _targetCanvas.transform.childCount;
+            for (int i = 0; i < childCount; i++)
+            {
+                var child = _targetCanvas.transform.GetChild(i);
+                if (child == _decoContainer.transform) continue;
+
+                string lowerName = child.name.ToLower();
+                if (lowerName.Contains("bg") || lowerName.Contains("background") || lowerName.Contains("back") || lowerName.Contains("space"))
+                {
+                    bgIndex = i;
+                }
+            }
+
+            if (bgIndex >= 0)
+            {
+                // 배경의 바로 앞 레이어로 주입 (배경보다 뒤로 숨지 않도록 보장)
+                _decoContainer.SetSiblingIndex(bgIndex + 1);
+                Debug.Log($"[GsiDecoPanelController] _decoContainer sibling set to {bgIndex + 1} (above bg child: {_targetCanvas.transform.GetChild(bgIndex).name})");
+            }
+            else
+            {
+                _decoContainer.SetSiblingIndex(1); // fallback
+            }
         }
         else
         {
             _decoContainer.SetParent(_canvas.transform, false);
             _decoContainer.SetSiblingIndex(0);
         }
+
+        // Z-position 및 스케일 꼬임 전면 리셋
+        _decoContainer.localPosition = new Vector3(_decoContainer.localPosition.x, _decoContainer.localPosition.y, 0f);
+        _decoContainer.localScale = Vector3.one;
+
         GsiUiRuntimeWidgets.StretchFull(_decoContainer);
 
         // 3. 메인 데코 슬라이딩 패널 (하단 전체 꽉 채움)
