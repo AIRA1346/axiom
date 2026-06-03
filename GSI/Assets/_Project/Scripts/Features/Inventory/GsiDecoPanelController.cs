@@ -354,9 +354,23 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var containerGo = new GameObject("DecoPlacementContainer", typeof(RectTransform));
         _decoContainer = containerGo.GetComponent<RectTransform>();
         _decoContainer.SetParent(parentTransform, false);
-        _decoContainer.SetAsFirstSibling();
         
-        Debug.Log($"[GsiDecoPanelController] DecoPlacementContainer parent set to {parentTransform.name} as first sibling.");
+        // 백그라운드 우주 연출 레이어(LobbyCenterStage 또는 GsiCosmicStage)를 인덱스 0(맨 뒤)에 두고,
+        // 데코 컨테이너를 인덱스 1에 두어 배경 위에 정상 노출되도록 렌더 오더 정교화
+        Transform bgStage = parentTransform.Find("LobbyCenterStage");
+        if (bgStage == null) bgStage = parentTransform.Find("GsiCosmicStage");
+
+        if (bgStage != null)
+        {
+            bgStage.SetSiblingIndex(0);
+            _decoContainer.SetSiblingIndex(1);
+            Debug.Log($"[GsiDecoPanelController] DecoPlacementContainer parent set to {parentTransform.name} at index 1 (behind {bgStage.name} at index 0).");
+        }
+        else
+        {
+            _decoContainer.SetAsFirstSibling();
+            Debug.Log($"[GsiDecoPanelController] DecoPlacementContainer parent set to {parentTransform.name} as first sibling (no background stage found).");
+        }
 
         // Z-position 및 스케일 꼬임 전면 리셋
         _decoContainer.localPosition = new Vector3(_decoContainer.localPosition.x, _decoContainer.localPosition.y, 0f);
