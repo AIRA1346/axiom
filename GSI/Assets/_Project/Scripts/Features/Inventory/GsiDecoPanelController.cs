@@ -255,6 +255,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             InputManager.Instance.OnInputDown += HandleGlobalInputDown;
             InputManager.Instance.OnInputHold += HandleGlobalInputHold;
             InputManager.Instance.OnInputUp += HandleGlobalInputUp;
+
+            InputManager.Instance.OnRightInputDown += HandleGlobalInputDown;
+            InputManager.Instance.OnRightInputHold += HandleGlobalInputHold;
+            InputManager.Instance.OnRightInputUp += HandleGlobalInputUp;
         }
     }
 
@@ -955,8 +959,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
                 }
             }
             
-            // 마우스를 놓는 순간 약간의 관성 관유 속도를 튕겨주듯 인가
-            deco.velocity = new Vector2(UnityEngine.Random.Range(-50f, 50f), UnityEngine.Random.Range(-50f, 50f));
+            // 마우스를 놓는 순간 드래그 중에 누적된 관성 속도를 그대로 유지하므로 별도의 Random 속도 대입 코드는 제거합니다.
         }
 
         // 저장 상태 동기화 및 패널 수량 갱신
@@ -987,6 +990,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             InputManager.Instance.OnInputDown -= HandleGlobalInputDown;
             InputManager.Instance.OnInputHold -= HandleGlobalInputHold;
             InputManager.Instance.OnInputUp -= HandleGlobalInputUp;
+
+            InputManager.Instance.OnRightInputDown -= HandleGlobalInputDown;
+            InputManager.Instance.OnRightInputHold -= HandleGlobalInputHold;
+            InputManager.Instance.OnRightInputUp -= HandleGlobalInputUp;
         }
 
         if (Instance == this)

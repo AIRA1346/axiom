@@ -17,6 +17,7 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
     private Canvas _parentCanvas;
     private bool _isDragging = false;
     private Vector2 _velocity;
+    private Vector2 _lastDragFramePos;
 
     // 애니메이션 및 마우스 호버 피드백 캐시
     private Transform _visualRoot;
@@ -278,6 +279,18 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
                 _glowLayer.Rotate(0f, 0f, rotSpeed * Time.unscaledDeltaTime);
             }
         }
+
+        // 5. Kinetic drag velocity update (마우스 던지기 속도 계산 - 별 노드와 동일 스펙)
+        if (_isDragging)
+        {
+            Vector2 currentPos = _rectTransform.anchoredPosition;
+            Vector2 positionDelta = currentPos - _lastDragFramePos;
+            Vector2 frameVelocity = positionDelta / Mathf.Max(Time.unscaledDeltaTime, 0.001f);
+
+            // 마우스 지터 필터링을 위한 보간
+            _velocity = Vector2.Lerp(_velocity, frameVelocity, 0.22f);
+            _lastDragFramePos = currentPos;
+        }
     }
 
     // ─── ICosmicKineticObject 물리 연산 처리부 ───────────────────────
@@ -303,6 +316,19 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
             float newSpeed = currentSpeed * Mathf.Exp(-friction * deltaTime);
             newSpeed = Mathf.Max(newSpeed, minDriftSpeed);
             _velocity = _velocity.normalized * newSpeed;
+        }
+        else
+        {
+            // 속도가 최소 유영 속도보다 낮으면 최소 속도로 보정 (완전 정지 방지)
+            if (currentSpeed < 0.01f)
+            {
+                float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
+                _velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * minDriftSpeed;
+            }
+            else
+            {
+                _velocity = _velocity.normalized * minDriftSpeed;
+            }
         }
 
         // 좌표 갱신
@@ -425,6 +451,7 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         if (dragging)
         {
             _velocity = Vector2.zero;
+            _lastDragFramePos = _rectTransform.anchoredPosition;
         }
     }
 

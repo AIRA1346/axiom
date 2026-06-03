@@ -14,7 +14,13 @@ public sealed class InputManager : MonoBehaviour
     public event Action<Vector2> OnInputHold;
     public event Action OnInputUp;
 
+    // 우클릭 지원용 추가 이벤트
+    public event Action<Vector2> OnRightInputDown;
+    public event Action<Vector2> OnRightInputHold;
+    public event Action OnRightInputUp;
+
     private bool _isPointerHeld;
+    private bool _isRightPointerHeld;
 
     private void Awake()
     {
@@ -85,6 +91,7 @@ public sealed class InputManager : MonoBehaviour
 
         Vector2 screenPosition = mouse.position.ReadValue();
 
+        // 1. 좌클릭 다운
         if (mouse.leftButton.wasPressedThisFrame)
         {
 #if UNITY_EDITOR
@@ -93,16 +100,38 @@ public sealed class InputManager : MonoBehaviour
             _isPointerHeld = true;
             OnInputDown?.Invoke(screenPosition);
         }
+        // 2. 우클릭 다운
+        else if (mouse.rightButton.wasPressedThisFrame)
+        {
+#if UNITY_EDITOR
+            Debug.Log($"InputManager: 화면 우클릭 감지됨! 좌표: {screenPosition}");
+#endif
+            _isRightPointerHeld = true;
+            OnRightInputDown?.Invoke(screenPosition);
+        }
 
+        // 3. 좌클릭 홀드
         if (_isPointerHeld && mouse.leftButton.isPressed)
         {
             OnInputHold?.Invoke(screenPosition);
         }
+        // 4. 우클릭 홀드
+        else if (_isRightPointerHeld && mouse.rightButton.isPressed)
+        {
+            OnRightInputHold?.Invoke(screenPosition);
+        }
 
+        // 5. 좌클릭 업
         if (_isPointerHeld && mouse.leftButton.wasReleasedThisFrame)
         {
             _isPointerHeld = false;
             OnInputUp?.Invoke();
+        }
+        // 6. 우클릭 업
+        else if (_isRightPointerHeld && mouse.rightButton.wasReleasedThisFrame)
+        {
+            _isRightPointerHeld = false;
+            OnRightInputUp?.Invoke();
         }
     }
 
