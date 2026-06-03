@@ -43,12 +43,7 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         _rectTransform = GetComponent<RectTransform>();
         _randomPhaseOffset = UnityEngine.Random.Range(0f, 100f);
 
-        // 1. 히트박스 영역 비활성화 (Bypass 터치를 타므로 uGUI 레이캐스트는 차단)
-        var hitImg = GetComponent<Image>();
-        if (hitImg == null) hitImg = gameObject.AddComponent<Image>();
-        hitImg.sprite = null;
-        hitImg.color = Color.clear;
-        hitImg.raycastTarget = false;
+        // 1. 히트박스 크기 지정 (uGUI 레이캐스트 대신 RectTransform의 수동 경계 검사를 수행하므로 Image 컴포넌트 불필요)
         _rectTransform.sizeDelta = new Vector2(40f, 40f);
 
         // 2. 비주얼 루트 콘테이너 생성
@@ -80,6 +75,10 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
     {
         _rectTransform = GetComponent<RectTransform>();
         
+        // Z-position 및 스케일 강제 리셋
+        _rectTransform.localPosition = new Vector3(_rectTransform.localPosition.x, _rectTransform.localPosition.y, 0f);
+        _rectTransform.localScale = Vector3.one;
+
         // Orrery System에 등록
         if (GsiCosmicOrrerySystem.Instance != null)
         {
@@ -227,6 +226,13 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         if (_visualRoot != null)
         {
             _visualRoot.localScale = new Vector3(_currentScale, _currentScale, 1f);
+        }
+
+        // Z-position 및 스케일 강제 설정 (3D 카메라 깊이 평면 탈출 및 스케일 왜곡 차단)
+        if (_rectTransform != null)
+        {
+            _rectTransform.localPosition = new Vector3(_rectTransform.localPosition.x, _rectTransform.localPosition.y, 0f);
+            _rectTransform.localScale = Vector3.one;
         }
 
         // 4. 아이템별 고유 연출 애니메이션 (호버 시 속도 가속 연동)

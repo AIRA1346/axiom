@@ -1408,6 +1408,13 @@ public sealed class GSIHubMenuController : MonoBehaviour
         _cosmicStage.offsetMax = Vector2.zero;
         _cosmicStage.SetAsFirstSibling();
 
+        // 만약 데코 컨테이너가 이미 존재한다면, 데코 컨테이너가 더 뒤에 렌더링되도록 첫 번째 Sibling으로 복귀시킵니다.
+        var decoContainer = transform.Find("DecoPlacementContainer");
+        if (decoContainer != null)
+        {
+            decoContainer.SetAsFirstSibling();
+        }
+
         // Ensure Orrery System exists to drive star node physics
         if (Application.isPlaying && ArchE.Game.GsiCosmicOrrerySystem.Instance == null)
         {

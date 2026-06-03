@@ -258,74 +258,45 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             }
         }
 
-        // 씬 내에 혹시 남아있을지 모르는 기존 DecoPlacementContainer 정제 파괴
+        Transform parentTransform = _targetCanvas != null ? _targetCanvas.transform : _canvas.transform;
+
         if (_targetCanvas != null)
         {
-            var existingContainer = _targetCanvas.transform.Find("DecoPlacementContainer");
+            // 씬 이름에 따라 올바른 백그라운드 패널 탐색
+            string activeSceneName = SceneManager.GetActiveScene().name;
+            if (activeSceneName == SceneNames.GSI)
+            {
+                var lobbyPanel = _targetCanvas.transform.Find("Panels/LobbyPanel");
+                if (lobbyPanel != null)
+                {
+                    parentTransform = lobbyPanel;
+                }
+            }
+            else
+            {
+                var mainMenuPanel = _targetCanvas.transform.Find("MainMenuPanel");
+                if (mainMenuPanel != null)
+                {
+                    parentTransform = mainMenuPanel;
+                }
+            }
+
+            // 구버전 DecoPlacementContainer가 탐색된 parentTransform 밑에 존재하면 제거
+            var existingContainer = parentTransform.Find("DecoPlacementContainer");
             if (existingContainer != null)
             {
-                Debug.LogWarning($"[GsiDecoPanelController] Found and destroyed legacy DecoPlacementContainer under {_targetCanvas.name}");
+                Debug.LogWarning($"[GsiDecoPanelController] Found and destroyed legacy DecoPlacementContainer under {parentTransform.name}");
                 DestroyImmediate(existingContainer.gameObject);
             }
         }
 
-        // 1. 배치 영역 컨테이너 생성 (배경 이미지 위, UI 아래 정렬)
+        // 1. 배치 영역 컨테이너 생성 및 parentTransform에 설정
         var containerGo = new GameObject("DecoPlacementContainer", typeof(RectTransform));
         _decoContainer = containerGo.GetComponent<RectTransform>();
-
-        if (_targetCanvas != null)
-        {
-            _decoContainer.SetParent(_targetCanvas.transform, false);
-            
-            int bgIndex = -1;
-            int nodeMinIndex = -1;
-            int childCount = _targetCanvas.transform.childCount;
-            
-            for (int i = 0; i < childCount; i++)
-            {
-                var child = _targetCanvas.transform.GetChild(i);
-                if (child == _decoContainer.transform) continue;
-
-                string lowerName = child.name.ToLower();
-                
-                // 배경 오브젝트 색인 (가장 깊은 인덱스 유지)
-                if (lowerName.Contains("bg") || lowerName.Contains("background") || lowerName.Contains("back") || lowerName.Contains("space") || lowerName.Contains("galaxy"))
-                {
-                    bgIndex = i;
-                }
-                
-                // 노드/콘텐츠 레이어 색인 (가장 얕은 인덱스 유지)
-                if (lowerName.Contains("star") || lowerName.Contains("node") || lowerName.Contains("center") || lowerName.Contains("lobby") || lowerName.Contains("hub") || lowerName.Contains("menu"))
-                {
-                    if (nodeMinIndex == -1 || i < nodeMinIndex)
-                    {
-                        nodeMinIndex = i;
-                    }
-                }
-            }
-
-            if (nodeMinIndex >= 0)
-            {
-                // 노드 레이어 바로 뒷단(인덱스 기준으론 바로 앞)에 삽입
-                _decoContainer.SetSiblingIndex(nodeMinIndex);
-                Debug.Log($"[GsiDecoPanelController] _decoContainer sibling set to {nodeMinIndex} (right behind node child: {_targetCanvas.transform.GetChild(nodeMinIndex).name})");
-            }
-            else if (bgIndex >= 0)
-            {
-                // 배경 바로 앞 레이어로 삽입
-                _decoContainer.SetSiblingIndex(bgIndex + 1);
-                Debug.Log($"[GsiDecoPanelController] _decoContainer sibling set to {bgIndex + 1} (above bg child: {_targetCanvas.transform.GetChild(bgIndex).name})");
-            }
-            else
-            {
-                _decoContainer.SetSiblingIndex(2); // 안전한 fallback 기본 레이어
-            }
-        }
-        else
-        {
-            _decoContainer.SetParent(_canvas.transform, false);
-            _decoContainer.SetSiblingIndex(0);
-        }
+        _decoContainer.SetParent(parentTransform, false);
+        _decoContainer.SetAsFirstSibling();
+        
+        Debug.Log($"[GsiDecoPanelController] DecoPlacementContainer parent set to {parentTransform.name} as first sibling.");
 
         // Z-position 및 스케일 꼬임 전면 리셋
         _decoContainer.localPosition = new Vector3(_decoContainer.localPosition.x, _decoContainer.localPosition.y, 0f);
@@ -598,20 +569,24 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void SpawnPlacedDeco(string itemId, Vector2 normalizedPos, Vector2 containerSize)
     {
-        var go = new GameObject($"PlacedDeco_{itemId}", typeof(RectTransform), typeof(Image));
+        // 불필요한 Image 컴포넌트를 배제하여 그래픽 드로우 및 레이캐스트 차단 제거
+        var go = new GameObject($"PlacedDeco_{itemId}", typeof(RectTransform));
         var rt = go.GetComponent<RectTransform>();
         rt.SetParent(_decoContainer, false);
         rt.anchorMin = new Vector2(0.5f, 0.5f);
         rt.anchorMax = new Vector2(0.5f, 0.5f);
         rt.pivot = new Vector2(0.5f, 0.5f);
 
-        // 비율에서 월드 좌표계 복원
+        // 비율에서 월드 좌표계 복원 및 Z축 강제 리셋
         float px = (normalizedPos.x - 0.5f) * containerSize.x;
         float py = (normalizedPos.y - 0.5f) * containerSize.y;
         rt.anchoredPosition = new Vector2(px, py);
+        rt.localPosition = new Vector3(px, py, 0f);
+        rt.localScale = Vector3.one;
 
         var deco = go.AddComponent<GsiPlacedDeco>();
-        deco.Initialize(itemId, normalizedPos, _canvas);
+        var parentCanvas = _targetCanvas;
+        deco.Initialize(itemId, normalizedPos, parentCanvas);
         _placedDecos.Add(deco);
     }
 
@@ -727,6 +702,12 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private void HandleGlobalInputDown(Vector2 screenPosition)
     {
         if (_manuallyDraggedDeco != null) return;
+
+        // 버튼이나 툴팁 등 다른 UI 요소(raycastTarget이 true인 기물) 위를 클릭했다면 수동 데코 드래그 차단
+        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        {
+            return;
+        }
 
         // 1. 하단 서랍 패널 내부 클릭 시 무시 (패널 안은 독립 캔버스에서 uGUI 카드가 터치를 직접 처리)
         bool clickInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPosition, _canvas.worldCamera);
