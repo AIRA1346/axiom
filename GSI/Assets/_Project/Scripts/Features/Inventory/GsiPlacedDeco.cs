@@ -43,6 +43,9 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         _rectTransform = GetComponent<RectTransform>();
         _randomPhaseOffset = UnityEngine.Random.Range(0f, 100f);
 
+        // 초기 자율 표류를 위한 느린 속도 인가 (기본값)
+        _velocity = new Vector2(UnityEngine.Random.Range(-40f, 40f), UnityEngine.Random.Range(-40f, 40f));
+
         // 1. 히트박스 크기 지정 (uGUI 레이캐스트 대신 RectTransform의 수동 경계 검사를 수행하므로 Image 컴포넌트 불필요)
         _rectTransform.sizeDelta = new Vector2(40f, 40f);
 
@@ -84,9 +87,6 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         {
             GsiCosmicOrrerySystem.Instance.RegisterStarNode(this);
         }
-
-        // 초기 자율 표류를 위한 느린 속도 인가
-        _velocity = new Vector2(UnityEngine.Random.Range(-40f, 40f), UnityEngine.Random.Range(-40f, 40f));
     }
 
     private void BuildTooltipLabel()
