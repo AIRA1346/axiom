@@ -26,6 +26,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private bool _isOpen = false;
     private Coroutine _slideRoutine;
     private string _sceneKey;
+    private bool _isDestroyed = false;
 
     private readonly List<GsiPlacedDeco> _placedDecos = new List<GsiPlacedDeco>();
     private List<PlayerDecorations.PlacedDecoData> _lastSavedDecoData = new List<PlayerDecorations.PlacedDecoData>();
@@ -259,6 +260,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void Update()
     {
+        if (_isDestroyed || Instance != this) return;
+
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             TogglePanel();
@@ -267,18 +270,45 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void LateUpdate()
     {
+        if (_isDestroyed || Instance != this) return;
+
         // 매 프레임 유영하는 데코들의 현재 위치와 속도를 메모리 캐시에 최신화 (디스크 쓰기 제외로 프레임 드랍 차단)
         UpdateDecoDataCache();
     }
 
     private void UpdateDecoDataCache()
     {
+        if (_isDestroyed || Instance != this) return;
+
+        int activeCount = 0;
+        for (int i = 0; i < _placedDecos.Count; i++)
+        {
+            if (_placedDecos[i] != null) activeCount++;
+        }
+
+        // 배치된 데코가 존재했었으나, 현재 살아있는 데코가 하나도 없다면
+        // 사용자 회수가 아니라 씬 전이/파괴 등으로 일괄 제거되는 도중이므로 
+        // 기존 캐시 데이터를 유지하고 갱신을 생략함.
+        if (_placedDecos.Count > 0 && activeCount == 0)
+        {
+            return;
+        }
+
         _lastSavedDecoData.Clear();
+        Vector2 containerSize = _decoContainer != null ? _decoContainer.rect.size : Vector2.zero;
+        if (containerSize.x < 100f) containerSize = new Vector2(Screen.width, Screen.height);
+
         for (int i = 0; i < _placedDecos.Count; i++)
         {
             var deco = _placedDecos[i];
             if (deco != null)
             {
+                // 실시간 floating 위치를 anchoredPosition 기준으로 구해서 NormalizedPos 갱신
+                Vector2 pos = deco.rectTransform.anchoredPosition;
+                float nx = pos.x / containerSize.x + 0.5f;
+                float ny = pos.y / containerSize.y + 0.5f;
+                deco.NormalizedPos = new Vector2(nx, ny);
+
                 _lastSavedDecoData.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos, deco.velocity));
             }
         }
@@ -949,6 +979,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void OnDestroy()
     {
+        _isDestroyed = true;
         SaveCurrentPlacementData();
 
         if (InputManager.Instance != null)
