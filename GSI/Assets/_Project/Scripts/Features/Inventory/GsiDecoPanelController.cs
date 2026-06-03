@@ -50,7 +50,23 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     /// </summary>
     public static void EnsureCreated()
     {
-        if (Instance != null) return;
+        string activeSceneName = SceneManager.GetActiveScene().name;
+        string targetSceneKey = activeSceneName == SceneNames.GSI ? "GSI" : "Lobby";
+
+        // 기존 인스턴스가 존재하는데 다른 씬용 데이터라면 강제 파괴 및 재생성
+        if (Instance != null)
+        {
+            if (Instance._sceneKey != targetSceneKey)
+            {
+                Debug.Log($"[GsiDecoPanelController] Scene changed ({Instance._sceneKey} -> {targetSceneKey}). Destroying old manager.");
+                Destroy(Instance.gameObject);
+                Instance = null;
+            }
+            else
+            {
+                return;
+            }
+        }
 
         Canvas targetCanvas = null;
         var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
@@ -104,6 +120,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var go = new GameObject("GsiDecoPanelManager");
         var controller = go.AddComponent<GsiDecoPanelController>();
         controller.InitCanvas(targetCanvas);
+        controller._sceneKey = targetSceneKey; // 생성 시점에 올바른 씬 키 주입
         Instance = controller;
     }
 
@@ -155,7 +172,11 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             }
         }
 
-        _sceneKey = SceneManager.GetActiveScene().name == SceneNames.GSI ? "GSI" : "Lobby";
+        // 씬 키가 미리 연동되어 있지 않은 경우에만 자동 획득
+        if (string.IsNullOrEmpty(_sceneKey))
+        {
+            _sceneKey = SceneManager.GetActiveScene().name == SceneNames.GSI ? "GSI" : "Lobby";
+        }
 
         BuildUi();
         LoadAndSpawnAllPlacedItems();
