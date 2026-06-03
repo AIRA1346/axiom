@@ -244,10 +244,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     {
         TMP_FontAsset font = TmpFontCache.LiberationSansSdf;
 
-        // 1. 배치 영역 컨테이너 생성 (배경 이미지 위, UI 아래 정렬)
-        var containerGo = new GameObject("DecoPlacementContainer", typeof(RectTransform));
-        _decoContainer = containerGo.GetComponent<RectTransform>();
-        
         // _targetCanvas가 Null일 경우 안전하게 씬 메인 캔버스 탐색
         if (_targetCanvas == null)
         {
@@ -262,34 +258,67 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             }
         }
 
+        // 씬 내에 혹시 남아있을지 모르는 기존 DecoPlacementContainer 정제 파괴
+        if (_targetCanvas != null)
+        {
+            var existingContainer = _targetCanvas.transform.Find("DecoPlacementContainer");
+            if (existingContainer != null)
+            {
+                Debug.LogWarning($"[GsiDecoPanelController] Found and destroyed legacy DecoPlacementContainer under {_targetCanvas.name}");
+                DestroyImmediate(existingContainer.gameObject);
+            }
+        }
+
+        // 1. 배치 영역 컨테이너 생성 (배경 이미지 위, UI 아래 정렬)
+        var containerGo = new GameObject("DecoPlacementContainer", typeof(RectTransform));
+        _decoContainer = containerGo.GetComponent<RectTransform>();
+
         if (_targetCanvas != null)
         {
             _decoContainer.SetParent(_targetCanvas.transform, false);
             
-            // 캔버스 내 메인 배경(Bg/Background/Space) 직계 자식의 Sibling Index 자동 추적
             int bgIndex = -1;
+            int nodeMinIndex = -1;
             int childCount = _targetCanvas.transform.childCount;
+            
             for (int i = 0; i < childCount; i++)
             {
                 var child = _targetCanvas.transform.GetChild(i);
                 if (child == _decoContainer.transform) continue;
 
                 string lowerName = child.name.ToLower();
-                if (lowerName.Contains("bg") || lowerName.Contains("background") || lowerName.Contains("back") || lowerName.Contains("space"))
+                
+                // 배경 오브젝트 색인 (가장 깊은 인덱스 유지)
+                if (lowerName.Contains("bg") || lowerName.Contains("background") || lowerName.Contains("back") || lowerName.Contains("space") || lowerName.Contains("galaxy"))
                 {
                     bgIndex = i;
                 }
+                
+                // 노드/콘텐츠 레이어 색인 (가장 얕은 인덱스 유지)
+                if (lowerName.Contains("star") || lowerName.Contains("node") || lowerName.Contains("center") || lowerName.Contains("lobby") || lowerName.Contains("hub") || lowerName.Contains("menu"))
+                {
+                    if (nodeMinIndex == -1 || i < nodeMinIndex)
+                    {
+                        nodeMinIndex = i;
+                    }
+                }
             }
 
-            if (bgIndex >= 0)
+            if (nodeMinIndex >= 0)
             {
-                // 배경의 바로 앞 레이어로 주입 (배경보다 뒤로 숨지 않도록 보장)
+                // 노드 레이어 바로 뒷단(인덱스 기준으론 바로 앞)에 삽입
+                _decoContainer.SetSiblingIndex(nodeMinIndex);
+                Debug.Log($"[GsiDecoPanelController] _decoContainer sibling set to {nodeMinIndex} (right behind node child: {_targetCanvas.transform.GetChild(nodeMinIndex).name})");
+            }
+            else if (bgIndex >= 0)
+            {
+                // 배경 바로 앞 레이어로 삽입
                 _decoContainer.SetSiblingIndex(bgIndex + 1);
                 Debug.Log($"[GsiDecoPanelController] _decoContainer sibling set to {bgIndex + 1} (above bg child: {_targetCanvas.transform.GetChild(bgIndex).name})");
             }
             else
             {
-                _decoContainer.SetSiblingIndex(1); // fallback
+                _decoContainer.SetSiblingIndex(2); // 안전한 fallback 기본 레이어
             }
         }
         else
