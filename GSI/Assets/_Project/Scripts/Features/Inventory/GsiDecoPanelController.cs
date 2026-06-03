@@ -158,9 +158,19 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
         var go = new GameObject("GsiDecoPanelManager");
         var controller = go.AddComponent<GsiDecoPanelController>();
-        controller.InitCanvas(targetCanvas);
-        controller._sceneKey = targetSceneKey; // 생성 시점에 올바른 씬 키 주입
+        controller.Initialize(targetCanvas, targetSceneKey);
         Instance = controller;
+    }
+
+    /// <summary>
+    /// 로비와 GSI 씬 로드 시 싱글톤 생성 및 리소스 연동 일괄 수행
+    /// </summary>
+    public void Initialize(Canvas targetCanvas, string sceneKey)
+    {
+        _sceneKey = sceneKey;
+        InitCanvas(targetCanvas);
+        BuildUi();
+        LoadAndSpawnAllPlacedItems();
     }
 
     /// <summary>
@@ -196,33 +206,44 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             return;
         }
         Instance = this;
-
-        // EnsureCreated를 통하지 않고 에디터상 수동 배치 등으로 깨질 수 있으므로 대비책 마련
-        if (_canvas == null)
-        {
-            _canvas = GetComponent<Canvas>();
-            if (_canvas == null)
-            {
-                var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
-                if (canvases.Length > 0)
-                {
-                    InitCanvas(canvases[0]);
-                }
-            }
-        }
-
-        // 씬 키가 미리 연동되어 있지 않은 경우에만 자동 획득
-        if (string.IsNullOrEmpty(_sceneKey))
-        {
-            _sceneKey = SceneManager.GetActiveScene().name == SceneNames.GSI ? "GSI" : "Lobby";
-        }
-
-        BuildUi();
-        LoadAndSpawnAllPlacedItems();
     }
 
     private void Start()
     {
+        // 에디터 배치 등으로 인해 초기화가 누락된 경우에 대한 대비책
+        if (_decoContainer == null)
+        {
+            Canvas targetCanvas = null;
+            var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                var c = canvases[i];
+                if (c.isActiveAndEnabled)
+                {
+                    if (c.gameObject.scene.name == "DontDestroyOnLoad")
+                        continue;
+
+                    string nameLower = c.name.ToLower();
+                    if (nameLower.Contains("transition") || 
+                        nameLower.Contains("intro") || 
+                        nameLower.Contains("fade") || 
+                        nameLower.Contains("settings") || 
+                        nameLower.Contains("overlay") || 
+                        nameLower.Contains("notice") || 
+                        nameLower.Contains("popup") ||
+                        nameLower.Contains("dialog"))
+                        continue;
+
+                    targetCanvas = c;
+                    break;
+                }
+            }
+            if (targetCanvas != null)
+            {
+                Initialize(targetCanvas, SceneManager.GetActiveScene().name == SceneNames.GSI ? "GSI" : "Lobby");
+            }
+        }
+
         // 씬 시작 시 패널은 숨김 상태로 대기
         if (_panelRt != null) _panelRt.anchoredPosition = new Vector2(0f, -PanelHeight - 20f);
 
@@ -776,7 +797,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         if (clickInPanel) return;
 
         // 2. 배치된 데코들 중 터치 위치에 충돌하는 것이 있는지 역순(최상단에 렌더링된 요소 우선) 검사
-        Camera cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
+        Camera cam = (_targetCanvas != null && _targetCanvas.renderMode != RenderMode.ScreenSpaceOverlay) ? _targetCanvas.worldCamera : null;
         for (int i = _placedDecos.Count - 1; i >= 0; i--)
         {
             var deco = _placedDecos[i];
@@ -819,11 +840,11 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var cg = deco.GetComponent<CanvasGroup>();
         if (cg != null) cg.alpha = 1f;
 
-        Camera cam = _canvas.renderMode == RenderMode.ScreenSpaceOverlay ? null : _canvas.worldCamera;
-        Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(cam, deco.transform.position);
+        Camera targetCam = (_targetCanvas != null && _targetCanvas.renderMode != RenderMode.ScreenSpaceOverlay) ? _targetCanvas.worldCamera : null;
+        Vector2 screenPos = RectTransformUtility.WorldToScreenPoint(targetCam, deco.transform.position);
 
         // 드롭 좌표가 하단 패널 내부인지 체크 (패널 회수)
-        bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPos, cam);
+        bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPos, null);
 
         if (dropInPanel)
         {
@@ -835,7 +856,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         {
             // 위치 업데이트 및 좌표 재정규화
             Vector2 localPoint;
-            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_decoContainer, screenPos, cam, out localPoint))
+            if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_decoContainer, screenPos, targetCam, out localPoint))
             {
                 Vector2 parentSize = _decoContainer.rect.size;
                 if (parentSize.x > 0 && parentSize.y > 0)
