@@ -637,11 +637,11 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         for (int i = 0; i < list.Count; i++)
         {
             var pData = list[i];
-            SpawnPlacedDeco(pData.ItemId, pData.NormalizedPos, containerSize);
+            SpawnPlacedDeco(pData.ItemId, pData.NormalizedPos, pData.Velocity, containerSize);
         }
     }
 
-    private void SpawnPlacedDeco(string itemId, Vector2 normalizedPos, Vector2 containerSize)
+    private void SpawnPlacedDeco(string itemId, Vector2 normalizedPos, Vector2 velocity, Vector2 containerSize)
     {
         // 불필요한 Image 컴포넌트를 배제하여 그래픽 드로우 및 레이캐스트 차단 제거
         var go = new GameObject($"PlacedDeco_{itemId}", typeof(RectTransform));
@@ -661,6 +661,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var deco = go.AddComponent<GsiPlacedDeco>();
         var parentCanvas = _targetCanvas;
         deco.Initialize(itemId, normalizedPos, parentCanvas);
+        deco.velocity = velocity;
         _placedDecos.Add(deco);
     }
 
@@ -738,7 +739,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
                     var norm = new Vector2(nx, ny);
 
                     // 영구 데코 인스턴스 소환
-                    SpawnPlacedDeco(_dragPreviewId, norm, parentSize);
+                    SpawnPlacedDeco(_dragPreviewId, norm, new Vector2(UnityEngine.Random.Range(-30f, 30f), UnityEngine.Random.Range(-30f, 30f)), parentSize);
 
                     // 세이브
                     SaveCurrentPlacementData();
@@ -773,6 +774,39 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     // ─── 직접 터치 바이패스 조작 감지 (uGUI Sibling 가로막힘 우회) ───────────
 
+    private bool IsInteractiveUi(GameObject go)
+    {
+        if (go == null) return false;
+
+        // 보관함 드로어 패널 내부 또는 데코 아이템 자신은 당연히 드래그 감지 허용
+        if (_panelRt != null && go.transform.IsChildOf(_panelRt)) return false;
+        if (go.GetComponent<GsiPlacedDeco>() != null || go.GetComponentInParent<GsiPlacedDeco>() != null) return false;
+
+        // 1. Selectable 컴포넌트(Button, Slider, Scrollbar, Toggle 등) 존재 여부 검사
+        if (go.GetComponentInParent<UnityEngine.UI.Selectable>() != null) return true;
+
+        // 2. EventTrigger 또는 드래그/클릭 핸들러 존재 여부 검사
+        if (go.GetComponentInParent<UnityEngine.EventSystems.EventTrigger>() != null) return true;
+
+        // 3. IPointerDownHandler 또는 IDragHandler를 직접 구현한 커스텀 컴포넌트가 존재하며, 그게 GsiPlacedDeco나 GsiDecoCard가 아닌 경우 검사
+        var handlers = go.GetComponentsInParent<UnityEngine.EventSystems.IEventSystemHandler>();
+        for (int i = 0; i < handlers.Length; i++)
+        {
+            var h = handlers[i];
+            if (h == null) continue;
+            // 본 데코 관련 핸들러가 아닌 다른 대화형 UI 컴포넌트일 경우 차단
+            if (h is UnityEngine.EventSystems.IPointerDownHandler || h is UnityEngine.EventSystems.IDragHandler)
+            {
+                if (!(h is GsiPlacedDeco) && !(h is GsiDecoCard) && !(h is GsiDecoPanelController))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
     private void HandleGlobalInputDown(Vector2 screenPosition)
     {
         if (_manuallyDraggedDeco != null) return;
@@ -787,21 +821,9 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             for (int i = 0; i < results.Count; i++)
             {
                 var go = results[i].gameObject;
-                if (go == null) continue;
-                
-                // 보관함 드로어 패널 내부 클릭은 이미 clickInPanel로 걸러지므로 제외
-                if (_panelRt != null && go.transform.IsChildOf(_panelRt)) continue;
-                
-                string nameLower = go.name.ToLower();
-                // 패널, 배경, 가로막이 이미지를 클릭한 것이 아닌 유의미한 클릭 타겟(버튼, 스크롤뷰, 기타 등)이 겹쳐져 있는 경우 데코 조작 차단
-                if (!nameLower.Contains("panel") && 
-                    !nameLower.Contains("bg") && 
-                    !nameLower.Contains("background") && 
-                    !nameLower.Contains("back") && 
-                    !nameLower.Contains("space") && 
-                    !nameLower.Contains("galaxy"))
+                if (IsInteractiveUi(go))
                 {
-                    return;
+                    return; // 다른 인터랙티브 UI 위에서는 데코 드래그 시작 차단
                 }
             }
         }
@@ -900,14 +922,21 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             var deco = _placedDecos[i];
             if (deco != null)
             {
-                dataList.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos));
+                dataList.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos, deco.velocity));
             }
         }
         PlayerDecorations.SavePlacedDecos(_sceneKey, dataList);
     }
 
+    private void OnApplicationQuit()
+    {
+        SaveCurrentPlacementData();
+    }
+
     private void OnDestroy()
     {
+        SaveCurrentPlacementData();
+
         if (InputManager.Instance != null)
         {
             InputManager.Instance.OnInputDown -= HandleGlobalInputDown;

@@ -159,11 +159,13 @@ public static class PlayerDecorations
     {
         public readonly string ItemId;
         public readonly Vector2 NormalizedPos;
+        public readonly Vector2 Velocity;
 
-        public PlacedDecoData(string itemId, Vector2 pos)
+        public PlacedDecoData(string itemId, Vector2 pos, Vector2 vel)
         {
             ItemId = itemId;
             NormalizedPos = pos;
+            Velocity = vel;
         }
     }
 
@@ -188,7 +190,19 @@ public static class PlayerDecorations
                         x = 0.5f;
                         y = 0.5f;
                     }
-                    list.Add(new PlacedDecoData(id, new Vector2(x, y)));
+                    
+                    float vx = UnityEngine.Random.Range(-30f, 30f);
+                    float vy = UnityEngine.Random.Range(-30f, 30f);
+                    if (tokens.Length >= 5)
+                    {
+                        float.TryParse(tokens[3], out vx);
+                        float.TryParse(tokens[4], out vy);
+                    }
+
+                    if (float.IsNaN(vx) || float.IsInfinity(vx)) vx = 0f;
+                    if (float.IsNaN(vy) || float.IsInfinity(vy)) vy = 0f;
+                    
+                    list.Add(new PlacedDecoData(id, new Vector2(x, y), new Vector2(vx, vy)));
                 }
             }
         }
@@ -202,9 +216,13 @@ public static class PlayerDecorations
         {
             float x = decos[i].NormalizedPos.x;
             float y = decos[i].NormalizedPos.y;
+            float vx = decos[i].Velocity.x;
+            float vy = decos[i].Velocity.y;
             if (float.IsNaN(x) || float.IsInfinity(x)) x = 0.5f;
             if (float.IsNaN(y) || float.IsInfinity(y)) y = 0.5f;
-            parts.Add($"{decos[i].ItemId}:{x:F4}:{y:F4}");
+            if (float.IsNaN(vx) || float.IsInfinity(vx)) vx = 0f;
+            if (float.IsNaN(vy) || float.IsInfinity(vy)) vy = 0f;
+            parts.Add($"{decos[i].ItemId}:{x:F4}:{y:F4}:{vx:F4}:{vy:F4}");
         }
         string raw = string.Join(";", parts);
         GsiSaveSystem.SetString(PlacedPrefix + sceneName, raw);
