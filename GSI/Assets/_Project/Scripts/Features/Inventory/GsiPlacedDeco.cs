@@ -310,25 +310,12 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
             currentSpeed = maxVelocity;
         }
 
-        // 마찰력 적용
+        // 마찰력 적용 (별 노드와 완전히 동일하게 구현: 최소 표류 속도 이하일 때는 속도를 강제 보정하지 않고 정지 가능하도록 함)
         if (currentSpeed > minDriftSpeed)
         {
             float newSpeed = currentSpeed * Mathf.Exp(-friction * deltaTime);
             newSpeed = Mathf.Max(newSpeed, minDriftSpeed);
             _velocity = _velocity.normalized * newSpeed;
-        }
-        else
-        {
-            // 속도가 최소 유영 속도보다 낮으면 최소 속도로 보정 (완전 정지 방지)
-            if (currentSpeed < 0.01f)
-            {
-                float angle = UnityEngine.Random.Range(0f, Mathf.PI * 2f);
-                _velocity = new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * minDriftSpeed;
-            }
-            else
-            {
-                _velocity = _velocity.normalized * minDriftSpeed;
-            }
         }
 
         // 좌표 갱신
