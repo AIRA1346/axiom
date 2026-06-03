@@ -71,13 +71,25 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         Canvas targetCanvas = null;
         var canvases = FindObjectsByType<Canvas>(FindObjectsSortMode.None);
         
-        // 1. GraphicRaycaster가 존재하고 활성화된 메인 UI 캔버스를 우선 탐색
+        // 1. GraphicRaycaster가 존재하고 활성화된 메인 UI 캔버스를 우선 탐색 (DontDestroyOnLoad 및 임시/시스템 캔버스 원천 배제)
         for (int i = 0; i < canvases.Length; i++)
         {
             var c = canvases[i];
             if (c.isActiveAndEnabled && c.GetComponent<GraphicRaycaster>() != null)
             {
-                if (c.name.Contains("Transition") || c.name.Contains("Intro"))
+                // DontDestroyOnLoad 씬의 캔버스 배제 (장면 전이용 FadeCanvas 등)
+                if (c.gameObject.scene.name == "DontDestroyOnLoad")
+                    continue;
+
+                string nameLower = c.name.ToLower();
+                if (nameLower.Contains("transition") || 
+                    nameLower.Contains("intro") || 
+                    nameLower.Contains("fade") || 
+                    nameLower.Contains("settings") || 
+                    nameLower.Contains("overlay") || 
+                    nameLower.Contains("notice") || 
+                    nameLower.Contains("popup") ||
+                    nameLower.Contains("dialog"))
                     continue;
 
                 targetCanvas = c;
@@ -85,14 +97,29 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             }
         }
 
-        // 2. 적절한 캔버스를 찾지 못했다면 활성화된 첫 번째 캔버스를 선택
+        // 2. 적절한 캔버스를 찾지 못했다면 활성화된 첫 번째 일반 캔버스를 선택
         if (targetCanvas == null)
         {
             for (int i = 0; i < canvases.Length; i++)
             {
-                if (canvases[i].isActiveAndEnabled)
+                var c = canvases[i];
+                if (c.isActiveAndEnabled)
                 {
-                    targetCanvas = canvases[i];
+                    if (c.gameObject.scene.name == "DontDestroyOnLoad")
+                        continue;
+
+                    string nameLower = c.name.ToLower();
+                    if (nameLower.Contains("transition") || 
+                        nameLower.Contains("intro") || 
+                        nameLower.Contains("fade") || 
+                        nameLower.Contains("settings") || 
+                        nameLower.Contains("overlay") || 
+                        nameLower.Contains("notice") || 
+                        nameLower.Contains("popup") ||
+                        nameLower.Contains("dialog"))
+                        continue;
+
+                    targetCanvas = c;
                     break;
                 }
             }
@@ -100,7 +127,19 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
         if (targetCanvas == null && canvases.Length > 0)
         {
-            targetCanvas = canvases[0];
+            // 최대한 DontDestroyOnLoad가 아닌 캔버스 우선 연동
+            for (int i = 0; i < canvases.Length; i++)
+            {
+                if (canvases[i].gameObject.scene.name != "DontDestroyOnLoad")
+                {
+                    targetCanvas = canvases[i];
+                    break;
+                }
+            }
+            if (targetCanvas == null)
+            {
+                targetCanvas = canvases[0];
+            }
         }
 
         if (targetCanvas == null)
@@ -703,10 +742,33 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     {
         if (_manuallyDraggedDeco != null) return;
 
-        // 버튼이나 툴팁 등 다른 UI 요소(raycastTarget이 true인 기물) 위를 클릭했다면 수동 데코 드래그 차단
-        if (EventSystem.current != null && EventSystem.current.IsPointerOverGameObject())
+        // 마우스 포인터가 배치 영역의 단순 배경판 외의 다른 실제 UI 요소(버튼, 대화 상자 등) 위에 가있다면 데코 드래그 조작을 예방 차단
+        if (EventSystem.current != null)
         {
-            return;
+            var pointerData = new PointerEventData(EventSystem.current) { position = screenPosition };
+            var results = new List<RaycastResult>();
+            EventSystem.current.RaycastAll(pointerData, results);
+            
+            for (int i = 0; i < results.Count; i++)
+            {
+                var go = results[i].gameObject;
+                if (go == null) continue;
+                
+                // 보관함 드로어 패널 내부 클릭은 이미 clickInPanel로 걸러지므로 제외
+                if (_panelRt != null && go.transform.IsChildOf(_panelRt)) continue;
+                
+                string nameLower = go.name.ToLower();
+                // 패널, 배경, 가로막이 이미지를 클릭한 것이 아닌 유의미한 클릭 타겟(버튼, 스크롤뷰, 기타 등)이 겹쳐져 있는 경우 데코 조작 차단
+                if (!nameLower.Contains("panel") && 
+                    !nameLower.Contains("bg") && 
+                    !nameLower.Contains("background") && 
+                    !nameLower.Contains("back") && 
+                    !nameLower.Contains("space") && 
+                    !nameLower.Contains("galaxy"))
+                {
+                    return;
+                }
+            }
         }
 
         // 1. 하단 서랍 패널 내부 클릭 시 무시 (패널 안은 독립 캔버스에서 uGUI 카드가 터치를 직접 처리)
