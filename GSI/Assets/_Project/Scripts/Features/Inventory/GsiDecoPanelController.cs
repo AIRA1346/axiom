@@ -28,6 +28,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     private string _sceneKey;
 
     private readonly List<GsiPlacedDeco> _placedDecos = new List<GsiPlacedDeco>();
+    private List<PlayerDecorations.PlacedDecoData> _lastSavedDecoData = new List<PlayerDecorations.PlacedDecoData>();
     private readonly List<DecoCardUI> _cards = new List<DecoCardUI>();
 
     // 드래그 중인 임시 프리뷰 오브젝트
@@ -261,6 +262,25 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Tab))
         {
             TogglePanel();
+        }
+    }
+
+    private void LateUpdate()
+    {
+        // 매 프레임 유영하는 데코들의 현재 위치와 속도를 메모리 캐시에 최신화 (디스크 쓰기 제외로 프레임 드랍 차단)
+        UpdateDecoDataCache();
+    }
+
+    private void UpdateDecoDataCache()
+    {
+        _lastSavedDecoData.Clear();
+        for (int i = 0; i < _placedDecos.Count; i++)
+        {
+            var deco = _placedDecos[i];
+            if (deco != null)
+            {
+                _lastSavedDecoData.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos, deco.velocity));
+            }
         }
     }
 
@@ -629,6 +649,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         _placedDecos.Clear();
 
         var list = PlayerDecorations.LoadPlacedDecos(_sceneKey);
+        _lastSavedDecoData = new List<PlayerDecorations.PlacedDecoData>(list); // 메모리 캐시 동기화
         Vector2 containerSize = _decoContainer.rect.size;
         
         // 만약 컨테이너 사이즈가 아직 가로세로 잡히지 않았다면 (최초 프레임 앵커링 지연) 전체화면 크기 디폴트로 잡음
@@ -742,6 +763,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
                     SpawnPlacedDeco(_dragPreviewId, norm, new Vector2(UnityEngine.Random.Range(-30f, 30f), UnityEngine.Random.Range(-30f, 30f)), parentSize);
 
                     // 세이브
+                    UpdateDecoDataCache();
                     SaveCurrentPlacementData();
 
                     // 수량 갱신
@@ -908,6 +930,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         }
 
         // 저장 상태 동기화 및 패널 수량 갱신
+        UpdateDecoDataCache();
         SaveCurrentPlacementData();
         RefreshAllCards();
     }
@@ -916,16 +939,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     private void SaveCurrentPlacementData()
     {
-        var dataList = new List<PlayerDecorations.PlacedDecoData>();
-        for (int i = 0; i < _placedDecos.Count; i++)
-        {
-            var deco = _placedDecos[i];
-            if (deco != null)
-            {
-                dataList.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos, deco.velocity));
-            }
-        }
-        PlayerDecorations.SavePlacedDecos(_sceneKey, dataList);
+        PlayerDecorations.SavePlacedDecos(_sceneKey, _lastSavedDecoData);
     }
 
     private void OnApplicationQuit()
