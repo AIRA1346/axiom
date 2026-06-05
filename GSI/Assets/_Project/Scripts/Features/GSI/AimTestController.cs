@@ -44,6 +44,7 @@ public sealed class AimTestController : MonoBehaviour, IMiniGameController
     [Header("Visual Feedback")]
     [SerializeField] private AnimationCurve _spawnCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
     [SerializeField] private float _animationDuration = 0.15f;
+    [SerializeField] private Image _missVignetteImage;
 
     private int _targetsRequired = 5;
     private float _missPenaltySeconds = 0.5f;
@@ -55,7 +56,7 @@ public sealed class AimTestController : MonoBehaviour, IMiniGameController
     private bool _isTestActive;
     private int _currentHitCount;
     private float _startTime;
-
+    private Coroutine _missFlashRoutine;
     private Coroutine _animationRoutine;
     private Vector3 _originalScale = Vector3.one;
 
@@ -232,7 +233,7 @@ public sealed class AimTestController : MonoBehaviour, IMiniGameController
     {
         _startTime -= _missPenaltySeconds;
         GsiAudio.PlaySfx(_missSfx);
-        // TODO: 시각적 미스 효과 추가 (예: 화면 빨간색 플래시)
+        TriggerMissFlash();
     }
 
     /// <summary>
@@ -272,6 +273,15 @@ public sealed class AimTestController : MonoBehaviour, IMiniGameController
         {
             StopCoroutine(_animationRoutine);
             _animationRoutine = null;
+        }
+        if (_missFlashRoutine != null)
+        {
+            StopCoroutine(_missFlashRoutine);
+            _missFlashRoutine = null;
+        }
+        if (_missVignetteImage != null)
+        {
+            _missVignetteImage.color = new Color(1f, 0f, 0f, 0f);
         }
         SetTargetActive(false);
     }
@@ -391,6 +401,59 @@ public sealed class AimTestController : MonoBehaviour, IMiniGameController
             default:
                 target_image.color = Color.white;
                 break;
+        }
+    }
+
+    private void TriggerMissFlash()
+    {
+        EnsureMissVignetteCreated();
+        if (_missVignetteImage == null) return;
+
+        if (_missFlashRoutine != null)
+        {
+            StopCoroutine(_missFlashRoutine);
+        }
+        _missFlashRoutine = StartCoroutine(MissFlashRoutine());
+    }
+
+    private IEnumerator MissFlashRoutine()
+    {
+        float duration = 0.2f;
+        float elapsed = 0f;
+        float peakAlpha = 0.25f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            float t = elapsed / duration;
+            float alpha = Mathf.Sin(t * Mathf.PI) * peakAlpha;
+            _missVignetteImage.color = new Color(1f, 0f, 0f, alpha);
+            yield return null;
+        }
+
+        _missVignetteImage.color = new Color(1f, 0f, 0f, 0f);
+        _missFlashRoutine = null;
+    }
+
+    private void EnsureMissVignetteCreated()
+    {
+        if (_missVignetteImage != null) return;
+
+        if (_aimTargetRect != null && _aimTargetRect.parent != null)
+        {
+            GameObject vignetteGo = new GameObject("AimMissVignette", typeof(RectTransform), typeof(Image));
+            vignetteGo.transform.SetParent(_aimTargetRect.parent, false);
+            vignetteGo.transform.SetAsLastSibling();
+
+            RectTransform rt = vignetteGo.GetComponent<RectTransform>();
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.sizeDelta = Vector2.zero;
+            rt.anchoredPosition = Vector2.zero;
+
+            _missVignetteImage = vignetteGo.GetComponent<Image>();
+            _missVignetteImage.color = new Color(1f, 0f, 0f, 0f);
+            _missVignetteImage.raycastTarget = false;
         }
     }
 }

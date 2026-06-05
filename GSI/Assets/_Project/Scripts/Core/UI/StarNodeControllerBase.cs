@@ -68,6 +68,13 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     private float _lastCollisionSoundTime = 0f;
     private bool _draggedThisFrame = false;
 
+    // Caching for twinkling layers to avoid per-frame Find() allocations
+    private Transform _auraGlowTf;
+    private Transform _outerGlowTf;
+    private Transform _innerRingGlowTf;
+    private Transform _spikeVTf;
+    private Transform _spikeHTf;
+
     // ═══════════════════════════════════════════════════════════════
     // Scene-specific virtual properties — override in subclasses
     // ═══════════════════════════════════════════════════════════════
@@ -144,6 +151,16 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         // Build premium procedural star layers
         BuildStarVisuals();
 
+        // Cache twinkling layers once to avoid per-frame string-based Find() calls
+        if (_starVisualRoot != null)
+        {
+            _auraGlowTf = _starVisualRoot.Find("AuraGlow");
+            _outerGlowTf = _starVisualRoot.Find("OuterGlow");
+            _innerRingGlowTf = _starVisualRoot.Find("InnerRingGlow");
+            _spikeVTf = _starVisualRoot.Find("SpikeV");
+            _spikeHTf = _starVisualRoot.Find("SpikeH");
+        }
+
         // Give a small random initial drift velocity
         _velocity = new Vector2(Random.Range(-90f, 90f), Random.Range(-90f, 90f));
 
@@ -184,23 +201,15 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
             // Slowly breathe the glows
             float glowPulse = 0.82f + Mathf.PingPong(Time.unscaledTime * 0.5f, 0.25f); // pulses between 0.82 and 1.07
             
-            Transform aura = _starVisualRoot.Find("AuraGlow");
-            if (aura != null) aura.localScale = new Vector3(glowPulse, glowPulse, 1f);
-            
-            Transform outer = _starVisualRoot.Find("OuterGlow");
-            if (outer != null) outer.localScale = new Vector3(glowPulse, glowPulse, 1f);
-            
-            Transform inner = _starVisualRoot.Find("InnerRingGlow");
-            if (inner != null) inner.localScale = new Vector3(glowPulse, glowPulse, 1f);
+            if (_auraGlowTf != null) _auraGlowTf.localScale = new Vector3(glowPulse, glowPulse, 1f);
+            if (_outerGlowTf != null) _outerGlowTf.localScale = new Vector3(glowPulse, glowPulse, 1f);
+            if (_innerRingGlowTf != null) _innerRingGlowTf.localScale = new Vector3(glowPulse, glowPulse, 1f);
 
             // Twist and stretch the flare spikes in opposite phases
             float spikePulse = 0.88f + Mathf.PingPong(Time.unscaledTime * 1.2f, 0.22f); // faster twinkling
             
-            Transform spikeV = _starVisualRoot.Find("SpikeV");
-            if (spikeV != null) spikeV.localScale = new Vector3(1f, spikePulse, 1f);
-            
-            Transform spikeH = _starVisualRoot.Find("SpikeH");
-            if (spikeH != null) spikeH.localScale = new Vector3(spikePulse, 1f, 1f);
+            if (_spikeVTf != null) _spikeVTf.localScale = new Vector3(1f, spikePulse, 1f);
+            if (_spikeHTf != null) _spikeHTf.localScale = new Vector3(spikePulse, 1f, 1f);
         }
 
         // 2. Kinetic drag velocity update (keeps dragging smooth and responsive)

@@ -35,9 +35,11 @@ public sealed class GsiCosmicViewportController : MonoBehaviour
     private bool _isPanning = false;
     private Vector2 _lastMousePosition;
     private bool _hasInitializedValues = false;
+    private RectTransform _myRt;
 
     private void Start()
     {
+        _myRt = GetComponent<RectTransform>();
         FindContainers();
     }
 
@@ -98,9 +100,8 @@ public sealed class GsiCosmicViewportController : MonoBehaviour
         _currentZoom = Mathf.SmoothDamp(_currentZoom, _targetZoom, ref _zoomVelocity, ZoomSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
 
         // 줌 아웃 시 화면이 경계 밖으로 이탈하지 않도록 실시간 타겟 오프셋 제한 보정
-        var myRt = GetComponent<RectTransform>();
-        float w = myRt != null ? myRt.rect.width : Screen.width;
-        float h = myRt != null ? myRt.rect.height : Screen.height;
+        float w = _myRt != null ? _myRt.rect.width : Screen.width;
+        float h = _myRt != null ? _myRt.rect.height : Screen.height;
 
         float limitX = Mathf.Max(0f, w * (_currentZoom - 1f) * 0.5f);
         float limitY = Mathf.Max(0f, h * (_currentZoom - 1f) * 0.5f);
@@ -185,9 +186,8 @@ public sealed class GsiCosmicViewportController : MonoBehaviour
                 _targetOffset += panDelta;
 
                 // 최대 반경 제한 (100% 비율 화면 경계에 고정)
-                var myRt = GetComponent<RectTransform>();
-                float w = myRt != null ? myRt.rect.width : Screen.width;
-                float h = myRt != null ? myRt.rect.height : Screen.height;
+                float w = _myRt != null ? _myRt.rect.width : Screen.width;
+                float h = _myRt != null ? _myRt.rect.height : Screen.height;
 
                 float limitX = Mathf.Max(0f, w * (_currentZoom - 1f) * 0.5f);
                 float limitY = Mathf.Max(0f, h * (_currentZoom - 1f) * 0.5f);
