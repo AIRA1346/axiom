@@ -12,7 +12,7 @@ using UnityEngine.UI;
 public sealed class GsiCosmicViewportController : MonoBehaviour
 {
     [Header("Zoom Config")]
-    public float MinZoom = 0.4f;
+    public float MinZoom = 1.0f;
     public float MaxZoom = 2.5f;
     public float ZoomSpeed = 0.08f;
     public float ZoomSmoothTime = 0.12f;
