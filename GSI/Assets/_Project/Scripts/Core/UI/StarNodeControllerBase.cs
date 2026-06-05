@@ -617,6 +617,20 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         Vector2 delta = eventData.delta / scaleFactor;
 
         // Zoom Sensitivity Compensation
+        if (_scaleReferenceParent == null || (_scaleReferenceParent.name != "LobbyCenterStage" && _scaleReferenceParent.name != "GsiCosmicStage"))
+        {
+            Transform curr = transform.parent;
+            while (curr != null)
+            {
+                if (curr.name == "LobbyCenterStage" || curr.name == "GsiCosmicStage")
+                {
+                    _scaleReferenceParent = curr;
+                    break;
+                }
+                curr = curr.parent;
+            }
+        }
+
         if (_scaleReferenceParent != null)
         {
             delta.x /= _scaleReferenceParent.localScale.x;
