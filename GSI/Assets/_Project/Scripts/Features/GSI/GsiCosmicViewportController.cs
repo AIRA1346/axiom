@@ -96,6 +96,18 @@ public sealed class GsiCosmicViewportController : MonoBehaviour
 
         // 부드러운 감쇠 연산 (SmoothDamp)
         _currentZoom = Mathf.SmoothDamp(_currentZoom, _targetZoom, ref _zoomVelocity, ZoomSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
+
+        // 줌 아웃 시 화면이 경계 밖으로 이탈하지 않도록 실시간 타겟 오프셋 제한 보정
+        var myRt = GetComponent<RectTransform>();
+        float w = myRt != null ? myRt.rect.width : Screen.width;
+        float h = myRt != null ? myRt.rect.height : Screen.height;
+
+        float limitX = Mathf.Max(0f, w * (_currentZoom - 1f) * 0.5f);
+        float limitY = Mathf.Max(0f, h * (_currentZoom - 1f) * 0.5f);
+
+        _targetOffset.x = Mathf.Clamp(_targetOffset.x, -limitX, limitX);
+        _targetOffset.y = Mathf.Clamp(_targetOffset.y, -limitY, limitY);
+
         _currentOffset = Vector2.SmoothDamp(_currentOffset, _targetOffset, ref _panVelocity, PanSmoothTime, Mathf.Infinity, Time.unscaledDeltaTime);
 
         // 1. 우주 배경 스테이지 적용
@@ -172,10 +184,16 @@ public sealed class GsiCosmicViewportController : MonoBehaviour
                 // 뷰포트 방향 드래그 오프셋 누적
                 _targetOffset += panDelta;
 
-                // 최대 반경 제한
-                float limit = MaxPanRadius * _currentZoom;
-                _targetOffset.x = Mathf.Clamp(_targetOffset.x, -limit, limit);
-                _targetOffset.y = Mathf.Clamp(_targetOffset.y, -limit, limit);
+                // 최대 반경 제한 (100% 비율 화면 경계에 고정)
+                var myRt = GetComponent<RectTransform>();
+                float w = myRt != null ? myRt.rect.width : Screen.width;
+                float h = myRt != null ? myRt.rect.height : Screen.height;
+
+                float limitX = Mathf.Max(0f, w * (_currentZoom - 1f) * 0.5f);
+                float limitY = Mathf.Max(0f, h * (_currentZoom - 1f) * 0.5f);
+
+                _targetOffset.x = Mathf.Clamp(_targetOffset.x, -limitX, limitX);
+                _targetOffset.y = Mathf.Clamp(_targetOffset.y, -limitY, limitY);
             }
         }
         else
