@@ -156,8 +156,8 @@ public sealed class GsiCosmicViewportController : MonoBehaviour
 
         Vector2 currentMousePos = mouse.position.ReadValue();
 
-        // 마우스 우클릭 또는 휠 클릭으로 팬 이동
-        bool panPressed = mouse.rightButton.isPressed || mouse.middleButton.isPressed;
+        // 마우스 휠(가운데) 클릭으로만 팬 이동 (우클릭 이동 기능 차단)
+        bool panPressed = mouse.middleButton.isPressed;
 
         if (panPressed)
         {
