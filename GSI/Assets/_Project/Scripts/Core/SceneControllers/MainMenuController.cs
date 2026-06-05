@@ -133,6 +133,13 @@ public sealed class MainMenuController : MonoBehaviour
     {
         _lobbyShellBuilt = false;
         _lobbyRoot = transform.parent as RectTransform;
+
+        // Ensure Orrery System exists during Awake so all star nodes can find it in Start()
+        if (Application.isPlaying && ArchE.Game.GsiCosmicOrrerySystem.Instance == null)
+        {
+            gameObject.AddComponent<ArchE.Game.GsiCosmicOrrerySystem>();
+        }
+
         WireOptionalHierarchyButtons();
         CacheLobbyVisualRefs();
 
@@ -1441,6 +1448,12 @@ public sealed class MainMenuController : MonoBehaviour
         {
             star.OnClickedAction = onClickedAction;
             Destroy(button);
+
+            // Manually register in Play Mode to be absolutely safe
+            if (ArchE.Game.GsiCosmicOrrerySystem.Instance != null)
+            {
+                ArchE.Game.GsiCosmicOrrerySystem.Instance.RegisterStarNode(star);
+            }
         }
     }
 
