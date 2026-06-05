@@ -364,6 +364,28 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         var parentRt = (RectTransform)transform.parent;
         Rect parentRect = parentRt.rect;
 
+        // If parent rect is zero-sized or too small (e.g. LobbyActionRow is 0x0), traverse up to find a valid ancestor
+        if (parentRect.width < 10f || parentRect.height < 10f)
+        {
+            Transform curr = transform.parent;
+            while (curr != null)
+            {
+                var rt = curr as RectTransform;
+                if (rt != null && rt.rect.width >= 100f && rt.rect.height >= 100f)
+                {
+                    Vector3 ancestorLocalCenter = parentRt.InverseTransformPoint(rt.transform.position);
+                    parentRect = new Rect(
+                        ancestorLocalCenter.x - rt.rect.width * 0.5f,
+                        ancestorLocalCenter.y - rt.rect.height * 0.5f,
+                        rt.rect.width,
+                        rt.rect.height
+                    );
+                    break;
+                }
+                curr = curr.parent;
+            }
+        }
+
         float marginX = 64f;
         float marginY_min = MarginYMin;
         float marginY_max = MarginYMax;
