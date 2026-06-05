@@ -118,6 +118,7 @@ public sealed class MainMenuController : MonoBehaviour
     private RectTransform _lobbyRoot;
     private Image _panelBackground;
     private Image _heroImage;
+    [System.NonSerialized]
     private bool _lobbyShellBuilt;
     private TextMeshProUGUI _lobbyTopLeftTitleTmp;
     private TextMeshProUGUI _lobbyTopLeftTimeTmp;
@@ -130,6 +131,7 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
+        _lobbyShellBuilt = false;
         _lobbyRoot = transform.parent as RectTransform;
         WireOptionalHierarchyButtons();
         CacheLobbyVisualRefs();
