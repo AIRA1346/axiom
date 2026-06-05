@@ -11,7 +11,7 @@ using UnityEditor.SceneManagement;
 #endif
 
 /// <summary>
-/// 濡쒕퉬 ??硫붿씤 硫붾돱: G.S.I ?쒖꽕 ?낆옣 諛?寃쎌젣 ?띿뒪???쒖떆. ?ㅽ겕/?쇱씠???멸? 諛섏쁺.
+/// 로비 및 메인 메뉴: G.S.I 시설 입장 및 경제 텍스트 표시. 다크/라이트 테마 반영.
 /// </summary>
 [ExecuteAlways]
 public sealed class MainMenuController : MonoBehaviour
@@ -34,19 +34,19 @@ public sealed class MainMenuController : MonoBehaviour
     private const string LobbyHeaderBarLegacyName = "LobbyHeaderBar";
     private const string LobbyEconomyStripName = "LobbyEconomyStrip";
     private const string LobbyEconomyStripSpacerName = "LobbyEconomyStripSpacer";
-    /// <summary>Strip ?덉뿉??怨⑤뱶/?곗폆?????⑹뼱由щ줈 臾띠뼱 ?곗긽?⑥뿉 怨좎젙 ??쑝濡?諛곗튂?⑸땲??(CSF+HLG 瑗ъ엫 諛⑹?).</summary>
+    /// <summary>Strip 안에서 골드/티켓을 한 덩어리로 묶어 우측 단에 고정 탭으로 배치합니다 (CSF+HLG 꼬임 방지).</summary>
     private const string LobbyEconomyRightClusterName = "LobbyEconomyRightCluster";
     private const float LobbyEconomyClusterMinWidth = 780f;
     private const float LobbyEconomyClusterPreferredWidth = 900f;
     private const float LobbyEconomyLabelMinWidth = 200f;
     private const float LobbyEconomyLabelPreferredWidth = 280f;
     private const string LobbyTopLeftBarName = "LobbyTopLeftBar";
-    /// <summary>怨⑤뱶/?묒떆沅?以꾧낵 ?숈씪( <see cref="UpdateEconomyTexts"/> ??24f ).</summary>
+    /// <summary>골드/입장권 글자 크기와 동일 (UpdateEconomyTexts 내 24f 참조).</summary>
     private const float LobbyTopLeftFontSize = 24f;
     private const float LobbyTopLeftTitleClockGap = 12f;
-    /// <summary>濡쒕퉬 媛濡쒖쓽 ?쇰?留??ъ슜 ???곷떒 怨⑤뱶 ?곸뿭怨?寃뱀튂吏 ?딄쾶 ?〓땲??</summary>
+    /// <summary>로비 가로의 절반만 사용 상단 골드 영역과 겹치지 않게 합니다.</summary>
     private const float LobbyTopLeftWidthFraction = 0.5f;
-    /// <summary>?쒓퀎(?걔룹썡쨌?셋룹떆媛? ?댁씠 ?덈Т ?뉗븘吏??寃껋쓣 留됰뒗 理쒖넖媛??ㅼ젣???띿뒪?몄뿉 留욎땄).</summary>
+    /// <summary>시계(시스템 시간) 너비가 너무 좁아지는 것을 막는 최소값 (실제 텍스트에 맞춤).</summary>
     private const float LobbyTopLeftTimeMinWidth = 200f;
     private const float LobbyTopLeftBarMaxHeight = 300f;
     private const string LobbyCenterStageName = "LobbyCenterStage";
@@ -56,7 +56,7 @@ public sealed class MainMenuController : MonoBehaviour
     private const string LobbyLayerNearName = "Layer_Near";
     private const string LobbyLayerGlowName = "Layer_Glow";
     private const string LobbyLayerVignetteName = "Layer_Vignette";
-    /// <summary>Parallax art ?? 湲濡쒖슦쨌?쒕ぉ蹂대떎 ?꾨옒 ??硫붿씤 ?꾪듃瑜??댁쭩 ?꾨Ⅴ??UI??諛섑닾紐?硫?</summary>
+    /// <summary>Parallax art 및 글로우/제목보다 아래, 메인 아트를 한 층 아래에 흐르는 UI의 반투명 면</summary>
     private const string LobbyLayerUiScrimName = "Layer_UiScrim";
     private const string LobbyDecorRootName = "Decor_Root";
     private const string LobbyDecorBrandingName = "LobbyBrandingTitle";
@@ -70,16 +70,16 @@ public sealed class MainMenuController : MonoBehaviour
     private static readonly Color LobbyActionButtonBackgroundClear = new Color(1f, 1f, 1f, 0f);
 
     [Header("G.S.I")]
-    [Tooltip("?좊떦 ??G.S.I ?쒖꽕 ?ъ쑝濡??대룞?⑸땲??")]
+    [Tooltip("클릭 시 G.S.I 시설 로비로 이동합니다.")]
     [SerializeField] private Button _enterGsiFacilityButton;
 
-    [Tooltip("?좊떦 ???곸젏 ???묒떆沅뙿룹뒪???쇰줈 ?대룞?⑸땲??")]
+    [Tooltip("클릭 시 상점으로 이동합니다.")]
     [SerializeField] private Button _openShopButton;
 
-    [Tooltip("?좊떦 ???몃깽?좊━ ??怨⑤뱶쨌?묒떆沅뙿룹뒪???쇰줈 ?대룞?⑸땲??")]
+    [Tooltip("클릭 시 인벤토리로 이동합니다.")]
     [SerializeField] private Button _openInventoryButton;
 
-    [Tooltip("?좊떦 ???듯빀 ?쒗뿕 湲곕줉 ??Altar of Verity)?쇰줈 ?대룞?⑸땲??")]
+    [Tooltip("클릭 시 통합 시험 기록실(Altar of Verity)로 이동합니다.")]
     [SerializeField] private Button _openAltarOfVerityButton;
 
     [SerializeField] private Button _practiceButton;
@@ -264,6 +264,11 @@ public sealed class MainMenuController : MonoBehaviour
         EnsureLobbyShell();
         if (Application.isPlaying && _lobbyRoot != null)
         {
+            if (_lobbyRoot.gameObject.GetComponent<GsiCosmicViewportController>() == null)
+            {
+                _lobbyRoot.gameObject.AddComponent<GsiCosmicViewportController>();
+            }
+
             Transform stageTf = _lobbyRoot.Find(LobbyCenterStageName);
             if (stageTf != null)
             {
@@ -1316,7 +1321,7 @@ public sealed class MainMenuController : MonoBehaviour
             return;
         }
 
-        Transform rowTf = _lobbyRoot.Find(LobbyActionRowName);
+        Transform rowTf = FindLobbyActionRow();
         if (rowTf == null || !rowTf.TryGetComponent(out RectTransform rowRt))
         {
             return;
@@ -1440,7 +1445,7 @@ public sealed class MainMenuController : MonoBehaviour
 
     private void BuildLobbyActionRow()
     {
-        if (_lobbyRoot == null || _lobbyRoot.Find(LobbyActionRowName) != null)
+        if (_lobbyRoot == null || FindLobbyActionRow() != null)
         {
             return;
         }
@@ -1559,7 +1564,8 @@ public sealed class MainMenuController : MonoBehaviour
 
         if (_panelBackground != null)
         {
-            ProceduralSpaceBackground.ApplyToImage(_panelBackground);
+            _panelBackground.sprite = null;
+            _panelBackground.color = new Color(0.002f, 0.001f, 0.004f, 1f); // Deep void black/violet
             _panelBackground.raycastTarget = false;
         }
 
@@ -1686,7 +1692,7 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         cg.interactable = true;
-        cg.blocksRaycasts = false;
+        cg.blocksRaycasts = true;
         cg.alpha = _lobbyCenterEntranceFade ? 0f : 1f;
     }
 
@@ -2069,6 +2075,16 @@ public sealed class MainMenuController : MonoBehaviour
             stage.SetAsFirstSibling();
         }
 
+        Transform row = FindLobbyActionRow();
+
+        // 런타임에 별 노드 버튼들의 부모 컨테이너(LobbyActionRow)를 LobbyCenterStage의 자식으로 옮깁니다.
+        // 이를 통해 휠 줌/팬 적용 시 성단의 별 버튼들이 우주 배경 아트 레이어들과 동조되어 함께 확대/축소 및 이동하게 됩니다.
+        if (Application.isPlaying && stage != null && row != null)
+        {
+            row.SetParent(stage, false);
+            row.SetAsLastSibling(); // 별들이 다른 Parallax 우주 배경 아트 위에 렌더링되도록 최상단 레이어로 보정
+        }
+
         Transform topLeftBar = _lobbyRoot.Find(LobbyTopLeftBarName);
         if (topLeftBar != null)
         {
@@ -2076,16 +2092,30 @@ public sealed class MainMenuController : MonoBehaviour
         }
 
         Transform strip = _lobbyRoot.Find(LobbyEconomyStripName);
-        Transform row = _lobbyRoot.Find(LobbyActionRowName);
         if (strip != null)
         {
             strip.SetAsLastSibling();
         }
 
-        if (row != null)
+        if (!Application.isPlaying && row != null)
         {
             row.SetAsLastSibling();
         }
+    }
+
+    private Transform FindLobbyActionRow()
+    {
+        if (_lobbyRoot == null) return null;
+        Transform row = _lobbyRoot.Find(LobbyActionRowName);
+        if (row == null)
+        {
+            Transform stage = _lobbyRoot.Find(LobbyCenterStageName);
+            if (stage != null)
+            {
+                row = stage.Find(LobbyActionRowName);
+            }
+        }
+        return row;
     }
 
 
@@ -2258,7 +2288,7 @@ public sealed class MainMenuController : MonoBehaviour
         ApplyLobbyButtonColorTint(btn);
     }
 
-    /// <summary>濡쒕퉬 ?≪뀡 ?쇰꺼 ?꽷룹븘???뉗? ???ㅽ겕/?쇱씠?몄뿉 留욎떠 ?됱? ?몄텧遺?먯꽌 吏??.</summary>
+    /// <summary>로비 액션 라벨의 구분선을 다크/라이트 테마에 맞춰 연출하기 위해 지정합니다.</summary>
     private static void EnsureLobbyActionLabelRuleLines(Button btn, Color lineColor)
     {
         if (btn == null)

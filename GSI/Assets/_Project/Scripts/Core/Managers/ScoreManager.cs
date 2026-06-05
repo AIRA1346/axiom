@@ -116,7 +116,8 @@ public sealed class ScoreManager : MonoBehaviour
             switch (GameManager.Instance.CurrentTestMode)
             {
                 case TestMode.Reaction:
-                    IsFailed = !ReactionDifficulty.IsPass(time, GameManager.Instance.GetPracticeGrade(TestMode.Reaction));
+                    // 난이도 선택 삭제로 인해 무조건 9급 합격 컷인 0.320초를 합격선으로 삼음
+                    IsFailed = !ReactionDifficulty.IsPass(time, 9);
                     break;
                 case TestMode.AimPrecision:
                     IsFailed = !AimDifficulty.IsPass(time, GameManager.Instance.GetPracticeGrade(TestMode.AimPrecision));
@@ -378,31 +379,15 @@ public sealed class ScoreManager : MonoBehaviour
         switch (GameManager.Instance.CurrentTestMode)
         {
             case TestMode.Reaction:
-                if (GameManager.Instance != null)
+                // 1등급부터 9등급까지 순차적으로 컷을 판정하여 통과한 가장 높은 등급을 반환
+                for (int grade = 1; grade <= 9; grade++)
                 {
-                    int g = GameManager.Instance.GetPracticeGrade(TestMode.Reaction);
-                    if (!ReactionDifficulty.IsPass(LastReactionTime, g))
+                    if (ReactionDifficulty.IsPass(LastReactionTime, grade))
                     {
-                        return "F";
+                        return grade.ToString();
                     }
                 }
-
-                if (LastReactionTime < 0.15f)
-                {
-                    return "S";
-                }
-
-                if (LastReactionTime < 0.2f)
-                {
-                    return "A";
-                }
-
-                if (LastReactionTime < 0.25f)
-                {
-                    return "B";
-                }
-
-                return "C";
+                return "F";
 
             case TestMode.AimPrecision:
                 if (GameManager.Instance != null)

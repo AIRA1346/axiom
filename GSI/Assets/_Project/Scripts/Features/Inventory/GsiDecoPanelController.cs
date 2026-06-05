@@ -259,6 +259,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             InputManager.Instance.OnRightInputDown += HandleGlobalInputDown;
             InputManager.Instance.OnRightInputHold += HandleGlobalInputHold;
             InputManager.Instance.OnRightInputUp += HandleGlobalInputUp;
+
+            InputManager.Instance.OnMiddleInputDown += HandleGlobalMiddleInputDown;
         }
     }
 
@@ -313,7 +315,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
                 float ny = pos.y / containerSize.y + 0.5f;
                 deco.NormalizedPos = new Vector2(nx, ny);
 
-                _lastSavedDecoData.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos, deco.velocity));
+                _lastSavedDecoData.Add(new PlayerDecorations.PlacedDecoData(deco.ItemId, deco.NormalizedPos, deco.velocity, deco.IsLocked));
             }
         }
     }
@@ -608,8 +610,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             badgeTmp.color = PlayerDecorations.GetRarityColor(def.Rarity);
             badgeTmp.raycastTarget = false;
 
-            // 3. 카드 내부 아이콘 이미지 영역
-            var iconGo = new GameObject("Icon", typeof(RectTransform), typeof(Image));
+            // 3. 카드 내부 아이콘 이미지 컨테이너 영역 (실제 형태와 일치하도록 자식 레이어들로 채워짐)
+            var iconGo = new GameObject("Icon", typeof(RectTransform));
             var iconRt = iconGo.GetComponent<RectTransform>();
             iconRt.SetParent(cardRt, false);
             iconRt.anchorMin = new Vector2(0.5f, 0.5f);
@@ -617,10 +619,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             iconRt.pivot = new Vector2(0.5f, 0.5f);
             iconRt.anchoredPosition = new Vector2(0f, -4f);
             iconRt.sizeDelta = new Vector2(28f, 28f);
-            var iconImg = iconGo.GetComponent<Image>();
-            iconImg.sprite = null;
-            iconImg.color = def.DefaultColor;
-            iconImg.raycastTarget = false;
+            iconRt.localScale = Vector3.one;
+
+            // 절차적 비주얼 빌드
+            BuildProceduralVisualsForCard(iconRt, def);
 
             // 4. 카드 하단 잔여 수량 표시
             var countGo = new GameObject("CountText", typeof(RectTransform), typeof(TextMeshProUGUI));
@@ -692,11 +694,11 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         for (int i = 0; i < list.Count; i++)
         {
             var pData = list[i];
-            SpawnPlacedDeco(pData.ItemId, pData.NormalizedPos, pData.Velocity, containerSize);
+            SpawnPlacedDeco(pData.ItemId, pData.NormalizedPos, pData.Velocity, containerSize, pData.IsLocked);
         }
     }
 
-    private void SpawnPlacedDeco(string itemId, Vector2 normalizedPos, Vector2 velocity, Vector2 containerSize)
+    private void SpawnPlacedDeco(string itemId, Vector2 normalizedPos, Vector2 velocity, Vector2 containerSize, bool isLocked = false)
     {
         // 불필요한 Image 컴포넌트를 배제하여 그래픽 드로우 및 레이캐스트 차단 제거
         var go = new GameObject($"PlacedDeco_{itemId}", typeof(RectTransform));
@@ -717,7 +719,57 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         var parentCanvas = _targetCanvas;
         deco.Initialize(itemId, normalizedPos, parentCanvas);
         deco.velocity = velocity;
+        deco.IsLocked = isLocked;
         _placedDecos.Add(deco);
+    }
+
+    private void BuildProceduralVisualsForCard(RectTransform iconRoot, PlayerDecorations.DecoItemDef def)
+    {
+        Color color = def.DefaultColor;
+
+        if (def.ProceduralShape == "star")
+        {
+            float scaleMultiplier = def.Id == "deco_yellow_star" ? 0.2f : 1f;
+
+            CreateCardIconLayer(iconRoot, "AuraGlow", 15f * scaleMultiplier, 15f * scaleMultiplier, 45f, new Color(color.r, color.g, color.b, 0.35f));
+            CreateCardIconLayer(iconRoot, "SpikeV", 1.8f * scaleMultiplier, 28f * scaleMultiplier, 0f, new Color(color.r, color.g, color.b, 0.95f));
+            CreateCardIconLayer(iconRoot, "SpikeH", 28f * scaleMultiplier, 1.8f * scaleMultiplier, 0f, new Color(color.r, color.g, color.b, 0.95f));
+            CreateCardIconLayer(iconRoot, "CoreDiamond", 7f * scaleMultiplier, 7f * scaleMultiplier, 45f, new Color(1f, 1f, 0.96f, 0.98f));
+        }
+        else if (def.ProceduralShape == "crystal")
+        {
+            float scaleMultiplier = def.Id == "deco_purple_crystal" ? (1f / 3f) : 1f;
+
+            CreateCardIconLayer(iconRoot, "AuraGlow", 13f * scaleMultiplier, 13f * scaleMultiplier, 45f, new Color(color.r, color.g, color.b, 0.3f));
+            CreateCardIconLayer(iconRoot, "CrystalOuter", 12f * scaleMultiplier, 20f * scaleMultiplier, 45f, new Color(color.r, color.g, color.b, 0.85f));
+            CreateCardIconLayer(iconRoot, "CrystalCore", 6f * scaleMultiplier, 10f * scaleMultiplier, 45f, new Color(1f, 1f, 1f, 0.95f));
+        }
+        else if (def.ProceduralShape == "ring")
+        {
+            float scaleMultiplier = def.Id == "deco_neon_ring" ? (1f / 3f) : 1f;
+
+            CreateCardIconLayer(iconRoot, "RingOuter", 22f * scaleMultiplier, 22f * scaleMultiplier, 0f, new Color(color.r, color.g, color.b, 0.85f));
+            CreateCardIconLayer(iconRoot, "RingHole", 16f * scaleMultiplier, 16f * scaleMultiplier, 0f, new Color(0.04f, 0.04f, 0.06f, 1f));
+            CreateCardIconLayer(iconRoot, "CoreDot", 5f * scaleMultiplier, 5f * scaleMultiplier, 0f, Color.white);
+        }
+    }
+
+    private void CreateCardIconLayer(RectTransform parent, string name, float w, float h, float rotZ, Color color)
+    {
+        var go = new GameObject(name, typeof(RectTransform), typeof(Image));
+        var rt = go.GetComponent<RectTransform>();
+        rt.SetParent(parent, false);
+        rt.anchorMin = new Vector2(0.5f, 0.5f);
+        rt.anchorMax = new Vector2(0.5f, 0.5f);
+        rt.pivot = new Vector2(0.5f, 0.5f);
+        rt.anchoredPosition = Vector2.zero;
+        rt.sizeDelta = new Vector2(w, h);
+        rt.localRotation = Quaternion.Euler(0f, 0f, rotZ);
+
+        var img = go.GetComponent<Image>();
+        img.sprite = null;
+        img.color = color;
+        img.raycastTarget = false;
     }
 
     // ─── 인벤토리 카드 드래그 제어 (신규 아이템 생성) ──────────────────────────
@@ -726,7 +778,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
     {
         int total = PlayerDecorations.GetTotalOwned(itemId);
         int available = PlayerDecorations.GetAvailableCount(itemId);
-        Debug.Log($"[GsiDecoPanelController] OnCardBeginDrag: ItemId={itemId}, TotalOwned={total}, Available={available}");
 
         if (available <= 0)
         {
@@ -741,7 +792,10 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         _dragPreviewGo = new GameObject("DragPreview", typeof(RectTransform), typeof(Image));
         var rt = _dragPreviewGo.GetComponent<RectTransform>();
         rt.SetParent(_canvas.transform, false);
-        rt.sizeDelta = new Vector2(28f, 28f);
+        float previewSize = 28f;
+        if (itemId == "deco_yellow_star") previewSize = 5.6f;
+        else if (itemId == "deco_purple_crystal" || itemId == "deco_neon_ring") previewSize = 28f / 3f;
+        rt.sizeDelta = new Vector2(previewSize, previewSize);
         rt.pivot = new Vector2(0.5f, 0.5f);
         rt.localPosition = new Vector3(rt.localPosition.x, rt.localPosition.y, 0f);
         rt.localScale = Vector3.one;
@@ -760,7 +814,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     public void OnCardDrag(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoPanelController] OnCardDrag: position={eventData.position}");
         if (_dragPreviewGo != null)
         {
             UpdateDragPreviewPos(eventData.position);
@@ -769,7 +822,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
     public void OnCardEndDrag(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoPanelController] OnCardEndDrag: position={eventData.position}");
         if (_dragPreviewGo == null) return;
 
         Destroy(_dragPreviewGo);
@@ -777,7 +829,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
         // 드롭된 마우스 포인터의 위치가 하단 드로어 패널 내부인지 외부인지 체크
         bool dropInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, eventData.position, eventData.pressEventCamera);
-        Debug.Log($"[GsiDecoPanelController] dropInPanel={dropInPanel}");
 
         if (!dropInPanel)
         {
@@ -786,7 +837,6 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             if (RectTransformUtility.ScreenPointToLocalPointInRectangle(_decoContainer, eventData.position, eventData.pressEventCamera, out localPoint))
             {
                 Vector2 parentSize = _decoContainer.rect.size;
-                Debug.Log($"[GsiDecoPanelController] localPoint={localPoint}, parentSize={parentSize}");
                 if (parentSize.x > 0 && parentSize.y > 0)
                 {
                     float nx = localPoint.x / parentSize.x + 0.5f;
@@ -794,7 +844,7 @@ public sealed class GsiDecoPanelController : MonoBehaviour
                     var norm = new Vector2(nx, ny);
 
                     // 영구 데코 인스턴스 소환
-                    SpawnPlacedDeco(_dragPreviewId, norm, new Vector2(UnityEngine.Random.Range(-30f, 30f), UnityEngine.Random.Range(-30f, 30f)), parentSize);
+                    SpawnPlacedDeco(_dragPreviewId, norm, new Vector2(UnityEngine.Random.Range(-30f, 30f), UnityEngine.Random.Range(-30f, 30f)), parentSize, false);
 
                     // 세이브
                     UpdateDecoDataCache();
@@ -897,6 +947,9 @@ public sealed class GsiDecoPanelController : MonoBehaviour
 
             if (RectTransformUtility.RectangleContainsScreenPoint(deco.rectTransform, screenPosition, cam))
             {
+                // 고정된(Locked) 상태인 데코는 마우스 드래그 조작을 할 수 없도록 안전하게 차단
+                if (deco.IsLocked) continue;
+
                 // 충돌 감지 -> 수동 드래그 상태로 전환
                 _manuallyDraggedDeco = deco;
                 _manuallyDraggedDeco.SetDragging(true);
@@ -909,6 +962,38 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         }
     }
 
+    private void HandleGlobalMiddleInputDown(Vector2 screenPosition)
+    {
+        // 1. 하단 서랍 패널 내부 휠클릭 시 무시
+        bool clickInPanel = RectTransformUtility.RectangleContainsScreenPoint(_panelRt, screenPosition, _canvas.worldCamera);
+        if (clickInPanel) return;
+
+        // 2. 배치된 데코들 중 터치 위치에 충돌하는 것이 있는지 역순 검사
+        Camera cam = (_targetCanvas != null && _targetCanvas.renderMode != RenderMode.ScreenSpaceOverlay) ? _targetCanvas.worldCamera : null;
+        for (int i = _placedDecos.Count - 1; i >= 0; i--)
+        {
+            var deco = _placedDecos[i];
+            if (deco == null) continue;
+
+            if (RectTransformUtility.RectangleContainsScreenPoint(deco.rectTransform, screenPosition, cam))
+            {
+                // 이미 고정된(Locked) 상태인 경우에는 속도에 관계없이 항상 휠클릭으로 해제(Unlock) 가능하도록 허용.
+                // 고정되지 않은 일반 상태에서는 완전히 정지한 정적 상태(속도 < 0.05f)일 때만 고정이 가능합니다.
+                if (deco.IsLocked || deco.velocity.magnitude < 0.05f)
+                {
+                    deco.IsLocked = !deco.IsLocked;
+                    
+                    GsiUiSound.PlayClick(); // 기계적 고정 오디오 피드백
+
+                    // 즉시 세이브 캐시 최신화 및 물리 저장 기록
+                    UpdateDecoDataCache();
+                    SaveCurrentPlacementData();
+                }
+                break;
+            }
+        }
+    }
+
     private void HandleGlobalInputHold(Vector2 screenPosition)
     {
         if (_manuallyDraggedDeco == null) return;
@@ -916,7 +1001,16 @@ public sealed class GsiDecoPanelController : MonoBehaviour
         // 3. 드래그 이동 갱신
         Vector2 delta = screenPosition - _lastMousePos;
         float scaleFactor = _canvas != null ? _canvas.scaleFactor : 1f;
-        _manuallyDraggedDeco.rectTransform.anchoredPosition += delta / scaleFactor;
+
+        // 줌 배율에 맞춰 마우스 드래그 감도 보정
+        float parentScale = 1f;
+        if (_manuallyDraggedDeco.rectTransform.parent != null)
+        {
+            parentScale = _manuallyDraggedDeco.rectTransform.parent.localScale.x;
+            if (parentScale < 0.001f) parentScale = 1f;
+        }
+
+        _manuallyDraggedDeco.rectTransform.anchoredPosition += delta / (scaleFactor * parentScale);
         _lastMousePos = screenPosition;
     }
 
@@ -994,6 +1088,8 @@ public sealed class GsiDecoPanelController : MonoBehaviour
             InputManager.Instance.OnRightInputDown -= HandleGlobalInputDown;
             InputManager.Instance.OnRightInputHold -= HandleGlobalInputHold;
             InputManager.Instance.OnRightInputUp -= HandleGlobalInputUp;
+
+            InputManager.Instance.OnMiddleInputDown -= HandleGlobalMiddleInputDown;
         }
 
         if (Instance == this)
@@ -1023,43 +1119,35 @@ public sealed class GsiDecoCard : MonoBehaviour,
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoCard] OnPointerEnter: ItemId={ItemId}");
     }
 
     public void OnPointerExit(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoCard] OnPointerExit: ItemId={ItemId}");
     }
 
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoCard] OnPointerClick: ItemId={ItemId}");
     }
 
     public void OnPointerDown(PointerEventData eventData)
     {
         // EventSystem에 이 오브젝트가 클릭되었음을 알려 드래그 주도권을 선점하도록 만듦
-        Debug.Log($"[GsiDecoCard] OnPointerDown: ItemId={ItemId}");
         if (_parentScroll != null)
         {
             _parentScroll.enabled = false; // 스크롤 일시 정지 (드래그 탈취 방지)
-            Debug.Log("[GsiDecoCard] Temporarily disabled parent ScrollRect to prevent drag hijacking.");
         }
     }
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoCard] OnPointerUp: ItemId={ItemId}");
         if (_parentScroll != null)
         {
             _parentScroll.enabled = true; // 스크롤 원래대로 복구
-            Debug.Log("[GsiDecoCard] Restored parent ScrollRect.");
         }
     }
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoCard] OnBeginDrag: ItemId={ItemId}");
         if (PanelController != null)
         {
             PanelController.OnCardBeginDrag(eventData, ItemId);
@@ -1076,7 +1164,6 @@ public sealed class GsiDecoCard : MonoBehaviour,
 
     public void OnEndDrag(PointerEventData eventData)
     {
-        Debug.Log($"[GsiDecoCard] OnEndDrag: ItemId={ItemId}");
         if (PanelController != null)
         {
             PanelController.OnCardEndDrag(eventData);

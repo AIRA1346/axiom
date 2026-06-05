@@ -19,8 +19,14 @@ public sealed class InputManager : MonoBehaviour
     public event Action<Vector2> OnRightInputHold;
     public event Action OnRightInputUp;
 
+    // 휠클릭 지원용 추가 이벤트
+    public event Action<Vector2> OnMiddleInputDown;
+    public event Action<Vector2> OnMiddleInputHold;
+    public event Action OnMiddleInputUp;
+
     private bool _isPointerHeld;
     private bool _isRightPointerHeld;
+    private bool _isMiddlePointerHeld;
 
     private void Awake()
     {
@@ -109,6 +115,15 @@ public sealed class InputManager : MonoBehaviour
             _isRightPointerHeld = true;
             OnRightInputDown?.Invoke(screenPosition);
         }
+        // 2.5 휠클릭 다운
+        else if (mouse.middleButton.wasPressedThisFrame)
+        {
+#if UNITY_EDITOR
+            Debug.Log($"InputManager: 화면 휠클릭 감지됨! 좌표: {screenPosition}");
+#endif
+            _isMiddlePointerHeld = true;
+            OnMiddleInputDown?.Invoke(screenPosition);
+        }
 
         // 3. 좌클릭 홀드
         if (_isPointerHeld && mouse.leftButton.isPressed)
@@ -119,6 +134,11 @@ public sealed class InputManager : MonoBehaviour
         else if (_isRightPointerHeld && mouse.rightButton.isPressed)
         {
             OnRightInputHold?.Invoke(screenPosition);
+        }
+        // 4.5 휠클릭 홀드
+        else if (_isMiddlePointerHeld && mouse.middleButton.isPressed)
+        {
+            OnMiddleInputHold?.Invoke(screenPosition);
         }
 
         // 5. 좌클릭 업
@@ -132,6 +152,12 @@ public sealed class InputManager : MonoBehaviour
         {
             _isRightPointerHeld = false;
             OnRightInputUp?.Invoke();
+        }
+        // 6.5 휠클릭 업
+        else if (_isMiddlePointerHeld && mouse.middleButton.wasReleasedThisFrame)
+        {
+            _isMiddlePointerHeld = false;
+            OnMiddleInputUp?.Invoke();
         }
     }
 

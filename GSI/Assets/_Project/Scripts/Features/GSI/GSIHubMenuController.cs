@@ -91,13 +91,12 @@ public sealed class GSIHubMenuController : MonoBehaviour
         EnsureHubTopChrome();
         CacheHubVisualRefs();
 
+        // 런타임 및 에디터 모두에서 반응속도 난이도 삭제 가이드가 무결하게 동작하도록 항시 레이아웃 생성
+        EnsurePracticeGradeLayout();
+
         if (Application.isPlaying)
         {
             BuildCosmicHubStage();
-        }
-        else
-        {
-            EnsurePracticeGradeLayout();
         }
 
         ApplyHubLocalizedUiTexts();
@@ -131,7 +130,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
     }
 
     /// <summary>
-    /// ?곸젏쨌?몃깽怨??숈씪???곷떒 ?ㅻ뜑 ?ㅽ듃由??쒕ぉ 以묒븰쨌Back ?곗륫) + ?쒕툕諛?怨⑤뱶쨌?묒떆沅?濡???린怨? 蹂몃Ц Layout?€ 洹??꾨옒?먯꽉 ?쒖옉?섎룄濡?留욎땅?덈떎.
+    /// 상점/인벤토리와 동일한 상단 헤더 스트립 (제목 중앙, Back 우측) + 서브바 (골드/입장권) 로 쪼개고, 본문 Layout은 그 아래에 꽉 차게 시작하도록 맞추었다.
     /// </summary>
     private void EnsureHubTopChrome()
     {
@@ -1156,11 +1155,30 @@ public sealed class GSIHubMenuController : MonoBehaviour
         var rowH = packGo.AddComponent<HorizontalLayoutGroup>();
         rowH.spacing = 4f;
         rowH.childAlignment = TextAnchor.MiddleCenter;
-        rowH.childControlWidth = false;
+        rowH.childControlWidth = mode == TestMode.Reaction; // 반응속도 안내 가이드인 경우 전체 가로 맞춤
         rowH.childControlHeight = true;
         rowH.childForceExpandWidth = false;
         rowH.childForceExpandHeight = true;
         rowH.padding = new RectOffset(0, 0, 2, 2);
+
+        if (mode == TestMode.Reaction)
+        {
+            var guideGo = new GameObject("ReactionGuideText");
+            guideGo.transform.SetParent(packGo.transform, false);
+            var guideTmp = guideGo.AddComponent<TextMeshProUGUI>();
+            if (font != null) guideTmp.font = font;
+            
+            bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                        UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+            
+            guideTmp.text = isKo ? "기록별 등급 차등 지급" : "Grade based on Reaction Record";
+            guideTmp.fontSize = 14;
+            guideTmp.fontStyle = FontStyles.Bold;
+            guideTmp.alignment = TextAlignmentOptions.Center;
+            guideTmp.color = GsiUiAppearance.TextSecondary;
+            guideTmp.raycastTarget = false;
+            return;
+        }
 
         for (int i = 0; i < 9; i++)
         {
@@ -1388,6 +1406,11 @@ public sealed class GSIHubMenuController : MonoBehaviour
 
     private void BuildCosmicHubStage()
     {
+        if (gameObject.GetComponent<GsiCosmicViewportController>() == null)
+        {
+            gameObject.AddComponent<GsiCosmicViewportController>();
+        }
+
         Transform layout = transform.Find("Layout");
         if (layout != null)
         {
@@ -1503,12 +1526,12 @@ public sealed class GSIHubMenuController : MonoBehaviour
                 SpawnOrbitalSelector(node.Rect, node.StarColor, (grade) => {
                     GameManager.Instance.SetPracticeGrade(modeCapture, grade);
                     OnPracticeModeClicked(modeCapture);
-                });
+                }, modeCapture == TestMode.Reaction);
             };
         }
     }
 
-    private void SpawnOrbitalSelector(RectTransform anchorRt, Color themeColor, Action<int> onGradeSelected)
+    private void SpawnOrbitalSelector(RectTransform anchorRt, Color themeColor, Action<int> onGradeSelected, bool isReaction = false)
     {
         bool isSameAnchor = _activeSelector != null && _activeSelector.transform.parent == anchorRt;
 
@@ -1534,6 +1557,7 @@ public sealed class GSIHubMenuController : MonoBehaviour
         rt.sizeDelta = Vector2.zero;
 
         var selector = go.AddComponent<GsiGsiOrbitalSelector>();
+        selector.IsReactionMode = isReaction;
         selector.ThemeColor = themeColor;
         selector.OnGradeSelected = (grade) => {
             onGradeSelected(grade);

@@ -21,6 +21,7 @@ public sealed class GSIUIManager : MonoBehaviour
     private Button _unifiedInterstitialContinue;
 
     private GsiTestBriefingUi.Refs _briefingRefs;
+    private float _briefingEnterTime;
     private bool _localeSubscribed;
 
     private void Start()
@@ -161,6 +162,7 @@ public sealed class GSIUIManager : MonoBehaviour
                 break;
 
             case GameState.TestBriefing:
+                _briefingEnterTime = Time.unscaledTime;
                 EnsureTestBriefingUi();
                 SetBriefingVisible(true);
                 break;
@@ -306,6 +308,11 @@ public sealed class GSIUIManager : MonoBehaviour
 
     private void OnTestBriefingStartClicked()
     {
+        if (Time.unscaledTime - _briefingEnterTime < 0.25f)
+        {
+            return;
+        }
+
         if (GameManager.Instance != null)
         {
             GameManager.Instance.SetGameState(GameState.TestInProgress);

@@ -156,7 +156,8 @@ public sealed class ReactionTestController : MonoBehaviour, IMiniGameController
 
         float minDelay = 2.0f;
         float maxDelay = 5.0f;
-        PracticeDifficulty.GetReactionDelayRange(_assignedGrade, out minDelay, out maxDelay);
+        // 난이도 선택 삭제로 인해 5급 딜레이 기준으로 난이도 고정
+        PracticeDifficulty.GetReactionDelayRange(5, out minDelay, out maxDelay);
 
         float randomDelay = Random.Range(minDelay, maxDelay);
 

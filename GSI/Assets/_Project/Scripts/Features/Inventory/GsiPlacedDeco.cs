@@ -13,17 +13,37 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
     public string ItemId { get; private set; }
     public Vector2 NormalizedPos { get; set; }
 
+    private bool _isLocked = false;
+    public bool IsLocked
+    {
+        get { return _isLocked; }
+        set
+        {
+            _isLocked = value;
+            RefreshLockedVisualState();
+        }
+    }
+
     private RectTransform _rectTransform;
     private Canvas _parentCanvas;
+    private CanvasGroup _selfCanvasGroup;
     private bool _isDragging = false;
     private Vector2 _velocity;
     private Vector2 _lastDragFramePos;
+
+    public DecoBehavior Behavior { get; private set; }
 
     // 애니메이션 및 마우스 호버 피드백 캐시
     private Transform _visualRoot;
     private Transform _glowLayer;
     private Transform _spikeV;
     private Transform _spikeH;
+    
+    public Transform visualRoot => _visualRoot;
+    public Transform glowLayer => _glowLayer;
+    public Transform spikeV => _spikeV;
+    public Transform spikeH => _spikeH;
+
     private float _randomPhaseOffset;
 
     private CanvasGroup _labelCanvasGroup;
@@ -33,7 +53,7 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
     // ─── ICosmicKineticObject 인터페이스 구현부 ───────────────────
     public RectTransform rectTransform => _rectTransform;
     public Vector2 velocity { get { return _velocity; } set { _velocity = value; } }
-    public float collisionRadius => 14f; // 배치 아이템 충돌 반경
+    public float collisionRadius => ItemId == "deco_yellow_star" ? 2.8f : ((ItemId == "deco_purple_crystal" || ItemId == "deco_neon_ring") ? 14f / 3f : 14f); // 배치 아이템 충돌 반경 (노란색 별 1/5, 퍼플 크리스탈/네온 링 1/3 축소)
     public bool isDragging => _isDragging;
 
     public void Initialize(string itemId, Vector2 normalizedPos, Canvas canvas)
@@ -43,6 +63,9 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         _parentCanvas = canvas;
         _rectTransform = GetComponent<RectTransform>();
         _randomPhaseOffset = UnityEngine.Random.Range(0f, 100f);
+
+        _selfCanvasGroup = GetComponent<CanvasGroup>();
+        if (_selfCanvasGroup == null) _selfCanvasGroup = gameObject.AddComponent<CanvasGroup>();
 
         // 초기 자율 표류를 위한 느린 속도 인가 (기본값)
         _velocity = new Vector2(UnityEngine.Random.Range(-40f, 40f), UnityEngine.Random.Range(-40f, 40f));
@@ -73,12 +96,22 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
 
         // 4. 툴팁 가이드 라벨 생성
         BuildTooltipLabel();
+
+        // 5. 행동 전략 장착
+        Behavior = DecoBehaviorFactory.Create(ItemId);
+        Behavior.Initialize(this);
     }
 
     private void Start()
     {
         _rectTransform = GetComponent<RectTransform>();
         
+        if (_selfCanvasGroup == null)
+        {
+            _selfCanvasGroup = GetComponent<CanvasGroup>();
+            if (_selfCanvasGroup == null) _selfCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
         // Z-position 및 스케일 강제 리셋
         _rectTransform.localPosition = new Vector3(_rectTransform.localPosition.x, _rectTransform.localPosition.y, 0f);
         _rectTransform.localScale = Vector3.one;
@@ -87,6 +120,43 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         if (GsiCosmicOrrerySystem.Instance != null)
         {
             GsiCosmicOrrerySystem.Instance.RegisterStarNode(this);
+        }
+
+        // 초기 비주얼 락 상태 동기화
+        RefreshLockedVisualState();
+    }
+
+    public void RefreshLockedVisualState()
+    {
+        if (_selfCanvasGroup != null)
+        {
+            _selfCanvasGroup.alpha = IsLocked ? 0.6f : 1.0f;
+        }
+
+        if (_labelTmp != null)
+        {
+            if (PlayerDecorations.TryGetItemDef(ItemId, out var def))
+            {
+                bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                            UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+                
+                string rarityName = PlayerDecorations.GetRarityName(def.Rarity, isKo);
+                string displayName = GameLocalization.GetUiString(def.DisplayNameKey, def.EnglishName);
+                
+                if (IsLocked)
+                {
+                    string lockLabel = isKo ? "고정됨" : "LOCKED";
+                    _labelTmp.text = $"[{rarityName}] {displayName} <color=#EF4444>[{lockLabel}]</color>";
+                }
+                else
+                {
+                    _labelTmp.text = $"[{rarityName}] {displayName}";
+                }
+            }
+            else
+            {
+                _labelTmp.text = IsLocked ? $"{ItemId} <color=#EF4444>[LOCK]</color>" : ItemId;
+            }
         }
     }
 
@@ -141,32 +211,38 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
 
         if (def.ProceduralShape == "star")
         {
-            var glow = CreateLayer("AuraGlow", 15f, 15f, 45f, new Color(color.r, color.g, color.b, 0.35f));
+            float scaleMultiplier = ItemId == "deco_yellow_star" ? 0.2f : 1f;
+
+            var glow = CreateLayer("AuraGlow", 15f * scaleMultiplier, 15f * scaleMultiplier, 45f, new Color(color.r, color.g, color.b, 0.35f));
             _glowLayer = glow.transform;
 
-            var spV = CreateLayer("SpikeV", 1.8f, 28f, 0f, new Color(color.r, color.g, color.b, 0.95f));
+            var spV = CreateLayer("SpikeV", 1.8f * scaleMultiplier, 28f * scaleMultiplier, 0f, new Color(color.r, color.g, color.b, 0.95f));
             _spikeV = spV.transform;
 
-            var spH = CreateLayer("SpikeH", 28f, 1.8f, 0f, new Color(color.r, color.g, color.b, 0.95f));
+            var spH = CreateLayer("SpikeH", 28f * scaleMultiplier, 1.8f * scaleMultiplier, 0f, new Color(color.r, color.g, color.b, 0.95f));
             _spikeH = spH.transform;
 
-            CreateLayer("CoreDiamond", 7f, 7f, 45f, new Color(1f, 1f, 0.96f, 0.98f));
+            CreateLayer("CoreDiamond", 7f * scaleMultiplier, 7f * scaleMultiplier, 45f, new Color(1f, 1f, 0.96f, 0.98f));
         }
         else if (def.ProceduralShape == "crystal")
         {
-            var glow = CreateLayer("AuraGlow", 13f, 13f, 45f, new Color(color.r, color.g, color.b, 0.3f));
+            float scaleMultiplier = ItemId == "deco_purple_crystal" ? (1f / 3f) : 1f;
+
+            var glow = CreateLayer("AuraGlow", 13f * scaleMultiplier, 13f * scaleMultiplier, 45f, new Color(color.r, color.g, color.b, 0.3f));
             _glowLayer = glow.transform;
 
-            CreateLayer("CrystalOuter", 12f, 20f, 45f, new Color(color.r, color.g, color.b, 0.85f));
-            CreateLayer("CrystalCore", 6f, 10f, 45f, new Color(1f, 1f, 1f, 0.95f));
+            CreateLayer("CrystalOuter", 12f * scaleMultiplier, 20f * scaleMultiplier, 45f, new Color(color.r, color.g, color.b, 0.85f));
+            CreateLayer("CrystalCore", 6f * scaleMultiplier, 10f * scaleMultiplier, 45f, new Color(1f, 1f, 1f, 0.95f));
         }
         else if (def.ProceduralShape == "ring")
         {
-            var ringOuter = CreateLayer("RingOuter", 22f, 22f, 0f, new Color(color.r, color.g, color.b, 0.85f));
+            float scaleMultiplier = ItemId == "deco_neon_ring" ? (1f / 3f) : 1f;
+
+            var ringOuter = CreateLayer("RingOuter", 22f * scaleMultiplier, 22f * scaleMultiplier, 0f, new Color(color.r, color.g, color.b, 0.85f));
             _glowLayer = ringOuter.transform;
             
-            CreateLayer("RingHole", 16f, 16f, 0f, new Color(0.04f, 0.04f, 0.06f, 1f));
-            CreateLayer("CoreDot", 5f, 5f, 0f, Color.white);
+            CreateLayer("RingHole", 16f * scaleMultiplier, 16f * scaleMultiplier, 0f, new Color(0.04f, 0.04f, 0.06f, 1f));
+            CreateLayer("CoreDot", 5f * scaleMultiplier, 5f * scaleMultiplier, 0f, Color.white);
         }
     }
 
@@ -220,7 +296,7 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
         }
         else if (isHovered)
         {
-            targetScale = 1.35f; // 호버 시 별 노드와 동일 스펙의 팝스케일
+            targetScale = IsLocked ? 1.0f : 1.35f; // 고정 시에는 호버 확대 스케일을 1.0으로 제한
         }
 
         _currentScale = Mathf.Lerp(_currentScale, targetScale, 16f * Time.unscaledDeltaTime);
@@ -236,48 +312,10 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
             _rectTransform.localScale = Vector3.one;
         }
 
-        // 4. 아이템별 고유 연출 애니메이션 (호버 시 속도 가속 연동)
-        if (ItemId == "deco_yellow_star")
+        // 4. 아이템별 고유 연출 애니메이션 (행동 전략에 위임)
+        if (Behavior != null)
         {
-            if (_visualRoot != null)
-            {
-                float rotSpeed = isHovered ? 45f : 10f;
-                _visualRoot.localRotation = Quaternion.Euler(0f, 0f, time * rotSpeed);
-            }
-            if (_glowLayer != null)
-            {
-                float pulse = 0.8f + Mathf.PingPong(time * 0.4f, 0.3f);
-                _glowLayer.localScale = new Vector3(pulse, pulse, 1f);
-            }
-            if (_spikeV != null && _spikeH != null)
-            {
-                float spPulse = 0.85f + Mathf.PingPong(time * 1.5f, 0.25f);
-                _spikeV.localScale = new Vector3(1f, spPulse, 1f);
-                _spikeH.localScale = new Vector3(spPulse, 1f, 1f);
-            }
-        }
-        else if (ItemId == "deco_purple_crystal")
-        {
-            if (_visualRoot != null)
-            {
-                float floatOffset = Mathf.Sin(time * 1.8f) * 6f;
-                // 호버 시 부유 폭 강화
-                if (isHovered && !_isDragging) floatOffset *= 1.4f;
-                _visualRoot.localPosition = new Vector3(0f, floatOffset, 0f);
-            }
-            if (_glowLayer != null)
-            {
-                float pulse = 0.85f + Mathf.Sin(time * 2.2f) * 0.15f;
-                _glowLayer.localScale = new Vector3(pulse, pulse, 1f);
-            }
-        }
-        else if (ItemId == "deco_neon_ring")
-        {
-            if (_glowLayer != null)
-            {
-                float rotSpeed = isHovered ? -120f : -40f;
-                _glowLayer.Rotate(0f, 0f, rotSpeed * Time.unscaledDeltaTime);
-            }
+            Behavior.UpdateVisual(time, isHovered, _isDragging);
         }
 
         // 5. Kinetic drag velocity update (마우스 던지기 속도 계산 - 별 노드와 동일 스펙)
@@ -297,86 +335,21 @@ public sealed class GsiPlacedDeco : MonoBehaviour, ICosmicKineticObject
 
     public void UpdatePhysicsTick(float deltaTime)
     {
-        if (_isDragging) return;
-
-        float currentSpeed = _velocity.magnitude;
-        float maxVelocity = 1100f; // 데코 전용 속도 제약
-        float minDriftSpeed = 20f;
-        float friction = 0.35f;
-
-        if (currentSpeed > maxVelocity)
+        if (Behavior != null)
         {
-            _velocity = _velocity.normalized * maxVelocity;
-            currentSpeed = maxVelocity;
+            Behavior.UpdatePhysics(deltaTime);
         }
-
-        // 마찰력 적용 (별 노드와 완전히 동일하게 구현: 최소 표류 속도 이하일 때는 속도를 강제 보정하지 않고 정지 가능하도록 함)
-        if (currentSpeed > minDriftSpeed)
-        {
-            float newSpeed = currentSpeed * Mathf.Exp(-friction * deltaTime);
-            newSpeed = Mathf.Max(newSpeed, minDriftSpeed);
-            _velocity = _velocity.normalized * newSpeed;
-        }
-
-        // 좌표 갱신
-        _rectTransform.anchoredPosition += _velocity * deltaTime;
-
-        // 경계면 충돌 반사
-        HandleScreenBoundaries();
     }
 
     public void ResolveCollisionWith(ICosmicKineticObject other)
     {
-        if (other == null || other == this) return;
-
-        RectTransform otherRt = other.rectTransform;
-        if (otherRt == null || _rectTransform == null) return;
-
-        float minDistance = collisionRadius + other.collisionRadius;
-        Vector2 diff = otherRt.anchoredPosition - _rectTransform.anchoredPosition;
-        float distance = diff.magnitude;
-
-        if (distance < 0.01f)
+        if (Behavior != null)
         {
-            _rectTransform.anchoredPosition += new Vector2(UnityEngine.Random.Range(-5f, 5f), UnityEngine.Random.Range(-5f, 5f));
-            return;
-        }
-
-        if (distance < minDistance)
-        {
-            Vector2 normal = diff / distance;
-            float overlap = minDistance - distance;
-
-            // 1. 밀어내기 (겹침 강제 분리)
-            float pushSelf = _isDragging ? 0f : (other.isDragging ? 1f : 0.5f);
-            float pushOther = other.isDragging ? 0f : (_isDragging ? 1f : 0.5f);
-
-            _rectTransform.anchoredPosition -= normal * overlap * pushSelf;
-            otherRt.anchoredPosition += normal * overlap * pushOther;
-
-            // 2. 탄성 튕김 속도 전달
-            Vector2 rv = other.velocity - _velocity;
-            float velAlongNormal = Vector2.Dot(rv, normal);
-
-            if (velAlongNormal < 0f)
-            {
-                float restitution = 0.95f;
-                float impulseScalar = -(1f + restitution) * velAlongNormal / 2f;
-                Vector2 impulse = normal * impulseScalar;
-
-                if (!_isDragging)
-                {
-                    _velocity -= impulse;
-                }
-                if (!other.isDragging)
-                {
-                    other.velocity += impulse;
-                }
-            }
+            Behavior.ResolveCollision(other);
         }
     }
 
-    private void HandleScreenBoundaries()
+    public void HandleScreenBoundaries()
     {
         if (transform.parent == null) return;
 

@@ -162,6 +162,18 @@ public sealed class EconomyManager : MonoBehaviour
             case "A": stardustReward = 30; break;
             case "B": stardustReward = 20; break;
             case "C": stardustReward = 10; break;
+
+            // 반응속도 전용 1등급 ~ 9등급 세분화 보상
+            case "1": stardustReward = 50; break;
+            case "2": stardustReward = 45; break;
+            case "3": stardustReward = 40; break;
+            case "4": stardustReward = 35; break;
+            case "5": stardustReward = 30; break;
+            case "6": stardustReward = 25; break;
+            case "7": stardustReward = 20; break;
+            case "8": stardustReward = 15; break;
+            case "9": stardustReward = 10; break;
+
             case "F":
             default: stardustReward = 0; break;
         }

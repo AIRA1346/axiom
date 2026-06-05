@@ -160,12 +160,14 @@ public static class PlayerDecorations
         public readonly string ItemId;
         public readonly Vector2 NormalizedPos;
         public readonly Vector2 Velocity;
+        public readonly bool IsLocked;
 
-        public PlacedDecoData(string itemId, Vector2 pos, Vector2 vel)
+        public PlacedDecoData(string itemId, Vector2 pos, Vector2 vel, bool isLocked = false)
         {
             ItemId = itemId;
             NormalizedPos = pos;
             Velocity = vel;
+            IsLocked = isLocked;
         }
     }
 
@@ -202,7 +204,16 @@ public static class PlayerDecorations
                     if (float.IsNaN(vx) || float.IsInfinity(vx)) vx = 0f;
                     if (float.IsNaN(vy) || float.IsInfinity(vy)) vy = 0f;
                     
-                    list.Add(new PlacedDecoData(id, new Vector2(x, y), new Vector2(vx, vy)));
+                    bool isLocked = false;
+                    if (tokens.Length >= 6)
+                    {
+                        if (int.TryParse(tokens[5], out int lockVal))
+                        {
+                            isLocked = lockVal == 1;
+                        }
+                    }
+                    
+                    list.Add(new PlacedDecoData(id, new Vector2(x, y), new Vector2(vx, vy), isLocked));
                 }
             }
         }
@@ -218,11 +229,12 @@ public static class PlayerDecorations
             float y = decos[i].NormalizedPos.y;
             float vx = decos[i].Velocity.x;
             float vy = decos[i].Velocity.y;
+            bool isLocked = decos[i].IsLocked;
             if (float.IsNaN(x) || float.IsInfinity(x)) x = 0.5f;
             if (float.IsNaN(y) || float.IsInfinity(y)) y = 0.5f;
             if (float.IsNaN(vx) || float.IsInfinity(vx)) vx = 0f;
             if (float.IsNaN(vy) || float.IsInfinity(vy)) vy = 0f;
-            parts.Add($"{decos[i].ItemId}:{x:F4}:{y:F4}:{vx:F4}:{vy:F4}");
+            parts.Add($"{decos[i].ItemId}:{x:F4}:{y:F4}:{vx:F4}:{vy:F4}:{(isLocked ? 1 : 0)}");
         }
         string raw = string.Join(";", parts);
         GsiSaveSystem.SetString(PlacedPrefix + sceneName, raw);

@@ -18,6 +18,10 @@ public sealed class GsiGsiOrbitalSelector : MonoBehaviour
     public Action<int> OnGradeSelected;
     public Action OnClosed;
 
+    public bool IsReactionMode = false;
+    private RectTransform _reactionPill;
+    private CanvasGroup _reactionPillCg;
+
     private readonly List<RectTransform> _spheres = new List<RectTransform>();
     private readonly List<CanvasGroup> _sphereCanvasGroups = new List<CanvasGroup>();
     private GameObject _orbitRingGo;
@@ -30,6 +34,80 @@ public sealed class GsiGsiOrbitalSelector : MonoBehaviour
 
     private void Start()
     {
+        if (IsReactionMode)
+        {
+            // Create a single beautiful pill button
+            var pillGo = new GameObject("ReactionGuidePill", typeof(RectTransform), typeof(Image), typeof(CanvasGroup));
+            _reactionPill = pillGo.GetComponent<RectTransform>();
+            _reactionPill.SetParent(transform, false);
+            _reactionPill.anchorMin = new Vector2(0.5f, 0.5f);
+            _reactionPill.anchorMax = new Vector2(0.5f, 0.5f);
+            _reactionPill.pivot = new Vector2(0.5f, 0.5f);
+            _reactionPill.anchoredPosition = Vector2.zero; // Starts at zero for animation
+            _reactionPill.sizeDelta = new Vector2(260f, 48f);
+
+            var pillImg = pillGo.GetComponent<Image>();
+            pillImg.color = Color.clear;
+            pillImg.raycastTarget = true;
+
+            // Create Text inside the pill
+            var guideTextGo = new GameObject("Text", typeof(RectTransform), typeof(TextMeshProUGUI));
+            var guideTextRt = guideTextGo.GetComponent<RectTransform>();
+            guideTextRt.SetParent(_reactionPill, false);
+            guideTextRt.anchorMin = Vector2.zero;
+            guideTextRt.anchorMax = Vector2.one;
+            guideTextRt.offsetMin = new Vector2(10f, 0f);
+            guideTextRt.offsetMax = new Vector2(-10f, 0f);
+            
+            var textTmp = guideTextGo.GetComponent<TextMeshProUGUI>();
+            textTmp.alignment = TextAlignmentOptions.Center;
+            textTmp.fontSize = 15f;
+            textTmp.fontStyle = FontStyles.Bold;
+            textTmp.color = ThemeColor;
+
+            bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                        UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+            textTmp.text = isKo ? "기록별 등급 차등 지급" : "Grade based on Record";
+            textTmp.raycastTarget = false;
+
+            if (TmpFontCache.LiberationSansSdf != null)
+            {
+                textTmp.font = TmpFontCache.LiberationSansSdf;
+            }
+
+            _reactionPillCg = pillGo.GetComponent<CanvasGroup>();
+            _reactionPillCg.alpha = 0f;
+
+            // Setup EventTrigger for hovering and clicking
+            var trigger = pillGo.AddComponent<EventTrigger>();
+
+            // PointerEnter
+            var enterEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerEnter };
+            enterEntry.callback.AddListener((data) => {
+                _reactionPill.localScale = new Vector3(1.05f, 1.05f, 1.05f);
+                textTmp.color = Color.white;
+            });
+            trigger.triggers.Add(enterEntry);
+
+            // PointerExit
+            var exitEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerExit };
+            exitEntry.callback.AddListener((data) => {
+                _reactionPill.localScale = Vector3.one;
+                textTmp.color = ThemeColor;
+            });
+            trigger.triggers.Add(exitEntry);
+
+            // PointerClick
+            var clickEntry = new EventTrigger.Entry { eventID = EventTriggerType.PointerClick };
+            clickEntry.callback.AddListener((data) => {
+                OnGradeSelected?.Invoke(5); // Invoke with grade 5 (fixed)
+            });
+            trigger.triggers.Add(clickEntry);
+
+            Open();
+            return;
+        }
+
         // 1. 얇고 세련된 반투명 궤도 링(Glow Ring) 가이드 생성 (네모 배경 제거를 위해 생성하지 않음)
         _orbitRingGo = null;
         _orbitRingImg = null;
@@ -196,6 +274,26 @@ public sealed class GsiGsiOrbitalSelector : MonoBehaviour
         float duration = 0.28f;
         float elapsed = 0f;
 
+        if (IsReactionMode)
+        {
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = elapsed / duration;
+                float tElastic = SinProgress(t);
+
+                float currentY = 70f * tElastic;
+                _reactionPill.anchoredPosition = new Vector2(0f, currentY);
+                _reactionPillCg.alpha = Mathf.Lerp(0f, 1f, t * 1.5f);
+
+                yield return null;
+            }
+
+            _reactionPill.anchoredPosition = new Vector2(0f, 70f);
+            _reactionPillCg.alpha = 1f;
+            yield break;
+        }
+
         // 원형 링 페이드인
         if (_orbitRingImg != null)
         {
@@ -250,6 +348,24 @@ public sealed class GsiGsiOrbitalSelector : MonoBehaviour
     {
         float duration = 0.2f;
         float elapsed = 0f;
+
+        if (IsReactionMode)
+        {
+            Vector2 sPos = _reactionPill.anchoredPosition;
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = elapsed / duration;
+                float tCurve = t * t;
+
+                _reactionPill.anchoredPosition = Vector2.Lerp(sPos, Vector2.zero, tCurve);
+                _reactionPillCg.alpha = Mathf.Lerp(1f, 0f, t);
+
+                yield return null;
+            }
+            onDone?.Invoke();
+            yield break;
+        }
 
         Vector2[] startPos = new Vector2[_spheres.Count];
         for (int i = 0; i < _spheres.Count; i++)

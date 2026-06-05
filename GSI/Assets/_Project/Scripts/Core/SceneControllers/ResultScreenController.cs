@@ -404,10 +404,19 @@ public sealed class ResultScreenController : MonoBehaviour
             else if (GameManager.Instance != null && GameManager.Instance.CurrentTestMode == TestMode.Reaction)
             {
                 float t = ScoreManager.Instance.LastReactionTime;
-                int g = GameManager.Instance.GetPracticeGrade(TestMode.Reaction);
-                float limit = ReactionDifficulty.GetPassMaxSeconds(g);
-                _resultText.text = GameLocalization.FormatUiString(UiStringKeys.ResultFailReactionFmt,
-                    "FAILED\nReaction {0:F0} ms (pass {1:F0} ms or lower)", t * 1000f, limit * 1000f);
+                float limit = ReactionDifficulty.GetPassMaxSeconds(9); // 9등급 컷
+                
+                bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                            UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+                
+                if (isKo)
+                {
+                    _resultText.text = $"불합격\n반응 속도: {t * 1000f:F0} ms (9등급 합격선 {limit * 1000f:F0} ms 이하)";
+                }
+                else
+                {
+                    _resultText.text = $"FAILED\nReaction {t * 1000f:F0} ms (pass {limit * 1000f:F0} ms or lower)";
+                }
             }
             else if (GameManager.Instance != null && GameManager.Instance.CurrentTestMode == TestMode.AimPrecision)
             {
@@ -551,11 +560,33 @@ public sealed class ResultScreenController : MonoBehaviour
         {
             float reactionTime = ScoreManager.Instance.LastReactionTime;
             string tier = ScoreManager.Instance.GetTier();
-            int g = GameManager.Instance.GetPracticeGrade(TestMode.Reaction);
-            float limit = ReactionDifficulty.GetPassMaxSeconds(g);
-            _resultText.text = GameLocalization.FormatUiString(UiStringKeys.ResultReactionPassBodyFmt,
-                "Reaction: {0:F0} ms ({1:F3}s)\nGrade {2} pass: {3:F0} ms or lower, pass\nReward tier: {4}",
-                reactionTime * 1000f, reactionTime, g, limit * 1000f, tier);
+            
+            bool isKo = UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale != null &&
+                        UnityEngine.Localization.Settings.LocalizationSettings.SelectedLocale.Identifier.Code.StartsWith("ko", System.StringComparison.OrdinalIgnoreCase);
+            
+            if (int.TryParse(tier, out int achievedGrade))
+            {
+                float limit = ReactionDifficulty.GetPassMaxSeconds(achievedGrade);
+                if (isKo)
+                {
+                    _resultText.text = $"반응 속도: {reactionTime * 1000f:F0} ms ({reactionTime:F3}초)\n달성 등급: {achievedGrade}등급 (합격선 {limit * 1000f:F0} ms 이하)\n결과: {achievedGrade}등급 합격";
+                }
+                else
+                {
+                    _resultText.text = $"Reaction: {reactionTime * 1000f:F0} ms ({reactionTime:F3}s)\nAchieved: Grade {achievedGrade} (limit {limit * 1000f:F0} ms or lower)\nResult: Grade {achievedGrade} Pass";
+                }
+            }
+            else
+            {
+                if (isKo)
+                {
+                    _resultText.text = $"반응 속도: {reactionTime * 1000f:F0} ms ({reactionTime:F3}초)\n합격선 초과 (9등급 합격선 {ReactionDifficulty.GetPassMaxMs(9)} ms 초과)\n결과: 불합격";
+                }
+                else
+                {
+                    _resultText.text = $"Reaction: {reactionTime * 1000f:F0} ms ({reactionTime:F3}s)\nLimit exceeded (limit {ReactionDifficulty.GetPassMaxMs(9)} ms)\nResult: Failed";
+                }
+            }
 
             if (_rewardText != null)
             {

@@ -70,6 +70,28 @@ namespace ArchE.Game
                 obj.UpdatePhysicsTick(deltaTime);
             }
 
+            // 1.5. 시공간 물리 영향력(감속 중력장 등 특수 효과) 일괄 연산 적용
+            for (int i = 0; i < count; i++)
+            {
+                var objA = _registeredObjects[i];
+                var monoA = objA as MonoBehaviour;
+                if (monoA == null || !monoA.gameObject.activeInHierarchy) continue;
+
+                if (objA is GsiPlacedDeco decoA && decoA.Behavior != null)
+                {
+                    for (int j = 0; j < count; j++)
+                    {
+                        if (i == j) continue;
+                        
+                        var objB = _registeredObjects[j];
+                        var monoB = objB as MonoBehaviour;
+                        if (monoB == null || !monoB.gameObject.activeInHierarchy) continue;
+
+                        decoA.Behavior.ApplyInfluence(objB, deltaTime);
+                    }
+                }
+            }
+
             // 2. 일괄 충돌 처리 (동일 프레임 내 상호 탄성 충돌 연산 보정)
             for (int i = 0; i < count; i++)
             {

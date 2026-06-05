@@ -256,6 +256,9 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     {
         if (other == null || other == this) return;
 
+        // 충돌 대상이 고정된 데코레이션 아이템(GsiPlacedDeco)인 경우 즉시 충돌 무시 (Ghost 관통)
+        if (other is GsiPlacedDeco deco && deco.IsLocked) return;
+
         RectTransform otherRt = other.rectTransform;
         if (otherRt == null || _rectTransform == null) return;
 
@@ -576,6 +579,14 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
 
         // Move position based on scaled pointer movement
         Vector2 delta = eventData.delta / scaleFactor;
+
+        // 줌 배율에 맞춰 마우스 포인터 드래그 감도 보정
+        if (transform.parent != null)
+        {
+            delta.x /= transform.parent.localScale.x;
+            delta.y /= transform.parent.localScale.y;
+        }
+
         _rectTransform.anchoredPosition += delta;
     }
 
