@@ -60,15 +60,14 @@ public sealed class GsiLobbyStarNodeController : StarNodeControllerBase
         CreateStarLayer("CoreDiamond", 7f, 7f, 45f, new Color(1f, 1.0f, 0.96f, 0.98f));
     }
 
+    public System.Action OnClickedAction;
+
     // ═══════════════════════════════════════════════════════════════
-    // Lobby-specific click behavior: invoke Button.onClick
+    // Lobby-specific click behavior: invoke delegate (button is destroyed)
     // ═══════════════════════════════════════════════════════════════
 
     protected override void OnStarClicked()
     {
-        if (TryGetComponent(out Button btn))
-        {
-            btn.onClick.Invoke();
-        }
+        OnClickedAction?.Invoke();
     }
 }

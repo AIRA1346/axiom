@@ -51,6 +51,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
 
     // ─── Protected state accessible to subclasses ───────────────────
     protected RectTransform _rectTransform;
+    protected Transform _scaleReferenceParent;
     protected RectTransform _starVisualRoot;
     protected CanvasGroup _labelCanvasGroup;
     protected TextMeshProUGUI _labelTmp;
@@ -65,6 +66,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     private float _totalDragDist;
     private Vector2 _lastDragFramePos;
     private float _lastCollisionSoundTime = 0f;
+    private bool _draggedThisFrame = false;
 
     // ═══════════════════════════════════════════════════════════════
     // Scene-specific virtual properties — override in subclasses
@@ -145,6 +147,18 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         // Give a small random initial drift velocity
         _velocity = new Vector2(Random.Range(-90f, 90f), Random.Range(-90f, 90f));
 
+        // Cache parent scale reference
+        Transform curr = transform.parent;
+        while (curr != null)
+        {
+            if (curr.name == "LobbyCenterStage" || curr.name == "GsiCosmicStage" || curr.GetComponent<GsiCosmicViewportController>() != null)
+            {
+                _scaleReferenceParent = curr;
+                break;
+            }
+            curr = curr.parent;
+        }
+
         // Load saved cosmic position & velocity state if it exists
         LoadState();
 
@@ -192,14 +206,14 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         // 2. Kinetic drag velocity update (keeps dragging smooth and responsive)
         if (_isDragging)
         {
-            // Calculate velocity based on actual movement in this frame during the drag
-            Vector2 currentPos = _rectTransform.anchoredPosition;
-            Vector2 positionDelta = currentPos - _lastDragFramePos;
-            Vector2 frameVelocity = positionDelta / Mathf.Max(Time.unscaledDeltaTime, 0.001f);
-
-            // Smooth the velocity to filter out single-frame mouse jitter
-            _velocity = Vector2.Lerp(_velocity, frameVelocity, 0.22f);
-            _lastDragFramePos = currentPos;
+            if (_draggedThisFrame)
+            {
+                _draggedThisFrame = false;
+            }
+            else
+            {
+                _velocity = Vector2.Lerp(_velocity, Vector2.zero, 0.22f);
+            }
         }
     }
 
@@ -567,7 +581,7 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
     {
         _isDragging = true;
         _velocity = Vector2.zero;
-        _lastDragFramePos = _rectTransform.anchoredPosition;
+        _draggedThisFrame = false;
     }
 
     public virtual void OnDrag(PointerEventData eventData)
@@ -580,14 +594,20 @@ public abstract class StarNodeControllerBase : MonoBehaviour,
         // Move position based on scaled pointer movement
         Vector2 delta = eventData.delta / scaleFactor;
 
-        // 줌 배율에 맞춰 마우스 포인터 드래그 감도 보정
-        if (transform.parent != null)
+        // Zoom Sensitivity Compensation
+        if (_scaleReferenceParent != null)
         {
-            delta.x /= transform.parent.localScale.x;
-            delta.y /= transform.parent.localScale.y;
+            delta.x /= _scaleReferenceParent.localScale.x;
+            delta.y /= _scaleReferenceParent.localScale.y;
         }
 
         _rectTransform.anchoredPosition += delta;
+
+        // Calculate dynamic velocity directly from drag event
+        _draggedThisFrame = true;
+        float dt = Mathf.Max(Time.unscaledDeltaTime, 0.001f);
+        Vector2 frameVelocity = delta / dt;
+        _velocity = Vector2.Lerp(_velocity, frameVelocity, 0.22f);
     }
 
     public virtual void OnEndDrag(PointerEventData eventData)

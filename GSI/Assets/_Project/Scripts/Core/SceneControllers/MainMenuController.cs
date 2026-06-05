@@ -1350,7 +1350,8 @@ public sealed class MainMenuController : MonoBehaviour
                 _enterGsiFacilityButton,
                 new Color(1.0f, 0.88f, 0.35f, 1f),
                 GameLocalization.GetUiString(UiStringKeys.UiLobbyStart, "Start"),
-                new Vector2(-360f, 80f)
+                new Vector2(-360f, 80f),
+                OnEnterGsiFacilityClicked
             );
         }
 
@@ -1361,7 +1362,8 @@ public sealed class MainMenuController : MonoBehaviour
                 _openShopButton,
                 new Color(0.85f, 0.45f, 1f, 1f),
                 GameLocalization.GetUiString(UiStringKeys.UiLobbyShop, "Shop"),
-                new Vector2(-120f, -140f)
+                new Vector2(-120f, -140f),
+                OnOpenShopClicked
             );
         }
 
@@ -1372,7 +1374,8 @@ public sealed class MainMenuController : MonoBehaviour
                 _openInventoryButton,
                 new Color(0.35f, 0.95f, 0.85f, 1f),
                 GameLocalization.GetUiString(UiStringKeys.UiLobbyInventory, "Inventory"),
-                new Vector2(120f, 140f)
+                new Vector2(120f, 140f),
+                OnOpenInventoryClicked
             );
         }
 
@@ -1383,32 +1386,36 @@ public sealed class MainMenuController : MonoBehaviour
                 _openAltarOfVerityButton,
                 new Color(1f, 0.48f, 0.45f, 1f),
                 GameLocalization.GetUiString(UiStringKeys.UiLobbyAltarOfVerity, "Altar of Verity"),
-                new Vector2(360f, -80f)
+                new Vector2(360f, -80f),
+                OnOpenAltarOfVerityClicked
             );
         }
 
         rowRt.SetAsLastSibling();
     }
 
-    private void SetupLobbyStar(Button button, Color color, string label, Vector2 initPos)
+    private void SetupLobbyStar(Button button, Color color, string label, Vector2 initPos, System.Action onClickedAction)
     {
         // Remove layout element to prevent horizontal auto-positioning
         if (button.TryGetComponent(out LayoutElement le))
         {
-            Destroy(le);
+            if (Application.isPlaying) Destroy(le);
+            else DestroyImmediate(le);
         }
 
         // Remove legacy hover boost to avoid visual interference
         if (button.TryGetComponent(out LobbyButtonLabelHoverBoost hb))
         {
-            Destroy(hb);
+            if (Application.isPlaying) Destroy(hb);
+            else DestroyImmediate(hb);
         }
 
         // Remove horizontal rule lines if they exist
         Transform rules = button.transform.Find("LobbyLabelRules");
         if (rules != null)
         {
-            Destroy(rules.gameObject);
+            if (Application.isPlaying) Destroy(rules.gameObject);
+            else DestroyImmediate(rules.gameObject);
         }
 
         // Set anchors to center to make positioning relative to parent's center
@@ -1427,6 +1434,12 @@ public sealed class MainMenuController : MonoBehaviour
         star.StarColor = color;
         star.ButtonLabelText = label;
         star.InitialPosition = initPos;
+
+        if (Application.isPlaying)
+        {
+            star.OnClickedAction = onClickedAction;
+            Destroy(button);
+        }
     }
 
     private void ApplyLobbyEconomyStripRect(RectTransform stripRt)
